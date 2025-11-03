@@ -89,10 +89,16 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
         height: '80vh', 
         borderTopLeftRadius: '8px', 
         borderTopRightRadius: '8px',
-        padding: '16px'
+        display: 'flex',
+        flexDirection: 'column'
       }}
     >
-      <div>
+      <div style={{ 
+        flex: 1, 
+        overflowY: 'auto',
+        padding: '16px',
+        paddingBottom: '0'
+      }}>
         <h3 style={{ marginBottom: '16px' }}>编辑记录</h3>
 
         <Space direction="vertical" style={{ width: '100%' }} block>
@@ -192,26 +198,31 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
             </div>
           </div>
 
-          <div style={{ marginTop: '16px' }}>
-            <Space direction="vertical" style={{ width: '100%' }} block>
-              <Button
-                color="primary"
-                block
-                size="large"
-                onClick={handleSubmit}
-                disabled={!activity.trim()}
-              >
-                保存
-              </Button>
-              <Button
-                block
-                size="large"
-                onClick={onClose}
-              >
-                取消
-              </Button>
-            </Space>
-          </div>
+        </Space>
+      </div>
+      
+      <div style={{ 
+        padding: '16px',
+        borderTop: '1px solid #f0f0f0',
+        backgroundColor: 'white'
+      }}>
+        <Space direction="vertical" style={{ width: '100%' }} block>
+          <Button
+            color="primary"
+            block
+            size="large"
+            onClick={handleSubmit}
+            disabled={!activity.trim()}
+          >
+            保存
+          </Button>
+          <Button
+            block
+            size="large"
+            onClick={onClose}
+          >
+            取消
+          </Button>
         </Space>
       </div>
     </Popup>

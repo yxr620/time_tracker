@@ -92,9 +92,18 @@ export const ManualEntry: React.FC = () => {
       <Popup
         visible={visible}
         onMaskClick={() => setVisible(false)}
-        bodyStyle={{ height: '70vh' }}
+        bodyStyle={{ 
+          height: '70vh',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
       >
-        <div style={{ padding: '16px' }}>
+        <div style={{ 
+          flex: 1, 
+          overflowY: 'auto',
+          padding: '16px',
+          paddingBottom: '0'
+        }}>
           <Space direction="vertical" style={{ width: '100%' }} block>
             <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>
               手动添加记录
@@ -172,23 +181,29 @@ export const ManualEntry: React.FC = () => {
                 ))}
               </Space>
             </div>
+          </Space>
+        </div>
 
-            <Space style={{ width: '100%', marginTop: '16px' }} block>
-              <Button
-                block
-                color="primary"
-                onClick={handleSubmit}
-                disabled={!activity.trim()}
-              >
-                保存
-              </Button>
-              <Button
-                block
-                onClick={() => setVisible(false)}
-              >
-                取消
-              </Button>
-            </Space>
+        <div style={{ 
+          padding: '16px',
+          borderTop: '1px solid #f0f0f0',
+          backgroundColor: 'white'
+        }}>
+          <Space style={{ width: '100%' }} block>
+            <Button
+              block
+              color="primary"
+              onClick={handleSubmit}
+              disabled={!activity.trim()}
+            >
+              保存
+            </Button>
+            <Button
+              block
+              onClick={() => setVisible(false)}
+            >
+              取消
+            </Button>
           </Space>
         </div>
       </Popup>
