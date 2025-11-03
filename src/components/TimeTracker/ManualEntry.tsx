@@ -1,16 +1,25 @@
-import React, { useState } from 'react';
-import { Button, Input, DatePicker, Popup, Space } from 'antd-mobile';
+import React, { useState, useEffect } from 'react';
+import { Button, Input, DatePicker, Popup, Space, Selector, Toast } from 'antd-mobile';
 import { useEntryStore } from '../../stores/entryStore';
+import { useGoalStore } from '../../stores/goalStore';
 import dayjs from 'dayjs';
 
 export const ManualEntry: React.FC = () => {
   const { addEntry } = useEntryStore();
+  const { goals, loadGoals } = useGoalStore();
   const [visible, setVisible] = useState(false);
   const [activity, setActivity] = useState('');
   const [startTime, setStartTime] = useState(new Date());
   const [endTime, setEndTime] = useState(new Date());
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [startPickerVisible, setStartPickerVisible] = useState(false);
   const [endPickerVisible, setEndPickerVisible] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      loadGoals();
+    }
+  }, [visible]);
 
   const quickTimeButtons = [
     { label: '现在', minutes: 0 },
@@ -28,13 +37,25 @@ export const ManualEntry: React.FC = () => {
     }
   };
 
+  // 获取当前日期的目标
+  const currentDateGoals = goals.filter(g => 
+    g.date === dayjs(startTime).format('YYYY-MM-DD')
+  );
+
   const handleSubmit = async () => {
     if (!activity.trim() || !startTime || !endTime) {
+      Toast.show({
+        icon: 'fail',
+        content: '请填写完整信息'
+      });
       return;
     }
 
     if (endTime <= startTime) {
-      alert('结束时间必须晚于开始时间');
+      Toast.show({
+        icon: 'fail',
+        content: '结束时间必须晚于开始时间'
+      });
       return;
     }
 
@@ -42,12 +63,18 @@ export const ManualEntry: React.FC = () => {
       startTime,
       endTime,
       activity,
-      goalId: null
+      goalId: selectedGoalId
+    });
+
+    Toast.show({
+      icon: 'success',
+      content: '记录已添加'
     });
 
     setActivity('');
     setStartTime(new Date());
     setEndTime(new Date());
+    setSelectedGoalId(null);
     setVisible(false);
   };
 
@@ -81,6 +108,27 @@ export const ManualEntry: React.FC = () => {
                 onChange={setActivity}
                 clearable
               />
+            </div>
+
+            <div>
+              <div style={{ marginBottom: '8px', fontWeight: '500' }}>关联目标（可选）</div>
+              {currentDateGoals.length > 0 ? (
+                <Selector
+                  options={[
+                    { label: '无', value: '' },
+                    ...currentDateGoals.map(g => ({
+                      label: g.name,
+                      value: g.id!
+                    }))
+                  ]}
+                  value={[selectedGoalId || '']}
+                  onChange={(arr) => setSelectedGoalId(arr[0] === '' ? null : arr[0] as string)}
+                />
+              ) : (
+                <div style={{ color: '#999', fontSize: '14px' }}>
+                  该日期暂无目标，请先在目标页面创建
+                </div>
+              )}
             </div>
 
             <div>

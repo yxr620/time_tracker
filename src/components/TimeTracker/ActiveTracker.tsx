@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Input, Space } from 'antd-mobile';
+import { Button, Input, Space, Selector } from 'antd-mobile';
 import { useEntryStore } from '../../stores/entryStore';
+import { useGoalStore } from '../../stores/goalStore';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 
@@ -8,8 +9,14 @@ dayjs.extend(duration);
 
 export const ActiveTracker: React.FC = () => {
   const { currentEntry, startTracking, stopTracking, getLastEndTime } = useEntryStore();
+  const { goals, loadGoals } = useGoalStore();
   const [activity, setActivity] = useState('');
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState('00:00:00');
+
+  useEffect(() => {
+    loadGoals();
+  }, []);
 
   useEffect(() => {
     if (!currentEntry) {
@@ -32,12 +39,18 @@ export const ActiveTracker: React.FC = () => {
     return () => clearInterval(timer);
   }, [currentEntry]);
 
+  // 获取今天的目标
+  const todayGoals = goals.filter(g => 
+    g.date === dayjs().format('YYYY-MM-DD')
+  );
+
   const handleStartNow = async () => {
     if (!activity.trim()) {
       return;
     }
-    await startTracking(activity);
+    await startTracking(activity, selectedGoalId || undefined);
     setActivity('');
+    setSelectedGoalId(null);
   };
 
   const handleStartFromLast = async () => {
@@ -46,12 +59,13 @@ export const ActiveTracker: React.FC = () => {
     }
     const lastEndTime = getLastEndTime();
     if (lastEndTime) {
-      await startTracking(activity, undefined, lastEndTime);
+      await startTracking(activity, selectedGoalId || undefined, lastEndTime);
     } else {
       // 如果没有上一个任务，就从当前时间开始
-      await startTracking(activity);
+      await startTracking(activity, selectedGoalId || undefined);
     }
     setActivity('');
+    setSelectedGoalId(null);
   };
 
   const handleStop = async () => {
@@ -98,6 +112,28 @@ export const ActiveTracker: React.FC = () => {
           onChange={setActivity}
           clearable
         />
+        
+        <div>
+          <div style={{ marginBottom: '8px', fontSize: '14px', color: '#666' }}>关联目标（可选）</div>
+          {todayGoals.length > 0 ? (
+            <Selector
+              options={[
+                { label: '无', value: '' },
+                ...todayGoals.map(g => ({
+                  label: g.name,
+                  value: g.id!
+                }))
+              ]}
+              value={[selectedGoalId || '']}
+              onChange={(arr) => setSelectedGoalId(arr[0] === '' ? null : arr[0] as string)}
+            />
+          ) : (
+            <div style={{ color: '#999', fontSize: '14px' }}>
+              今天暂无目标，请先在目标页面创建
+            </div>
+          )}
+        </div>
+
         <Space direction="horizontal" style={{ width: '100%' }} block>
           <Button
             block

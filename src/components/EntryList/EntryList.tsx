@@ -1,14 +1,20 @@
-import React, { useEffect } from 'react';
-import { List, SwipeAction } from 'antd-mobile';
+import React, { useEffect, useState } from 'react';
+import { List, SwipeAction, Tag } from 'antd-mobile';
 import { useEntryStore } from '../../stores/entryStore';
+import { useGoalStore } from '../../stores/goalStore';
+import type { TimeEntry } from '../../services/db';
+import { EditEntryDialog } from './EditEntryDialog';
 import dayjs from 'dayjs';
 
 export const EntryList: React.FC = () => {
-  const { entries, loadEntries, deleteEntry } = useEntryStore();
+  const { entries, loadEntries, deleteEntry, updateEntry } = useEntryStore();
+  const { goals, loadGoals } = useGoalStore();
+  const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
 
   useEffect(() => {
     loadEntries();
-  }, [loadEntries]);
+    loadGoals();
+  }, [loadEntries, loadGoals]);
 
   const formatDuration = (start: Date, end: Date | null) => {
     if (!end) return '进行中';
@@ -23,6 +29,13 @@ export const EntryList: React.FC = () => {
     return `${minutes}分钟`;
   };
 
+  // 根据goalId获取目标名称
+  const getGoalName = (goalId: string | null) => {
+    if (!goalId) return null;
+    const goal = goals.find(g => g.id === goalId);
+    return goal?.name || null;
+  };
+
   return (
     <div style={{ marginTop: '16px' }}>
       <div style={{ padding: '0 16px 8px', fontWeight: 'bold', fontSize: '16px' }}>
@@ -33,6 +46,14 @@ export const EntryList: React.FC = () => {
           <SwipeAction
             key={entry.id}
             rightActions={[
+              {
+                key: 'edit',
+                text: '编辑',
+                color: 'primary',
+                onClick: () => {
+                  setEditingEntry(entry);
+                }
+              },
               {
                 key: 'delete',
                 text: '删除',
@@ -52,6 +73,13 @@ export const EntryList: React.FC = () => {
                   <div style={{ color: '#999', fontSize: '12px' }}>
                     {formatDuration(entry.startTime, entry.endTime)}
                   </div>
+                  {getGoalName(entry.goalId) && (
+                    <div style={{ marginTop: '4px' }}>
+                      <Tag color="primary" fill="outline" style={{ fontSize: '12px' }}>
+                        {getGoalName(entry.goalId)}
+                      </Tag>
+                    </div>
+                  )}
                 </div>
               }
             >
@@ -60,6 +88,16 @@ export const EntryList: React.FC = () => {
           </SwipeAction>
         ))}
       </List>
+
+      <EditEntryDialog
+        entry={editingEntry}
+        visible={editingEntry !== null}
+        onClose={() => setEditingEntry(null)}
+        onSave={async (id, updates) => {
+          await updateEntry(id, updates);
+          setEditingEntry(null);
+        }}
+      />
     </div>
   );
 };

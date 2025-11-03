@@ -2,18 +2,17 @@ import { useState, useEffect, useRef } from 'react';
 import { TabBar, Button, Space, Toast } from 'antd-mobile';
 import { 
   AppOutline, 
-  UnorderedListOutline, 
-  FileOutline 
+  FileOutline,
+  StarOutline
 } from 'antd-mobile-icons';
 import { Keyboard } from '@capacitor/keyboard';
-import { ActiveTracker } from './components/TimeTracker/ActiveTracker';
-import { ManualEntry } from './components/TimeTracker/ManualEntry';
-import { EntryList } from './components/EntryList/EntryList';
-import { exportToJSON, exportToExcel } from './services/export';
+import { RecordsPage } from './components/RecordsPage/RecordsPage';
+import { GoalManager } from './components/GoalManager/GoalManager';
+import { exportFullJSON, exportIncrementalJSON } from './services/export';
 import './App.css';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('tracker');
+  const [activeTab, setActiveTab] = useState('records');
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const initialViewportHeightRef = useRef<number | null>(null);
   
@@ -109,18 +108,18 @@ function App() {
     };
   }, []);
   
-  const handleExportJSON = async () => {
+  const handleExportFullJSON = async () => {
     try {
       Toast.show({
         icon: 'loading',
-        content: '正在导出...',
+        content: '正在导出全量数据...',
         duration: 0
       });
-      await exportToJSON();
+      await exportFullJSON();
       Toast.clear();
       Toast.show({
         icon: 'success',
-        content: '导出成功'
+        content: '全量导出成功'
       });
     } catch (error) {
       Toast.clear();
@@ -128,22 +127,22 @@ function App() {
         icon: 'fail',
         content: '导出失败，请重试'
       });
-      console.error('Export JSON failed:', error);
+      console.error('Export Full JSON failed:', error);
     }
   };
 
-  const handleExportExcel = async () => {
+  const handleExportIncrementalJSON = async () => {
     try {
       Toast.show({
         icon: 'loading',
-        content: '正在导出...',
+        content: '正在导出增量数据...',
         duration: 0
       });
-      await exportToExcel();
+      await exportIncrementalJSON();
       Toast.clear();
       Toast.show({
         icon: 'success',
-        content: '导出成功'
+        content: '增量导出成功'
       });
     } catch (error) {
       Toast.clear();
@@ -151,7 +150,7 @@ function App() {
         icon: 'fail',
         content: '导出失败，请重试'
       });
-      console.error('Export Excel failed:', error);
+      console.error('Export Incremental JSON failed:', error);
     }
   };
 
@@ -177,14 +176,14 @@ function App() {
 
   const tabs = [
     {
-      key: 'tracker',
-      title: '追踪',
+      key: 'records',
+      title: '记录',
       icon: <AppOutline />,
     },
     {
-      key: 'list',
-      title: '列表',
-      icon: <UnorderedListOutline />,
+      key: 'goals',
+      title: '目标',
+      icon: <StarOutline />,
     },
     {
       key: 'export',
@@ -200,43 +199,52 @@ function App() {
       </div>
 
       <div className="app-body">
-        {activeTab === 'tracker' && (
-          <div style={{ padding: '16px' }}>
-            <ActiveTracker />
-            <div style={{ marginTop: '16px' }}>
-              <ManualEntry />
-            </div>
+        {activeTab === 'records' && (
+          <div>
+            <RecordsPage />
           </div>
         )}
 
-        {activeTab === 'list' && (
+        {activeTab === 'goals' && (
           <div>
-            <EntryList />
+            <GoalManager />
           </div>
         )}
 
         {activeTab === 'export' && (
           <div style={{ padding: '16px' }}>
             <Space direction="vertical" style={{ width: '100%' }} block>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>
-                导出数据
+              <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>
+                数据同步导出
               </div>
+              <div style={{ fontSize: '14px', color: '#666', marginBottom: '16px', lineHeight: '1.5' }}>
+                推荐日常使用增量导出，首次同步或数据恢复时使用全量导出
+              </div>
+              
               <Button
                 block
                 color="primary"
                 size="large"
-                onClick={handleExportJSON}
+                onClick={handleExportIncrementalJSON}
               >
-                导出为 JSON
+                📤 增量导出（推荐）
               </Button>
+              <div style={{ fontSize: '12px', color: '#999', marginTop: '-8px', marginBottom: '8px', paddingLeft: '8px' }}>
+                只导出自上次同步后的新数据
+              </div>
+              
               <Button
                 block
-                color="success"
+                color="default"
                 size="large"
-                onClick={handleExportExcel}
+                onClick={handleExportFullJSON}
               >
-                导出为 Excel
+                📦 全量导出
               </Button>
+              <div style={{ fontSize: '12px', color: '#999', marginTop: '-8px', marginBottom: '8px', paddingLeft: '8px' }}>
+                导出所有记录和目标数据
+              </div>
+
               <div style={{ marginTop: '24px', borderTop: '1px solid #e5e5e5', paddingTop: '16px' }}>
                 <div style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>
                   如果导出失败，可以使用复制功能：
@@ -247,7 +255,7 @@ function App() {
                   size="large"
                   onClick={handleCopyJSON}
                 >
-                  复制 JSON 到剪贴板
+                  📋 复制 JSON 到剪贴板
                 </Button>
               </div>
             </Space>
