@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">time-tracker</string>
+    <string name="title_activity_main">time-tracker</string>
+    <string name="package_name">com.example.timetracker</string>
+    <string name="custom_url_scheme">com.example.timetracker</string>
+</resources>

@@ -1,0 +1,70 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.app-header {
+  flex-shrink: 0;
+  padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  background: #1677ff;
+  color: white;
+  text-align: center;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.app-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0; /* 重要：允许 flex 子元素缩小 */
+}
+
+.app-footer {
+  flex-shrink: 0;
+  border-top: 1px solid #e5e5e5;
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: white;
+  z-index: 100;
+  position: relative;
+  transition: all 0.15s ease-in-out;
+}
+
+/* 强制隐藏底部导航栏 */
+.app-footer.hidden {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  overflow: hidden !important;
+  flex-basis: 0 !important;
+}
