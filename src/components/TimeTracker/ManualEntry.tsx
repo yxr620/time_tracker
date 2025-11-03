@@ -189,22 +189,25 @@ export const ManualEntry: React.FC = () => {
           borderTop: '1px solid #f0f0f0',
           backgroundColor: 'white'
         }}>
-          <Space style={{ width: '100%' }} block>
+          <div style={{ display: 'flex', gap: '12px' }}>
             <Button
-              block
+              color="default"
+              size="large"
+              style={{ flex: 1 }}
+              onClick={() => setVisible(false)}
+            >
+              取消
+            </Button>
+            <Button
               color="primary"
+              size="large"
+              style={{ flex: 1 }}
               onClick={handleSubmit}
               disabled={!activity.trim()}
             >
               保存
             </Button>
-            <Button
-              block
-              onClick={() => setVisible(false)}
-            >
-              取消
-            </Button>
-          </Space>
+          </div>
         </div>
       </Popup>
 

@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { TabBar, Button, Space, Toast } from 'antd-mobile';
 import { 
   AppOutline, 
   FileOutline,
   StarOutline
 } from 'antd-mobile-icons';
-import { Keyboard } from '@capacitor/keyboard';
 import { RecordsPage } from './components/RecordsPage/RecordsPage';
 import { GoalManager } from './components/GoalManager/GoalManager';
 import { exportFullJSON, exportIncrementalJSON } from './services/export';
@@ -13,100 +12,6 @@ import './App.css';
 
 function App() {
   const [activeTab, setActiveTab] = useState('records');
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-  const initialViewportHeightRef = useRef<number | null>(null);
-  
-  // 监听键盘显示/隐藏
-  useEffect(() => {
-    let showListener: any;
-    let hideListener: any;
-
-    const setInitialViewportHeight = () => {
-      if (typeof window === 'undefined') return;
-      initialViewportHeightRef.current = window.visualViewport?.height ?? window.innerHeight;
-    };
-
-    setInitialViewportHeight();
-
-    // 使用 Capacitor Keyboard 插件监听（更准确）
-    const setupKeyboardListeners = async () => {
-      try {
-        showListener = await Keyboard.addListener('keyboardDidShow', () => {
-          setIsKeyboardVisible(true);
-        });
-
-        hideListener = await Keyboard.addListener('keyboardDidHide', () => {
-          setIsKeyboardVisible(false);
-          setInitialViewportHeight();
-        });
-      } catch (err) {
-        console.warn('Keyboard plugin not available, using fallbacks:', err);
-      }
-    };
-
-    setupKeyboardListeners();
-
-    // Fallback 1: 监听所有输入框的 focus/blur 事件
-    const handleFocus = (e: FocusEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.getAttribute('contenteditable')) {
-        setIsKeyboardVisible(true);
-      }
-    };
-
-    const handleBlur = () => {
-      setTimeout(() => {
-        const activeElement = document.activeElement;
-        if (!activeElement) {
-          setIsKeyboardVisible(false);
-          setInitialViewportHeight();
-          return;
-        }
-        const isInput = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.getAttribute('contenteditable');
-        if (!isInput) {
-          setIsKeyboardVisible(false);
-          setInitialViewportHeight();
-        }
-      }, 150);
-    };
-
-    // Fallback 2: 使用 visualViewport（网页版或插件不可用时）
-    const handleViewportChange = () => {
-      if (typeof window === 'undefined') return;
-      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-      const initialHeight = initialViewportHeightRef.current ?? viewportHeight;
-      const diff = initialHeight - viewportHeight;
-      const visible = diff > 80; // 阈值越过 80px 视为键盘展示
-      setIsKeyboardVisible(prev => (prev === visible ? prev : visible));
-      if (!visible) {
-        initialViewportHeightRef.current = viewportHeight;
-      }
-    };
-
-    document.addEventListener('focusin', handleFocus, true);
-    document.addEventListener('focusout', handleBlur, true);
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleViewportChange);
-      window.visualViewport.addEventListener('scroll', handleViewportChange);
-    }
-
-    window.addEventListener('resize', handleViewportChange);
-
-    return () => {
-      if (showListener) showListener.remove();
-      if (hideListener) hideListener.remove();
-
-      document.removeEventListener('focusin', handleFocus, true);
-      document.removeEventListener('focusout', handleBlur, true);
-
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleViewportChange);
-        window.visualViewport.removeEventListener('scroll', handleViewportChange);
-      }
-      window.removeEventListener('resize', handleViewportChange);
-    };
-  }, []);
   
   const handleExportFullJSON = async () => {
     try {
@@ -263,15 +168,13 @@ function App() {
         )}
       </div>
 
-      {!isKeyboardVisible && (
-        <div className="app-footer">
-          <TabBar activeKey={activeTab} onChange={setActiveTab}>
-            {tabs.map(item => (
-              <TabBar.Item key={item.key} icon={item.icon} title={item.title} />
-            ))}
-          </TabBar>
-        </div>
-      )}
+      <div className="app-footer">
+        <TabBar activeKey={activeTab} onChange={setActiveTab}>
+          {tabs.map(item => (
+            <TabBar.Item key={item.key} icon={item.icon} title={item.title} />
+          ))}
+        </TabBar>
+      </div>
     </div>
   );
 }

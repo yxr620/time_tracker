@@ -22,6 +22,8 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
   const [startTime, setStartTime] = useState<Date>(new Date());
   const [endTime, setEndTime] = useState<Date | null>(null);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const [startPickerVisible, setStartPickerVisible] = useState(false);
+  const [endPickerVisible, setEndPickerVisible] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -82,6 +84,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
   if (!entry) return null;
 
   return (
+    <>
     <Popup
       visible={visible}
       onMaskClick={onClose}
@@ -134,17 +137,12 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
 
           <div>
             <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>开始时间</div>
-            <DatePicker
-              value={startTime}
-              onConfirm={setStartTime}
-              precision="minute"
+            <Button 
+              block 
+              onClick={() => setStartPickerVisible(true)}
             >
-              {(value) => (
-                <Button size="small" style={{ width: '100%' }}>
-                  {value ? dayjs(value).format('YYYY-MM-DD HH:mm') : '选择时间'}
-                </Button>
-              )}
-            </DatePicker>
+              {dayjs(startTime).format('YYYY-MM-DD HH:mm')}
+            </Button>
             <div style={{ marginTop: '8px' }}>
               <Space wrap>
                 {quickTimeButtons.map(btn => (
@@ -163,17 +161,12 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
 
           <div>
             <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>结束时间</div>
-            <DatePicker
-              value={endTime || new Date()}
-              onConfirm={setEndTime}
-              precision="minute"
+            <Button 
+              block 
+              onClick={() => setEndPickerVisible(true)}
             >
-              {() => (
-                <Button size="small" style={{ width: '100%' }}>
-                  {endTime ? dayjs(endTime).format('YYYY-MM-DD HH:mm') : '进行中'}
-                </Button>
-              )}
-            </DatePicker>
+              {endTime ? dayjs(endTime).format('YYYY-MM-DD HH:mm') : '进行中'}
+            </Button>
             <div style={{ marginTop: '8px' }}>
               <Space wrap>
                 {quickTimeButtons.map(btn => (
@@ -206,25 +199,83 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
         borderTop: '1px solid #f0f0f0',
         backgroundColor: 'white'
       }}>
-        <Space direction="vertical" style={{ width: '100%' }} block>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <Button
+            color="default"
+            size="large"
+            style={{ flex: 1 }}
+            onClick={onClose}
+          >
+            取消
+          </Button>
           <Button
             color="primary"
-            block
             size="large"
+            style={{ flex: 1 }}
             onClick={handleSubmit}
             disabled={!activity.trim()}
           >
             保存
           </Button>
-          <Button
-            block
-            size="large"
-            onClick={onClose}
-          >
-            取消
-          </Button>
-        </Space>
+        </div>
       </div>
     </Popup>
+
+    <DatePicker
+      visible={startPickerVisible}
+      onClose={() => setStartPickerVisible(false)}
+      value={startTime}
+      onConfirm={val => {
+        setStartTime(val);
+      }}
+      precision="minute"
+      renderLabel={(type, data) => {
+        switch (type) {
+          case 'year':
+            return data + '年';
+          case 'month':
+            return data + '月';
+          case 'day':
+            return data + '日';
+          case 'hour':
+            return data + '时';
+          case 'minute':
+            return data + '分';
+          default:
+            return data;
+        }
+      }}
+    >
+      {() => null}
+    </DatePicker>
+
+    <DatePicker
+      visible={endPickerVisible}
+      onClose={() => setEndPickerVisible(false)}
+      value={endTime || new Date()}
+      onConfirm={val => {
+        setEndTime(val);
+      }}
+      precision="minute"
+      renderLabel={(type, data) => {
+        switch (type) {
+          case 'year':
+            return data + '年';
+          case 'month':
+            return data + '月';
+          case 'day':
+            return data + '日';
+          case 'hour':
+            return data + '时';
+          case 'minute':
+            return data + '分';
+          default:
+            return data;
+        }
+      }}
+    >
+      {() => null}
+    </DatePicker>
+    </>
   );
 };

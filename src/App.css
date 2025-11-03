@@ -50,21 +50,4 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
   background-color: white;
   z-index: 100;
-  position: relative;
-  transition: all 0.15s ease-in-out;
-}
-
-/* 强制隐藏底部导航栏 */
-.app-footer.hidden {
-  display: none !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  max-height: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  overflow: hidden !important;
-  flex-basis: 0 !important;
 }
