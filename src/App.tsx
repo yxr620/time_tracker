@@ -83,7 +83,7 @@ function App() {
 
   const handleImportClick = () => {
     // 弹出策略选择对话框
-    Dialog.confirm({
+    const dialog = Dialog.show({
       title: '选择导入策略',
       content: (
         <div style={{ textAlign: 'left', lineHeight: '1.8' }}>
@@ -98,28 +98,50 @@ function App() {
           </div>
         </div>
       ),
-      confirmText: '合并导入',
-      cancelText: '替换导入',
-      onConfirm: () => {
-        setImportStrategy(ImportStrategy.MERGE);
-        setTimeout(() => {
-          fileInputRef.current?.click();
-        }, 100);
-      },
-      onCancel: () => {
-        Dialog.confirm({
-          title: '⚠️ 确认替换',
-          content: '替换模式会清空所有现有数据！此操作无法撤销。确定要继续吗？',
-          confirmText: '确认替换',
-          cancelText: '取消',
-          onConfirm: () => {
-            setImportStrategy(ImportStrategy.REPLACE);
+      closeOnMaskClick: true,
+      actions: [
+        {
+          key: 'cancel',
+          text: '取消',
+          style: { color: '#999' },
+          onClick: () => {
+            dialog.close();
+          }
+        },
+        {
+          key: 'replace',
+          text: '替换导入',
+          style: { color: '#ff4d4f' },
+          onClick: () => {
+            dialog.close();
+            Dialog.confirm({
+              title: '⚠️ 确认替换',
+              content: '替换模式会清空所有现有数据！此操作无法撤销。确定要继续吗？',
+              confirmText: '确认替换',
+              cancelText: '取消',
+              closeOnMaskClick: true,
+              onConfirm: () => {
+                setImportStrategy(ImportStrategy.REPLACE);
+                setTimeout(() => {
+                  fileInputRef.current?.click();
+                }, 100);
+              }
+            });
+          }
+        },
+        {
+          key: 'merge',
+          text: '合并导入',
+          bold: true,
+          onClick: () => {
+            dialog.close();
+            setImportStrategy(ImportStrategy.MERGE);
             setTimeout(() => {
               fileInputRef.current?.click();
             }, 100);
           }
-        });
-      }
+        }
+      ]
     });
   };
 
