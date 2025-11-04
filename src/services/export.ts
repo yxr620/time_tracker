@@ -249,3 +249,211 @@ const downloadBlob = (blob: Blob, filename: string) => {
     }, 100);
   }, 0);
 };
+
+// 导入策略
+export const ImportStrategy = {
+  MERGE: 'merge' as const,           // 合并：保留现有数据，只添加新数据（基于ID）
+  REPLACE: 'replace' as const,       // 替换：清空现有数据，导入新数据
+  SKIP_DUPLICATES: 'skip' as const   // 跳过：遇到重复ID时跳过
+};
+
+export type ImportStrategyType = typeof ImportStrategy[keyof typeof ImportStrategy];
+
+// 导入结果接口
+export interface ImportResult {
+  success: boolean;
+  message: string;
+  details: {
+    entriesImported: number;
+    goalsImported: number;
+    categoriesImported: number;
+    entriesSkipped: number;
+    goalsSkipped: number;
+    categoriesSkipped: number;
+    errors: string[];
+  };
+}
+
+// 验证导出数据格式
+const validateExportData = (data: any): { valid: boolean; error?: string } => {
+  if (!data || typeof data !== 'object') {
+    return { valid: false, error: '无效的JSON格式' };
+  }
+
+  if (!data.data || !data.data.entries || !Array.isArray(data.data.entries)) {
+    return { valid: false, error: '缺少必需的entries数据' };
+  }
+
+  if (!data.data.goals || !Array.isArray(data.data.goals)) {
+    return { valid: false, error: '缺少必需的goals数据' };
+  }
+
+  if (!data.data.categories || !Array.isArray(data.data.categories)) {
+    return { valid: false, error: '缺少必需的categories数据' };
+  }
+
+  return { valid: true };
+};
+
+// 从JSON文件导入数据
+export const importFromJSON = async (
+  file: File,
+  strategy: ImportStrategyType = ImportStrategy.MERGE
+): Promise<ImportResult> => {
+  const result: ImportResult = {
+    success: false,
+    message: '',
+    details: {
+      entriesImported: 0,
+      goalsImported: 0,
+      categoriesImported: 0,
+      entriesSkipped: 0,
+      goalsSkipped: 0,
+      categoriesSkipped: 0,
+      errors: []
+    }
+  };
+
+  try {
+    // 读取文件内容
+    const fileContent = await file.text();
+    const importData = JSON.parse(fileContent);
+
+    // 验证数据格式
+    const validation = validateExportData(importData);
+    if (!validation.valid) {
+      result.message = validation.error || '数据格式验证失败';
+      return result;
+    }
+
+    // 如果是替换策略，先清空数据库
+    if (strategy === ImportStrategy.REPLACE) {
+      await db.entries.clear();
+      await db.goals.clear();
+      // 注意：不清空categories，因为它们是系统预设的
+    }
+
+    // 获取现有数据（用于检查重复）
+    const existingEntryIds = new Set(
+      (await db.entries.toArray()).map(e => e.id)
+    );
+    const existingGoalIds = new Set(
+      (await db.goals.toArray()).map(g => g.id)
+    );
+    const existingCategoryIds = new Set(
+      (await db.categories.toArray()).map(c => c.id)
+    );
+
+    // 导入 categories
+    for (const category of importData.data.categories) {
+      try {
+        // 确保日期字段是Date对象
+        const categoryData = {
+          ...category,
+          createdAt: category.createdAt ? new Date(category.createdAt) : new Date()
+        };
+
+        if (strategy === ImportStrategy.SKIP_DUPLICATES && existingCategoryIds.has(category.id)) {
+          result.details.categoriesSkipped++;
+          continue;
+        }
+
+        if (strategy === ImportStrategy.MERGE && existingCategoryIds.has(category.id)) {
+          // 合并策略：更新现有类别
+          await db.categories.update(category.id, categoryData);
+        } else {
+          // 添加新类别
+          await db.categories.put(categoryData);
+        }
+        result.details.categoriesImported++;
+      } catch (error) {
+        result.details.errors.push(`导入类别失败 (${category.id}): ${error}`);
+      }
+    }
+
+    // 导入 goals
+    for (const goal of importData.data.goals) {
+      try {
+        // 确保日期字段是Date对象
+        const goalData = {
+          ...goal,
+          createdAt: goal.createdAt ? new Date(goal.createdAt) : new Date(),
+          updatedAt: goal.updatedAt ? new Date(goal.updatedAt) : new Date()
+        };
+
+        if (strategy === ImportStrategy.SKIP_DUPLICATES && existingGoalIds.has(goal.id)) {
+          result.details.goalsSkipped++;
+          continue;
+        }
+
+        if (strategy === ImportStrategy.MERGE && existingGoalIds.has(goal.id)) {
+          // 合并策略：更新现有目标
+          await db.goals.update(goal.id, goalData);
+        } else {
+          // 添加新目标
+          await db.goals.put(goalData);
+        }
+        result.details.goalsImported++;
+      } catch (error) {
+        result.details.errors.push(`导入目标失败 (${goal.id}): ${error}`);
+      }
+    }
+
+    // 导入 entries
+    for (const entry of importData.data.entries) {
+      try {
+        // 确保日期字段是Date对象
+        const entryData = {
+          ...entry,
+          startTime: new Date(entry.startTime),
+          endTime: entry.endTime ? new Date(entry.endTime) : null,
+          createdAt: entry.createdAt ? new Date(entry.createdAt) : new Date(),
+          updatedAt: entry.updatedAt ? new Date(entry.updatedAt) : new Date()
+        };
+
+        if (strategy === ImportStrategy.SKIP_DUPLICATES && existingEntryIds.has(entry.id)) {
+          result.details.entriesSkipped++;
+          continue;
+        }
+
+        if (strategy === ImportStrategy.MERGE && existingEntryIds.has(entry.id)) {
+          // 合并策略：更新现有记录
+          await db.entries.update(entry.id, entryData);
+        } else {
+          // 添加新记录
+          await db.entries.put(entryData);
+        }
+        result.details.entriesImported++;
+      } catch (error) {
+        result.details.errors.push(`导入记录失败 (${entry.id}): ${error}`);
+      }
+    }
+
+    // 构建结果消息
+    const total = result.details.entriesImported + result.details.goalsImported + result.details.categoriesImported;
+    const skipped = result.details.entriesSkipped + result.details.goalsSkipped + result.details.categoriesSkipped;
+    
+    if (total > 0) {
+      result.success = true;
+      result.message = `成功导入 ${total} 条数据`;
+      if (skipped > 0) {
+        result.message += `，跳过 ${skipped} 条重复数据`;
+      }
+      if (result.details.errors.length > 0) {
+        result.message += `，${result.details.errors.length} 条失败`;
+      }
+    } else {
+      result.message = '没有数据被导入';
+      if (result.details.errors.length > 0) {
+        result.message = `导入失败：${result.details.errors.length} 个错误`;
+      }
+    }
+
+    return result;
+  } catch (error) {
+    result.success = false;
+    result.message = `导入失败: ${error instanceof Error ? error.message : '未知错误'}`;
+    result.details.errors.push(String(error));
+    return result;
+  }
+};

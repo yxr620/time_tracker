@@ -5,7 +5,7 @@ export interface TimeEntry {
   startTime: Date;
   endTime: Date | null;
   activity: string;
-  categoryId: string | null;  // 活动类别（必填）
+  categoryId: string | null;  // 活动类别（可选，兼容旧数据）
   goalId: string | null;
   customFields?: Record<string, any>;
   createdAt: Date;

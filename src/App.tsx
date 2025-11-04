@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { TabBar, Button, Space, Toast } from 'antd-mobile';
+import { useState, useRef } from 'react';
+import { TabBar, Button, Space, Toast, Dialog } from 'antd-mobile';
 import { 
   AppOutline, 
   FileOutline,
@@ -7,11 +7,13 @@ import {
 } from 'antd-mobile-icons';
 import { RecordsPage } from './components/RecordsPage/RecordsPage';
 import { GoalManager } from './components/GoalManager/GoalManager';
-import { exportFullJSON, exportIncrementalJSON } from './services/export';
+import { exportFullJSON, exportIncrementalJSON, importFromJSON, ImportStrategy } from './services/export';
 import './App.css';
 
 function App() {
   const [activeTab, setActiveTab] = useState('records');
+  const [importStrategy, setImportStrategy] = useState<typeof ImportStrategy.MERGE | typeof ImportStrategy.REPLACE>(ImportStrategy.MERGE);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const handleExportFullJSON = async () => {
     try {
@@ -79,6 +81,142 @@ function App() {
     }
   };
 
+  const handleImportClick = () => {
+    // 弹出策略选择对话框
+    Dialog.confirm({
+      title: '选择导入策略',
+      content: (
+        <div style={{ textAlign: 'left', lineHeight: '1.8' }}>
+          <p style={{ marginBottom: '12px' }}>请选择数据导入策略：</p>
+          <div style={{ marginBottom: '8px' }}>
+            <strong>合并模式（推荐）</strong>
+            <div style={{ fontSize: '13px', color: '#666' }}>保留现有数据，导入新数据。相同ID的记录会被更新。</div>
+          </div>
+          <div style={{ marginBottom: '8px' }}>
+            <strong>替换模式</strong>
+            <div style={{ fontSize: '13px', color: '#666' }}>⚠️ 清空所有现有数据，然后导入新数据。</div>
+          </div>
+        </div>
+      ),
+      confirmText: '合并导入',
+      cancelText: '替换导入',
+      onConfirm: () => {
+        setImportStrategy(ImportStrategy.MERGE);
+        setTimeout(() => {
+          fileInputRef.current?.click();
+        }, 100);
+      },
+      onCancel: () => {
+        Dialog.confirm({
+          title: '⚠️ 确认替换',
+          content: '替换模式会清空所有现有数据！此操作无法撤销。确定要继续吗？',
+          confirmText: '确认替换',
+          cancelText: '取消',
+          onConfirm: () => {
+            setImportStrategy(ImportStrategy.REPLACE);
+            setTimeout(() => {
+              fileInputRef.current?.click();
+            }, 100);
+          }
+        });
+      }
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      Toast.show({
+        icon: 'loading',
+        content: '正在导入数据...',
+        duration: 0
+      });
+
+      const result = await importFromJSON(file, importStrategy);
+      Toast.clear();
+
+      if (result.success) {
+        Toast.show({
+          icon: 'success',
+          content: result.message,
+          duration: 3000
+        });
+
+        // 显示详细信息
+        setTimeout(() => {
+          Dialog.alert({
+            title: '导入完成',
+            content: (
+              <div style={{ textAlign: 'left', lineHeight: '1.8' }}>
+                <p><strong>导入成功：</strong></p>
+                <div style={{ fontSize: '14px', marginLeft: '12px' }}>
+                  <div>📝 时间记录: {result.details.entriesImported} 条</div>
+                  <div>🎯 目标: {result.details.goalsImported} 条</div>
+                  <div>🏷️ 类别: {result.details.categoriesImported} 条</div>
+                </div>
+                {(result.details.entriesSkipped + result.details.goalsSkipped + result.details.categoriesSkipped > 0) && (
+                  <div style={{ marginTop: '12px', fontSize: '14px', color: '#666' }}>
+                    <div>跳过重复数据: {result.details.entriesSkipped + result.details.goalsSkipped + result.details.categoriesSkipped} 条</div>
+                  </div>
+                )}
+                {result.details.errors.length > 0 && (
+                  <div style={{ marginTop: '12px', fontSize: '13px', color: '#ff4d4f' }}>
+                    <div>⚠️ {result.details.errors.length} 个错误</div>
+                  </div>
+                )}
+              </div>
+            ),
+            confirmText: '确定'
+          });
+        }, 500);
+
+        // 刷新当前页面数据
+        window.location.reload();
+      } else {
+        Toast.show({
+          icon: 'fail',
+          content: result.message,
+          duration: 3000
+        });
+
+        if (result.details.errors.length > 0) {
+          Dialog.alert({
+            title: '导入失败',
+            content: (
+              <div style={{ textAlign: 'left', lineHeight: '1.6' }}>
+                <p>{result.message}</p>
+                <div style={{ marginTop: '12px', fontSize: '13px', color: '#666' }}>
+                  <strong>错误详情：</strong>
+                  <div style={{ maxHeight: '200px', overflow: 'auto', marginTop: '8px' }}>
+                    {result.details.errors.slice(0, 5).map((err, i) => (
+                      <div key={i} style={{ marginBottom: '4px' }}>• {err}</div>
+                    ))}
+                    {result.details.errors.length > 5 && (
+                      <div>... 还有 {result.details.errors.length - 5} 个错误</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ),
+            confirmText: '确定'
+          });
+        }
+      }
+    } catch (error) {
+      Toast.clear();
+      Toast.show({
+        icon: 'fail',
+        content: '导入失败，请重试'
+      });
+      console.error('Import failed:', error);
+    } finally {
+      // 清空文件选择，允许重复选择同一文件
+      e.target.value = '';
+    }
+  };
+
   const tabs = [
     {
       key: 'records',
@@ -119,11 +257,43 @@ function App() {
         {activeTab === 'export' && (
           <div style={{ padding: '16px' }}>
             <Space direction="vertical" style={{ width: '100%' }} block>
+              {/* 导入部分 */}
               <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>
-                数据同步导出
+                数据导入
               </div>
               <div style={{ fontSize: '14px', color: '#666', marginBottom: '16px', lineHeight: '1.5' }}>
-                推荐日常使用增量导出，首次同步或数据恢复时使用全量导出
+                从之前导出的JSON文件中恢复数据
+              </div>
+              
+              <Button
+                block
+                color="success"
+                size="large"
+                onClick={handleImportClick}
+              >
+                📥 导入数据
+              </Button>
+              <div style={{ fontSize: '12px', color: '#999', marginTop: '-8px', marginBottom: '8px', paddingLeft: '8px' }}>
+                支持全量导出和增量导出的JSON文件
+              </div>
+
+              {/* 隐藏的文件输入 */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+              />
+
+              {/* 导出部分 */}
+              <div style={{ marginTop: '24px', borderTop: '1px solid #e5e5e5', paddingTop: '16px' }}>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>
+                  数据导出
+                </div>
+                <div style={{ fontSize: '14px', color: '#666', marginBottom: '16px', lineHeight: '1.5' }}>
+                  推荐日常使用增量导出，首次同步或数据恢复时使用全量导出
+                </div>
               </div>
               
               <Button

@@ -51,3 +51,13 @@ body {
   background-color: white;
   z-index: 100;
 }
+
+/* 修复 Selector 选中状态的文字颜色 */
+.adm-selector-item-active {
+  background-color: #1677ff !important;
+  color: white !important;
+}
+
+.adm-selector-item-active .adm-selector-item-label {
+  color: white !important;
+}

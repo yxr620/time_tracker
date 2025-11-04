@@ -77,11 +77,9 @@ export const EntryList: React.FC = () => {
                     {formatDuration(entry.startTime, entry.endTime)}
                   </div>
                   <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                    {getCategoryName(entry.categoryId) && (
-                      <Tag color="default" fill="solid" style={{ fontSize: '12px' }}>
-                        {getCategoryName(entry.categoryId)}
-                      </Tag>
-                    )}
+                    <Tag color="default" fill="solid" style={{ fontSize: '12px' }}>
+                      {getCategoryName(entry.categoryId) || '未分类'}
+                    </Tag>
                     {getGoalName(entry.goalId) && (
                       <Tag color="primary" fill="outline" style={{ fontSize: '12px' }}>
                         {getGoalName(entry.goalId)}

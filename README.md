@@ -1,34 +1,21 @@
-# 时间追踪工具 (Time Tracker)# React + TypeScript + Vite
+# 时间追踪工具 (Time Tracker)
 
+一个基于 React + TypeScript + Capacitor 开发的个人时间追踪应用，支持 Web 和 Android 平台。
 
+## 📱 功能特性
 
-一个基于 React + TypeScript + Capacitor 开发的个人时间追踪应用，支持 Web 和 Android 平台。This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-
-
-## 📱 功能特性Currently, two official plugins are available:
-
-
-
-- ⏱️ **实时计时**：实时追踪当前活动的时间- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-
-- ➕ **手动添加**：支持手动添加历史时间记录- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
+- ⏱️ **实时计时**：实时追踪当前活动的时间
+- ➕ **手动添加**：支持手动添加历史时间记录
+- 🏷️ **活动分类**：6个预设类别（学习、工作、运动、娱乐、日常、休息）
+- 🎯 **目标管理**：设置每日目标并追踪完成情况
 - 📝 **记录管理**：查看、编辑和删除时间记录
-
-- 📊 **数据导出**：支持导出为 JSON 和 Excel 格式## React Compiler
-
+- � **数据导出**：支持导出为 JSON 格式（全量/增量导出）
+- 📥 **数据导入**：从导出的 JSON 文件恢复数据（支持合并/替换策略）
 - 💾 **本地存储**：使用 IndexedDB 实现离线数据存储
-
-- 📱 **PWA 支持**：可作为 Progressive Web App 安装The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
+- 📱 **PWA 支持**：可作为 Progressive Web App 安装
 - 🤖 **Android 应用**：使用 Capacitor 打包为原生 Android 应用
 
-## Expanding the ESLint configuration
-
 ## 🛠️ 技术栈
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
 - **前端框架**：React 18 + TypeScript
 
@@ -323,8 +310,10 @@ npm run lint        # 运行 ESLint 检查代码
 应用使用 IndexedDB 存储数据，数据库名称：`TimeTrackerDB`
 
 **包含的表**：
-- `entries`：时间记录
+- `entries`：时间记录（包含活动、类别、目标等信息）
 - `goals`：目标管理
+- `categories`：活动类别（预设6个）
+- `syncMetadata`：同步元数据
 
 **数据位置**：
 - **Web 端**：浏览器的 IndexedDB
@@ -337,13 +326,56 @@ npm run lint        # 运行 ESLint 检查代码
 
 ---
 
-## 📤 数据导出
+## 📤 数据导出与导入
 
-应用支持导出数据为：
-- **JSON 格式**：完整的数据结构
-- **Excel 格式**：表格形式，方便查看和分析
+### 数据导出
 
-导出的文件会保存到设备的下载目录。
+应用支持多种导出方式：
+- **全量导出**：导出所有记录、目标和类别
+- **增量导出**：只导出自上次同步后的新数据
+- **时间范围导出**：导出指定时间段的数据
+
+导出格式为 **JSON**，包含完整的数据结构（entries, goals, categories），适合数据备份和 Python 分析。
+
+**导出步骤**：
+1. 进入"导出"页面
+2. 选择导出方式（推荐日常使用增量导出）
+3. 文件自动下载或分享
+4. 文件名格式：`time-tracker-full-YYYYMMDD-HHmmss.json` 或 `time-tracker-sync-YYYYMMDD-HHmmss.json`
+
+### 数据导入
+
+从导出的 JSON 文件恢复数据，支持两种导入策略：
+
+**1. 合并模式（推荐）**
+- 保留现有数据
+- 导入新数据
+- 相同 ID 的记录会被更新
+- 适合：日常同步、多设备数据合并
+
+**2. 替换模式**
+- ⚠️ 清空所有现有数据
+- 导入新数据
+- 此操作不可撤销
+- 适合：全新恢复、重置数据
+
+**导入步骤**：
+1. 进入"导出"页面
+2. 点击"📥 导入数据"按钮
+3. 选择导入策略（合并/替换）
+4. 选择之前导出的 JSON 文件
+5. 等待导入完成，查看导入结果
+
+**导入结果**：
+- 显示导入的记录数、目标数、类别数
+- 显示跳过的重复数据数量
+- 显示错误信息（如果有）
+
+**注意事项**：
+- 支持全量导出和增量导出的 JSON 文件
+- 建议导入前先备份当前数据
+- 替换模式会清空所有数据，请谨慎使用
+- 导入完成后页面会自动刷新
 
 ---
 
@@ -392,6 +424,41 @@ Build → Rebuild Project
 
 **Android 端**：
 - 设置 → 应用 → 时间追踪工具 → 清除数据
+
+### Q6: 如何在新设备上恢复数据？
+
+**解决方案**：
+1. 在旧设备上使用"全量导出"功能导出数据
+2. 将导出的 JSON 文件传输到新设备（通过云盘、邮件等）
+3. 在新设备上打开应用，进入"导出"页面
+4. 点击"导入数据"，选择"替换模式"
+5. 选择之前导出的 JSON 文件
+6. 等待导入完成
+
+### Q7: 多设备如何同步数据？
+
+**解决方案**：
+1. 在设备A上使用"增量导出"（或首次使用"全量导出"）
+2. 将文件传输到设备B
+3. 在设备B上使用"合并模式"导入
+4. 在设备B上工作后，再次导出
+5. 传输回设备A并导入
+
+**提示**：建议每次同步前先导出当前数据作为备份
+
+### Q8: 导入失败怎么办？
+
+**可能原因**：
+- JSON 文件格式不正确
+- 文件不是本应用导出的
+- 数据中存在无效字段
+
+**解决方案**：
+1. 确认文件是从本应用导出的
+2. 检查文件是否完整（未被截断）
+3. 查看导入结果对话框中的错误详情
+4. 如果部分数据导入成功，可以继续使用
+5. 联系支持并提供错误信息
 
 ---
 
@@ -450,12 +517,37 @@ git push
 
 ## ✨ 更新日志
 
+### v1.3.0 (2025-11-04)
+- ✅ **数据导入功能**：支持从导出的 JSON 文件恢复数据
+- ✅ 两种导入策略：合并模式（推荐）和替换模式
+- ✅ 导入结果详细报告（成功数量、跳过数量、错误信息）
+- ✅ 数据验证和错误处理
+- ✅ 多设备数据同步支持
+- ✅ 更新文档：添加数据导入使用说明
+
+### v1.2.0 (2025-11-04)
+- ✅ 优化追踪页面布局（移除冗余标题）
+- ✅ 修复类别选择器文字颜色问题（选中时文字变白色）
+- ✅ 调整按钮优先级（"接续上次"为主按钮）
+- ✅ 集成手动添加按钮到追踪区域
+- ✅ "从现在开始"改为底部辅助链接
+- ✅ 缩小各区块间距，界面更紧凑
+
+### v1.1.0 (2025-11-04)
+- ✅ 添加活动类别功能（6个预设类别）
+- ✅ 类别在记录添加时必选
+- ✅ 记录列表显示类别标签
+- ✅ 导出功能包含类别信息
+- ✅ 移除 Excel 导出（保留 JSON）
+- ✅ 增量导出和全量导出支持
+
 ### v1.0.0 (2025-11-03)
 - ✅ 初始版本发布
 - ✅ 实时计时功能
 - ✅ 手动添加记录
+- ✅ 目标管理功能
 - ✅ 记录列表展示
-- ✅ 数据导出（JSON/Excel）
+- ✅ 数据导出（JSON）
 - ✅ Android 应用支持
 - ✅ 双按钮开始功能（从现在开始/接续上次）
 - ✅ 时间选择器优化（只显示到分钟）

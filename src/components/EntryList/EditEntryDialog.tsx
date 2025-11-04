@@ -59,11 +59,6 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
       return;
     }
 
-    if (!selectedCategoryId) {
-      alert('请选择类别');
-      return;
-    }
-
     if (endTime && endTime <= startTime) {
       alert('结束时间必须晚于开始时间');
       return;
@@ -73,7 +68,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
       activity,
       startTime,
       endTime,
-      categoryId: selectedCategoryId,
+      categoryId: selectedCategoryId || null,
       goalId: selectedGoalId
     });
 
@@ -130,12 +125,15 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
           </div>
 
           <div>
-            <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>类别 <span style={{ color: '#ff4d4f' }}>*</span></div>
+            <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>类别（可选）</div>
             <Selector
-              options={categories.map(c => ({
-                label: c.name,
-                value: c.id
-              }))}
+              options={[
+                { label: '无分类', value: '' },
+                ...categories.map(c => ({
+                  label: c.name,
+                  value: c.id
+                }))
+              ]}
               value={[selectedCategoryId]}
               onChange={(arr) => setSelectedCategoryId(arr[0] as string)}
               style={{

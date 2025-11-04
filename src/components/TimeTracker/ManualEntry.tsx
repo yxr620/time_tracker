@@ -1,11 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Button, Input, DatePicker, Popup, Space, Selector, Toast } from 'antd-mobile';
 import { useEntryStore } from '../../stores/entryStore';
 import { useGoalStore } from '../../stores/goalStore';
 import { useCategoryStore } from '../../stores/categoryStore';
 import dayjs from 'dayjs';
 
-export const ManualEntry: React.FC = () => {
+interface ManualEntryProps {
+  hideButton?: boolean;
+}
+
+export interface ManualEntryRef {
+  open: () => void;
+}
+
+export const ManualEntry = forwardRef<ManualEntryRef, ManualEntryProps>(({ hideButton = false }, ref) => {
   const { addEntry } = useEntryStore();
   const { goals, loadGoals } = useGoalStore();
   const { categories, loadCategories } = useCategoryStore();
@@ -17,6 +25,10 @@ export const ManualEntry: React.FC = () => {
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [startPickerVisible, setStartPickerVisible] = useState(false);
   const [endPickerVisible, setEndPickerVisible] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    open: () => setVisible(true)
+  }));
 
   useEffect(() => {
     if (visible) {
@@ -59,14 +71,6 @@ export const ManualEntry: React.FC = () => {
       return;
     }
 
-    if (!selectedCategoryId) {
-      Toast.show({
-        icon: 'fail',
-        content: '请选择类别'
-      });
-      return;
-    }
-
     if (endTime <= startTime) {
       Toast.show({
         icon: 'fail',
@@ -79,7 +83,7 @@ export const ManualEntry: React.FC = () => {
       startTime,
       endTime,
       activity,
-      categoryId: selectedCategoryId,
+      categoryId: selectedCategoryId || null,
       goalId: selectedGoalId
     });
 
@@ -98,14 +102,16 @@ export const ManualEntry: React.FC = () => {
 
   return (
     <>
-      <Button
-        block
-        color="default"
-        size="large"
-        onClick={() => setVisible(true)}
-      >
-        手动添加记录
-      </Button>
+      {!hideButton && (
+        <Button
+          block
+          color="default"
+          size="large"
+          onClick={() => setVisible(true)}
+        >
+          手动添加记录
+        </Button>
+      )}
 
       <Popup
         visible={visible}
@@ -138,20 +144,24 @@ export const ManualEntry: React.FC = () => {
             </div>
 
             <div>
-              <div style={{ marginBottom: '8px', fontWeight: '500' }}>类别 <span style={{ color: '#ff4d4f' }}>*</span></div>
+              <div style={{ marginBottom: '8px', fontWeight: '500' }}>类别（可选）</div>
               <Selector
-                options={categories.map(c => ({
-                  label: c.name,
-                  value: c.id
-                }))}
+                options={[
+                  { label: '无分类', value: '' },
+                  ...categories.map(c => ({
+                    label: c.name,
+                    value: c.id
+                  }))
+                ]}
                 value={[selectedCategoryId]}
                 onChange={(arr) => setSelectedCategoryId(arr[0] as string)}
                 style={{
                   '--border-radius': '8px',
                   '--border': '1px solid #d9d9d9',
                   '--checked-border': '1px solid #1677ff',
-                  '--checked-color': '#1677ff'
-                }}
+                  '--checked-color': '#fff',
+                  '--padding': '8px 12px'
+                } as React.CSSProperties}
               />
             </div>
 
@@ -172,6 +182,13 @@ export const ManualEntry: React.FC = () => {
                   ]}
                   value={[selectedGoalId || '']}
                   onChange={(arr) => setSelectedGoalId(arr[0] === '' ? null : arr[0] as string)}
+                  style={{
+                    '--border-radius': '8px',
+                    '--border': '1px solid #d9d9d9',
+                    '--checked-border': '1px solid #1677ff',
+                    '--checked-color': '#fff',
+                    '--padding': '8px 12px'
+                  } as React.CSSProperties}
                 />
               ) : (
                 <div style={{ color: '#999', fontSize: '14px' }}>
@@ -308,4 +325,4 @@ export const ManualEntry: React.FC = () => {
       </DatePicker>
     </>
   );
-};
+});
