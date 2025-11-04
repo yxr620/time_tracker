@@ -8,7 +8,7 @@ interface EntryStore {
   
   // 操作方法
   loadEntries: (date?: string) => Promise<void>;
-  startTracking: (activity: string, goalId?: string, startTime?: Date) => Promise<void>;
+  startTracking: (activity: string, goalId?: string, startTime?: Date, categoryId?: string) => Promise<void>;
   stopTracking: () => Promise<void>;
   addEntry: (entry: Omit<TimeEntry, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateEntry: (id: string, updates: Partial<TimeEntry>) => Promise<void>;
@@ -32,12 +32,13 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
     set({ entries, currentEntry: current || null });
   },
 
-  startTracking: async (activity: string, goalId?: string, startTime?: Date) => {
+  startTracking: async (activity: string, goalId?: string, startTime?: Date, categoryId?: string) => {
     const entry: TimeEntry = {
       id: uuidv4(),
       startTime: startTime || new Date(),
       endTime: null,
       activity,
+      categoryId: categoryId || null,
       goalId: goalId || null,
       createdAt: new Date(),
       updatedAt: new Date()

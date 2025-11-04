@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { List, SwipeAction, Tag } from 'antd-mobile';
 import { useEntryStore } from '../../stores/entryStore';
 import { useGoalStore } from '../../stores/goalStore';
+import { useCategoryStore } from '../../stores/categoryStore';
 import type { TimeEntry } from '../../services/db';
 import { EditEntryDialog } from './EditEntryDialog';
 import dayjs from 'dayjs';
@@ -9,12 +10,14 @@ import dayjs from 'dayjs';
 export const EntryList: React.FC = () => {
   const { entries, loadEntries, deleteEntry, updateEntry } = useEntryStore();
   const { goals, loadGoals } = useGoalStore();
+  const { loadCategories, getCategoryName } = useCategoryStore();
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
 
   useEffect(() => {
     loadEntries();
     loadGoals();
-  }, [loadEntries, loadGoals]);
+    loadCategories();
+  }, [loadEntries, loadGoals, loadCategories]);
 
   const formatDuration = (start: Date, end: Date | null) => {
     if (!end) return '进行中';
@@ -73,13 +76,18 @@ export const EntryList: React.FC = () => {
                   <div style={{ color: '#999', fontSize: '12px' }}>
                     {formatDuration(entry.startTime, entry.endTime)}
                   </div>
-                  {getGoalName(entry.goalId) && (
-                    <div style={{ marginTop: '4px' }}>
+                  <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                    {getCategoryName(entry.categoryId) && (
+                      <Tag color="default" fill="solid" style={{ fontSize: '12px' }}>
+                        {getCategoryName(entry.categoryId)}
+                      </Tag>
+                    )}
+                    {getGoalName(entry.goalId) && (
                       <Tag color="primary" fill="outline" style={{ fontSize: '12px' }}>
                         {getGoalName(entry.goalId)}
                       </Tag>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               }
             >

@@ -12,10 +12,12 @@ interface ExportData {
   data: {
     entries: any[];
     goals: any[];
+    categories: any[];
   };
   metadata: {
     totalEntries: number;
     totalGoals: number;
+    totalCategories: number;
     version: string;
   };
 }
@@ -42,6 +44,7 @@ const updateLastSyncTime = async (time: Date): Promise<void> => {
 export const exportFullJSON = async () => {
   const entries = await db.entries.toArray();
   const goals = await db.goals.toArray();
+  const categories = await db.categories.toArray();
   const exportTime = new Date();
   
   const exportData: ExportData = {
@@ -49,11 +52,13 @@ export const exportFullJSON = async () => {
     exportType: 'full',
     data: {
       entries,
-      goals
+      goals,
+      categories
     },
     metadata: {
       totalEntries: entries.length,
       totalGoals: goals.length,
+      totalCategories: categories.length,
       version: '1.0'
     }
   };
@@ -92,17 +97,21 @@ export const exportIncrementalJSON = async () => {
     })
     .toArray();
   
+  const categories = await db.categories.toArray();
+  
   const exportData: ExportData = {
     exportTime: exportTime.toISOString(),
     exportType: 'incremental',
     lastSyncTime: lastSyncTime.toISOString(),
     data: {
       entries,
-      goals
+      goals,
+      categories
     },
     metadata: {
       totalEntries: entries.length,
       totalGoals: goals.length,
+      totalCategories: categories.length,
       version: '1.0'
     }
   };
@@ -120,6 +129,7 @@ export const exportIncrementalJSON = async () => {
 export const exportToJSON = async (startDate?: Date, endDate?: Date) => {
   let entries = await db.entries.toArray();
   let goals = await db.goals.toArray();
+  const categories = await db.categories.toArray();
   
   if (startDate || endDate) {
     entries = entries.filter(entry => {
@@ -145,11 +155,13 @@ export const exportToJSON = async (startDate?: Date, endDate?: Date) => {
     exportType: 'range',
     data: {
       entries,
-      goals
+      goals,
+      categories
     },
     metadata: {
       totalEntries: entries.length,
       totalGoals: goals.length,
+      totalCategories: categories.length,
       version: '1.0'
     }
   };

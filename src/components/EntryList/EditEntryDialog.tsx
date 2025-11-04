@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Input, DatePicker, Popup, Space, Selector } from 'antd-mobile';
 import { useGoalStore } from '../../stores/goalStore';
+import { useCategoryStore } from '../../stores/categoryStore';
 import type { TimeEntry } from '../../services/db';
 import dayjs from 'dayjs';
 
@@ -18,9 +19,11 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
   onSave
 }) => {
   const { goals, loadGoals } = useGoalStore();
+  const { categories, loadCategories } = useCategoryStore();
   const [activity, setActivity] = useState('');
   const [startTime, setStartTime] = useState<Date>(new Date());
   const [endTime, setEndTime] = useState<Date | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [startPickerVisible, setStartPickerVisible] = useState(false);
   const [endPickerVisible, setEndPickerVisible] = useState(false);
@@ -28,6 +31,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
   useEffect(() => {
     if (visible) {
       loadGoals();
+      loadCategories();
     }
   }, [visible]);
 
@@ -36,17 +40,27 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
       setActivity(entry.activity);
       setStartTime(entry.startTime);
       setEndTime(entry.endTime);
+      setSelectedCategoryId(entry.categoryId || '');
       setSelectedGoalId(entry.goalId || null);
     }
   }, [entry]);
 
-  // 获取记录日期的目标
-  const entryDateGoals = entry 
-    ? goals.filter(g => g.date === dayjs(entry.startTime).format('YYYY-MM-DD'))
-    : [];
+  // 获取记录日期和昨天的目标
+  const today = entry ? dayjs(entry.startTime).format('YYYY-MM-DD') : '';
+  const yesterday = entry ? dayjs(entry.startTime).subtract(1, 'day').format('YYYY-MM-DD') : '';
+  
+  const todayGoals = entry ? goals.filter(g => g.date === today) : [];
+  const yesterdayGoals = entry ? goals.filter(g => g.date === yesterday) : [];
+  
+  const entryDateGoals = [...todayGoals, ...yesterdayGoals];
 
   const handleSubmit = async () => {
     if (!entry?.id || !activity.trim()) {
+      return;
+    }
+
+    if (!selectedCategoryId) {
+      alert('请选择类别');
       return;
     }
 
@@ -59,6 +73,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
       activity,
       startTime,
       endTime,
+      categoryId: selectedCategoryId,
       goalId: selectedGoalId
     });
 
@@ -115,13 +130,35 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
           </div>
 
           <div>
+            <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>类别 <span style={{ color: '#ff4d4f' }}>*</span></div>
+            <Selector
+              options={categories.map(c => ({
+                label: c.name,
+                value: c.id
+              }))}
+              value={[selectedCategoryId]}
+              onChange={(arr) => setSelectedCategoryId(arr[0] as string)}
+              style={{
+                '--border-radius': '8px',
+                '--border': '1px solid #d9d9d9',
+                '--checked-border': '1px solid #1677ff',
+                '--checked-color': '#1677ff'
+              }}
+            />
+          </div>
+
+          <div>
             <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>关联目标</div>
             {entryDateGoals.length > 0 ? (
               <Selector
                 options={[
                   { label: '无', value: '' },
-                  ...entryDateGoals.map(g => ({
-                    label: g.name,
+                  ...todayGoals.map(g => ({
+                    label: `${g.name}`,
+                    value: g.id!
+                  })),
+                  ...yesterdayGoals.map(g => ({
+                    label: `${g.name} (昨天)`,
                     value: g.id!
                   }))
                 ]}

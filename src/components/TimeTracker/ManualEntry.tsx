@@ -2,15 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Button, Input, DatePicker, Popup, Space, Selector, Toast } from 'antd-mobile';
 import { useEntryStore } from '../../stores/entryStore';
 import { useGoalStore } from '../../stores/goalStore';
+import { useCategoryStore } from '../../stores/categoryStore';
 import dayjs from 'dayjs';
 
 export const ManualEntry: React.FC = () => {
   const { addEntry } = useEntryStore();
   const { goals, loadGoals } = useGoalStore();
+  const { categories, loadCategories } = useCategoryStore();
   const [visible, setVisible] = useState(false);
   const [activity, setActivity] = useState('');
   const [startTime, setStartTime] = useState(new Date());
   const [endTime, setEndTime] = useState(new Date());
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [startPickerVisible, setStartPickerVisible] = useState(false);
   const [endPickerVisible, setEndPickerVisible] = useState(false);
@@ -18,6 +21,7 @@ export const ManualEntry: React.FC = () => {
   useEffect(() => {
     if (visible) {
       loadGoals();
+      loadCategories();
     }
   }, [visible]);
 
@@ -37,16 +41,28 @@ export const ManualEntry: React.FC = () => {
     }
   };
 
-  // 获取当前日期的目标
-  const currentDateGoals = goals.filter(g => 
-    g.date === dayjs(startTime).format('YYYY-MM-DD')
-  );
+  // 获取当前日期和昨天的目标
+  const today = dayjs(startTime).format('YYYY-MM-DD');
+  const yesterday = dayjs(startTime).subtract(1, 'day').format('YYYY-MM-DD');
+  
+  const todayGoals = goals.filter(g => g.date === today);
+  const yesterdayGoals = goals.filter(g => g.date === yesterday);
+  
+  const currentDateGoals = [...todayGoals, ...yesterdayGoals];
 
   const handleSubmit = async () => {
     if (!activity.trim() || !startTime || !endTime) {
       Toast.show({
         icon: 'fail',
         content: '请填写完整信息'
+      });
+      return;
+    }
+
+    if (!selectedCategoryId) {
+      Toast.show({
+        icon: 'fail',
+        content: '请选择类别'
       });
       return;
     }
@@ -63,6 +79,7 @@ export const ManualEntry: React.FC = () => {
       startTime,
       endTime,
       activity,
+      categoryId: selectedCategoryId,
       goalId: selectedGoalId
     });
 
@@ -74,6 +91,7 @@ export const ManualEntry: React.FC = () => {
     setActivity('');
     setStartTime(new Date());
     setEndTime(new Date());
+    setSelectedCategoryId('');
     setSelectedGoalId(null);
     setVisible(false);
   };
@@ -120,13 +138,35 @@ export const ManualEntry: React.FC = () => {
             </div>
 
             <div>
+              <div style={{ marginBottom: '8px', fontWeight: '500' }}>类别 <span style={{ color: '#ff4d4f' }}>*</span></div>
+              <Selector
+                options={categories.map(c => ({
+                  label: c.name,
+                  value: c.id
+                }))}
+                value={[selectedCategoryId]}
+                onChange={(arr) => setSelectedCategoryId(arr[0] as string)}
+                style={{
+                  '--border-radius': '8px',
+                  '--border': '1px solid #d9d9d9',
+                  '--checked-border': '1px solid #1677ff',
+                  '--checked-color': '#1677ff'
+                }}
+              />
+            </div>
+
+            <div>
               <div style={{ marginBottom: '8px', fontWeight: '500' }}>关联目标（可选）</div>
               {currentDateGoals.length > 0 ? (
                 <Selector
                   options={[
                     { label: '无', value: '' },
-                    ...currentDateGoals.map(g => ({
-                      label: g.name,
+                    ...todayGoals.map(g => ({
+                      label: `${g.name}`,
+                      value: g.id!
+                    })),
+                    ...yesterdayGoals.map(g => ({
+                      label: `${g.name} (昨天)`,
                       value: g.id!
                     }))
                   ]}
