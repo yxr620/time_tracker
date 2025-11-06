@@ -54,7 +54,13 @@ export const ActiveTracker: React.FC<ActiveTrackerProps> = ({ onOpenManualEntry 
   const todayGoals = goals.filter(g => g.date === today);
   const yesterdayGoals = goals.filter(g => g.date === yesterday);
   
-  const availableGoals = [...todayGoals, ...yesterdayGoals];
+  // 过滤掉与今天目标重复的昨天目标（忽略大小写）
+  const todayGoalNamesLower = todayGoals.map(g => g.name.toLowerCase().trim());
+  const filteredYesterdayGoals = yesterdayGoals.filter(
+    g => !todayGoalNamesLower.includes(g.name.toLowerCase().trim())
+  );
+  
+  const availableGoals = [...todayGoals, ...filteredYesterdayGoals];
 
   const handleStartNow = async () => {
     if (!activity.trim()) {
@@ -125,7 +131,7 @@ export const ActiveTracker: React.FC<ActiveTrackerProps> = ({ onOpenManualEntry 
         />
         
         <div>
-          <div style={{ marginBottom: '8px', fontSize: '13px', color: '#666' }}>类别（可选）</div>
+          <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>类别（可选）</div>
           <Selector
             options={[
               { label: '无分类', value: '' },
@@ -137,17 +143,18 @@ export const ActiveTracker: React.FC<ActiveTrackerProps> = ({ onOpenManualEntry 
             value={[selectedCategoryId]}
             onChange={(arr) => setSelectedCategoryId(arr[0] as string)}
             style={{
-              '--border-radius': '8px',
+              '--border-radius': '6px',
               '--border': '1px solid #d9d9d9',
               '--checked-border': '1px solid #1677ff',
               '--checked-color': '#fff',
-              '--padding': '8px 12px'
+              '--padding': '6px 10px',
+              '--font-size': '13px'
             } as React.CSSProperties}
           />
         </div>
         
         <div>
-          <div style={{ marginBottom: '8px', fontSize: '13px', color: '#666' }}>关联目标（可选）</div>
+          <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>关联目标（可选）</div>
           {availableGoals.length > 0 ? (
             <Selector
               options={[
@@ -156,23 +163,24 @@ export const ActiveTracker: React.FC<ActiveTrackerProps> = ({ onOpenManualEntry 
                   label: `${g.name}`,
                   value: g.id!
                 })),
-                ...yesterdayGoals.map(g => ({
-                  label: `${g.name} (昨天)`,
+                ...filteredYesterdayGoals.map(g => ({
+                  label: `${g.name}*`,
                   value: g.id!
                 }))
               ]}
               value={[selectedGoalId || '']}
               onChange={(arr) => setSelectedGoalId(arr[0] === '' ? null : arr[0] as string)}
               style={{
-                '--border-radius': '8px',
+                '--border-radius': '6px',
                 '--border': '1px solid #d9d9d9',
                 '--checked-border': '1px solid #1677ff',
                 '--checked-color': '#fff',
-                '--padding': '8px 12px'
+                '--padding': '6px 10px',
+                '--font-size': '13px'
               } as React.CSSProperties}
             />
           ) : (
-            <div style={{ color: '#999', fontSize: '13px' }}>
+            <div style={{ color: '#999', fontSize: '12px', padding: '4px 0' }}>
               今天暂无目标，请先在目标页面创建
             </div>
           )}

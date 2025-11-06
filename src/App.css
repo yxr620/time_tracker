@@ -40,8 +40,11 @@ body {
 .app-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden; /* 禁止水平滚动 */
   -webkit-overflow-scrolling: touch;
   min-height: 0; /* 重要：允许 flex 子元素缩小 */
+  width: 100%;
+  position: relative;
 }
 
 .app-footer {

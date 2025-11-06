@@ -9,7 +9,7 @@
 - 🏷️ **活动分类**：6个预设类别（学习、工作、运动、娱乐、日常、休息）
 - 🎯 **目标管理**：设置每日目标并追踪完成情况
 - 📝 **记录管理**：查看、编辑和删除时间记录
-- � **数据导出**：支持导出为 JSON 格式（全量/增量导出）
+- 📤 **数据导出**：支持导出为 JSON 格式（全量/增量导出）
 - 📥 **数据导入**：从导出的 JSON 文件恢复数据（支持合并/替换策略）
 - 💾 **本地存储**：使用 IndexedDB 实现离线数据存储
 - 📱 **PWA 支持**：可作为 Progressive Web App 安装
@@ -18,117 +18,60 @@
 ## 🛠️ 技术栈
 
 - **前端框架**：React 18 + TypeScript
+- **构建工具**：Vite
+- **UI 组件**：Ant Design Mobile
+- **状态管理**：Zustand
+- **数据库**：Dexie.js (IndexedDB 封装)
+- **时间处理**：Day.js
+- **移动端打包**：Capacitor
+- **PWA**：vite-plugin-pwa
 
-- **构建工具**：Vite```js
+## 📂 项目结构
 
-- **UI 组件**：Ant Design Mobileexport default defineConfig([
-
-- **状态管理**：Zustand  globalIgnores(['dist']),
-
-- **数据库**：Dexie.js (IndexedDB 封装)  {
-
-- **时间处理**：Day.js    files: ['**/*.{ts,tsx}'],
-
-- **移动端打包**：Capacitor    extends: [
-
-- **PWA**：vite-plugin-pwa      // Other configs...
-
-
-
-## 📂 项目结构      // Remove tseslint.configs.recommended and replace with this
-
-      tseslint.configs.recommendedTypeChecked,
-
-```      // Alternatively, use this for stricter rules
-
-time-tracker/      tseslint.configs.strictTypeChecked,
-
-├── src/      // Optionally, add this for stylistic rules
-
-│   ├── main.tsx              # 应用入口      tseslint.configs.stylisticTypeChecked,
-
+```
+time-tracker/
+├── src/
+│   ├── main.tsx              # 应用入口
 │   ├── App.tsx               # 主应用组件（TabBar 导航）
-
-│   ├── components/           # UI 组件      // Other configs...
-
-│   │   ├── TimeTracker/    ],
-
-│   │   │   ├── ActiveTracker.tsx    # 实时计时器    languageOptions: {
-
-│   │   │   └── ManualEntry.tsx      # 手动添加记录      parserOptions: {
-
-│   │   └── EntryList/        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-
-│   │       └── EntryList.tsx        # 记录列表        tsconfigRootDir: import.meta.dirname,
-
-│   ├── stores/               # 状态管理      },
-
-│   │   ├── entryStore.ts    # 时间记录状态      // other options...
-
-│   │   └── goalStore.ts     # 目标管理状态    },
-
-│   └── services/             # 服务层  },
-
-│       ├── db.ts            # 数据库配置])
-
-│       └── export.ts        # 数据导出功能```
-
+│   ├── components/           # UI 组件
+│   │   ├── TimeTracker/
+│   │   │   ├── ActiveTracker.tsx    # 实时计时器
+│   │   │   └── ManualEntry.tsx      # 手动添加记录
+│   │   └── EntryList/
+│   │       └── EntryList.tsx        # 记录列表
+│   ├── stores/               # 状态管理
+│   │   ├── entryStore.ts    # 时间记录状态
+│   │   └── goalStore.ts     # 目标管理状态
+│   └── services/             # 服务层
+│       ├── db.ts            # 数据库配置
+│       └── export.ts        # 数据导出功能
 ├── android/                  # Android 原生项目
-
-├── public/                   # 静态资源You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
+├── public/                   # 静态资源
 ├── vite.config.ts           # Vite 配置
-
-├── capacitor.config.ts      # Capacitor 配置```js
-
-└── package.json             # 依赖管理// eslint.config.js
-
-```import reactX from 'eslint-plugin-react-x'
-
-import reactDom from 'eslint-plugin-react-dom'
+├── capacitor.config.ts      # Capacitor 配置
+└── package.json             # 依赖管理
+```
 
 ---
 
-export default defineConfig([
+## 🚀 第一次安装和运行
 
-## 🚀 第一次安装和运行  globalIgnores(['dist']),
+### 前置要求
 
-  {
+- **Node.js**：>= 18.0.0 (推荐使用最新 LTS 版本)
+- **npm**：>= 9.0.0 (Node.js 自带)
+- **Git**：用于版本控制
 
-### 前置要求    files: ['**/*.{ts,tsx}'],
+**Android 开发需要（可选）：**
+- **JDK**：>= 17
+- **Android Studio**：最新版本
+- **Android SDK**：API Level 33 或更高
 
-    extends: [
+### 1️⃣ 克隆项目
 
-- **Node.js**：>= 18.0.0 (推荐使用最新 LTS 版本)      // Other configs...
-
-- **npm**：>= 9.0.0 (Node.js 自带)      // Enable lint rules for React
-
-- **Git**：用于版本控制      reactX.configs['recommended-typescript'],
-
-      // Enable lint rules for React DOM
-
-**Android 开发需要（可选）：**      reactDom.configs.recommended,
-
-- **JDK**：>= 17    ],
-
-- **Android Studio**：最新版本    languageOptions: {
-
-- **Android SDK**：API Level 33 或更高      parserOptions: {
-
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-
-### 1️⃣ 克隆项目        tsconfigRootDir: import.meta.dirname,
-
-      },
-
-```bash      // other options...
-
-git clone <your-repository-url>    },
-
-cd time-tracker  },
-
-```])
-
+```bash
+git clone <your-repository-url>
+cd time-tracker
 ```
 
 ### 2️⃣ 安装依赖

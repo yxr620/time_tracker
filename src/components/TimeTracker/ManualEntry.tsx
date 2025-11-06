@@ -60,7 +60,13 @@ export const ManualEntry = forwardRef<ManualEntryRef, ManualEntryProps>(({ hideB
   const todayGoals = goals.filter(g => g.date === today);
   const yesterdayGoals = goals.filter(g => g.date === yesterday);
   
-  const currentDateGoals = [...todayGoals, ...yesterdayGoals];
+  // 过滤掉与今天目标重复的昨天目标（忽略大小写）
+  const todayGoalNamesLower = todayGoals.map(g => g.name.toLowerCase().trim());
+  const filteredYesterdayGoals = yesterdayGoals.filter(
+    g => !todayGoalNamesLower.includes(g.name.toLowerCase().trim())
+  );
+  
+  const currentDateGoals = [...todayGoals, ...filteredYesterdayGoals];
 
   const handleSubmit = async () => {
     if (!activity.trim() || !startTime || !endTime) {
@@ -144,7 +150,7 @@ export const ManualEntry = forwardRef<ManualEntryRef, ManualEntryProps>(({ hideB
             </div>
 
             <div>
-              <div style={{ marginBottom: '8px', fontWeight: '500' }}>类别（可选）</div>
+              <div style={{ marginBottom: '4px', fontWeight: '500', fontSize: '13px' }}>类别（可选）</div>
               <Selector
                 options={[
                   { label: '无分类', value: '' },
@@ -156,17 +162,18 @@ export const ManualEntry = forwardRef<ManualEntryRef, ManualEntryProps>(({ hideB
                 value={[selectedCategoryId]}
                 onChange={(arr) => setSelectedCategoryId(arr[0] as string)}
                 style={{
-                  '--border-radius': '8px',
+                  '--border-radius': '6px',
                   '--border': '1px solid #d9d9d9',
                   '--checked-border': '1px solid #1677ff',
                   '--checked-color': '#fff',
-                  '--padding': '8px 12px'
+                  '--padding': '6px 10px',
+                  '--font-size': '13px'
                 } as React.CSSProperties}
               />
             </div>
 
             <div>
-              <div style={{ marginBottom: '8px', fontWeight: '500' }}>关联目标（可选）</div>
+              <div style={{ marginBottom: '4px', fontWeight: '500', fontSize: '13px' }}>关联目标（可选）</div>
               {currentDateGoals.length > 0 ? (
                 <Selector
                   options={[
@@ -175,23 +182,24 @@ export const ManualEntry = forwardRef<ManualEntryRef, ManualEntryProps>(({ hideB
                       label: `${g.name}`,
                       value: g.id!
                     })),
-                    ...yesterdayGoals.map(g => ({
-                      label: `${g.name} (昨天)`,
+                    ...filteredYesterdayGoals.map(g => ({
+                      label: `${g.name}*`,
                       value: g.id!
                     }))
                   ]}
                   value={[selectedGoalId || '']}
                   onChange={(arr) => setSelectedGoalId(arr[0] === '' ? null : arr[0] as string)}
                   style={{
-                    '--border-radius': '8px',
+                    '--border-radius': '6px',
                     '--border': '1px solid #d9d9d9',
                     '--checked-border': '1px solid #1677ff',
                     '--checked-color': '#fff',
-                    '--padding': '8px 12px'
+                    '--padding': '6px 10px',
+                    '--font-size': '13px'
                   } as React.CSSProperties}
                 />
               ) : (
-                <div style={{ color: '#999', fontSize: '14px' }}>
+                <div style={{ color: '#999', fontSize: '12px', padding: '4px 0' }}>
                   该日期暂无目标，请先在目标页面创建
                 </div>
               )}

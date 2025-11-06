@@ -156,7 +156,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
                     value: g.id!
                   })),
                   ...yesterdayGoals.map(g => ({
-                    label: `${g.name} (昨天)`,
+                    label: `${g.name}*`,
                     value: g.id!
                   }))
                 ]}
