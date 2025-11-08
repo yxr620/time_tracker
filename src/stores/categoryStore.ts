@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { db, type Category } from '../services/db';
+import { getCategoryColor, getCategoryName as getConfigCategoryName } from '../config/categoryColors';
 
 interface CategoryStore {
   categories: Category[];
@@ -8,6 +9,7 @@ interface CategoryStore {
   loadCategories: () => Promise<void>;
   getCategoryById: (id: string | null) => Category | null;
   getCategoryName: (id: string | null) => string | null;
+  getCategoryColor: (id: string | null) => string;
 }
 
 export const useCategoryStore = create<CategoryStore>((set, get) => ({
@@ -26,7 +28,12 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
   },
 
   getCategoryName: (id: string | null) => {
-    const category = get().getCategoryById(id);
-    return category?.name || null;
+    // 优先从配置文件读取名称
+    return getConfigCategoryName(id);
+  },
+
+  getCategoryColor: (id: string | null) => {
+    // 从配置文件读取颜色
+    return getCategoryColor(id);
   }
 }));

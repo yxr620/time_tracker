@@ -23,7 +23,7 @@ interface TimelineViewProps {
 
 export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDateChange }) => {
   const { entries, loadEntries } = useEntryStore();
-  const { loadCategories, getCategoryById } = useCategoryStore();
+  const { loadCategories, getCategoryColor } = useCategoryStore();
   const { goals, loadGoals } = useGoalStore();
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
 
@@ -83,9 +83,8 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
       const endPercent = getTimePercent(end.toDate(), dayStart);
       const widthPercent = endPercent - startPercent;
 
-      // 获取类别颜色
-      const category = getCategoryById(entry.categoryId);
-      const color = category?.color || '#d9d9d9';
+      // 获取类别颜色（从配置文件读取）
+      const color = getCategoryColor(entry.categoryId);
 
       // 获取目标名称
       const goal = goals.find(g => g.id === entry.goalId);

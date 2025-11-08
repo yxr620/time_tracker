@@ -24,7 +24,7 @@ export interface Goal {
 export interface Category {
   id: string;
   name: string;
-  color?: string;
+  // color 不再存储在数据库中，从配置文件读取
   icon?: string;
   order: number;
   createdAt: Date;
@@ -63,42 +63,17 @@ export class TimeTrackerDB extends Dexie {
       categories: 'id, name, order',
       syncMetadata: 'key, updatedAt'
     }).upgrade(async tx => {
-      // 初始化预设类别（按色系分组）
+      // 初始化预设类别（颜色从配置文件读取，不存储在数据库）
       const categories: Category[] = [
-        // 蓝绿色系：学习、工作
-        { id: 'study', name: '学习', color: '#1677ff', order: 1, createdAt: new Date() },
-        { id: 'work', name: '工作', color: '#13c2c2', order: 2, createdAt: new Date() },
-        // 橙黄色系：日常、运动
-        { id: 'daily', name: '日常', color: '#faad14', order: 3, createdAt: new Date() },
-        { id: 'exercise', name: '运动', color: '#fa8c16', order: 4, createdAt: new Date() },
-        // 紫红色系：休息、娱乐
-        { id: 'rest', name: '休息', color: '#722ed1', order: 5, createdAt: new Date() },
-        { id: 'entertainment', name: '娱乐', color: '#eb2f96', order: 6, createdAt: new Date() }
+        { id: 'study', name: '学习', order: 1, createdAt: new Date() },
+        { id: 'work', name: '工作', order: 2, createdAt: new Date() },
+        { id: 'daily', name: '日常', order: 3, createdAt: new Date() },
+        { id: 'exercise', name: '运动', order: 4, createdAt: new Date() },
+        { id: 'rest', name: '休息', order: 5, createdAt: new Date() },
+        { id: 'entertainment', name: '娱乐', order: 6, createdAt: new Date() }
       ];
       
       await tx.table('categories').bulkAdd(categories);
-    });
-
-    // 更新类别颜色（色系分组优化）
-    this.version(4).stores({
-      entries: 'id, startTime, endTime, activity, categoryId, goalId, createdAt',
-      goals: 'id, name, date, createdAt',
-      categories: 'id, name, order',
-      syncMetadata: 'key, updatedAt'
-    }).upgrade(async tx => {
-      // 更新现有类别的颜色
-      const colorUpdates = [
-        { id: 'study', color: '#1677ff' },      // 蓝色（学习）
-        { id: 'work', color: '#13c2c2' },       // 青色（工作）- 蓝绿色系
-        { id: 'daily', color: '#faad14' },      // 金黄色（日常）
-        { id: 'exercise', color: '#fa8c16' },   // 橙色（运动）- 橙黄色系
-        { id: 'rest', color: '#722ed1' },       // 紫色（休息）
-        { id: 'entertainment', color: '#eb2f96' } // 洋红色（娱乐）- 紫红色系
-      ];
-
-      for (const update of colorUpdates) {
-        await tx.table('categories').update(update.id, { color: update.color });
-      }
     });
   }
 }
