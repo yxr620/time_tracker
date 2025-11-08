@@ -264,7 +264,7 @@ export const GoalManager: React.FC = () => {
           setShowAddGoal(false);
           setNewGoalName('');
         }}
-        bodyStyle={{ height: '40vh' }}
+        bodyStyle={{ height: '35vh' }} // 调整 添加新目标 和输入法之间的间距
       >
         <div style={{ padding: '16px' }}>
           <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>
@@ -276,6 +276,7 @@ export const GoalManager: React.FC = () => {
               value={newGoalName}
               onChange={setNewGoalName}
               clearable
+              autoFocus // 自动聚焦输入框，弹出输入法。
             />
             <div style={{ fontSize: '14px', color: '#999' }}>
               日期：{dayjs(currentDate).format('YYYY年MM月DD日')}
