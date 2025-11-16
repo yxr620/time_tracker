@@ -1,11 +1,9 @@
-import React, { useRef, useState } from 'react';
-import { ActiveTracker } from '../TimeTracker/ActiveTracker';
-import { ManualEntry } from '../TimeTracker/ManualEntry';
+import React, { useState } from 'react';
+import { TimeEntryForm } from '../TimeTracker/TimeEntryForm';
 import { TimelineView } from '../TimelineView/TimelineView';
 import { EntryList } from '../EntryList/EntryList';
 
 export const RecordsPage: React.FC = () => {
-  const manualEntryRef = useRef<{ open: () => void }>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   return (
@@ -15,13 +13,10 @@ export const RecordsPage: React.FC = () => {
       width: '100%',
       touchAction: 'pan-y' /* 只允许垂直滑动 */
     }}>
-      {/* 顶部：计时器区域 */}
+      {/* 顶部：时间记录表单 */}
       <div style={{ padding: '16px', paddingBottom: '8px' }}>
-        <ActiveTracker onOpenManualEntry={() => manualEntryRef.current?.open()} />
+        <TimeEntryForm />
       </div>
-
-      {/* 手动添加组件（隐藏按钮） */}
-      <ManualEntry ref={manualEntryRef} hideButton />
 
       {/* 24小时时间轴可视化 */}
       <TimelineView selectedDate={selectedDate} onDateChange={setSelectedDate} />

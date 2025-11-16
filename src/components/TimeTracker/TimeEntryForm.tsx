@@ -1,0 +1,465 @@
+import React, { useState, useEffect } from 'react';
+import { Button, Input, DatePicker, Space, Selector, Toast } from 'antd-mobile';
+import { useEntryStore } from '../../stores/entryStore';
+import { useGoalStore } from '../../stores/goalStore';
+import { useCategoryStore } from '../../stores/categoryStore';
+import dayjs from 'dayjs';
+
+export const TimeEntryForm: React.FC = () => {
+  const { entries, currentEntry, startTracking, stopTracking, addEntry } = useEntryStore();
+  const { goals, loadGoals } = useGoalStore();
+  const { categories, loadCategories } = useCategoryStore();
+  
+  const [activity, setActivity] = useState('');
+  const [startTime, setStartTime] = useState(new Date());
+  const [endTime, setEndTime] = useState<Date | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const [startPickerVisible, setStartPickerVisible] = useState(false);
+  const [endPickerVisible, setEndPickerVisible] = useState(false);
+  const [elapsed, setElapsed] = useState('00:00:00');
+
+  useEffect(() => {
+    loadGoals();
+    loadCategories();
+  }, []);
+
+  // 更新计时器显示
+  useEffect(() => {
+    if (!currentEntry) {
+      setElapsed('00:00:00');
+      return;
+    }
+
+    const timer = setInterval(() => {
+      const now = dayjs();
+      const start = dayjs(currentEntry.startTime);
+      const diff = now.diff(start, 'second');
+      
+      const hours = Math.floor(diff / 3600).toString().padStart(2, '0');
+      const minutes = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+      const seconds = (diff % 60).toString().padStart(2, '0');
+      
+      setElapsed(`${hours}:${minutes}:${seconds}`);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [currentEntry]);
+
+  // 获取今天和昨天的目标
+  const today = dayjs().format('YYYY-MM-DD');
+  const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+  
+  const todayGoals = goals.filter(g => g.date === today);
+  const yesterdayGoals = goals.filter(g => g.date === yesterday);
+  
+  // 过滤掉与今天目标重复的昨天目标
+  const todayGoalNamesLower = todayGoals.map(g => g.name.toLowerCase().trim());
+  const filteredYesterdayGoals = yesterdayGoals.filter(
+    g => !todayGoalNamesLower.includes(g.name.toLowerCase().trim())
+  );
+  
+  const availableGoals = [...todayGoals, ...filteredYesterdayGoals];
+
+  // 获取上次记录的结束时间
+  const getLastEndTime = () => {
+    if (entries.length === 0) return null;
+    // 找到最近完成的记录（有结束时间的）
+    const completedEntries = entries.filter(e => e.endTime !== null);
+    if (completedEntries.length === 0) return null;
+    return completedEntries[0].endTime;
+  };
+
+  // 设置开始时间为"上次结束"
+  const setStartTimeToLastEnd = () => {
+    const lastEndTime = getLastEndTime();
+    if (lastEndTime) {
+      setStartTime(lastEndTime);
+      Toast.show({
+        icon: 'success',
+        content: '已设置为上次结束时间'
+      });
+    } else {
+      Toast.show({
+        icon: 'fail',
+        content: '没有找到上次记录'
+      });
+    }
+  };
+
+  // 设置结束时间为"正在进行"
+  const setEndTimeToOngoing = () => {
+    setEndTime(null);
+    Toast.show({
+      icon: 'success',
+      content: '已设置为正在进行'
+    });
+  };
+
+  // 设置当前时间
+  const setToNow = (isStart: boolean) => {
+    const now = new Date();
+    if (isStart) {
+      setStartTime(now);
+    } else {
+      setEndTime(now);
+    }
+  };
+
+  // 开始计时（正在进行）
+  const handleStartTracking = async () => {
+    if (!activity.trim()) {
+      Toast.show({
+        icon: 'fail',
+        content: '请输入活动名称'
+      });
+      return;
+    }
+
+    await startTracking(
+      activity,
+      selectedGoalId || undefined,
+      startTime,
+      selectedCategoryId || undefined
+    );
+
+    Toast.show({
+      icon: 'success',
+      content: '开始计时'
+    });
+
+    // 清空表单
+    setActivity('');
+    setSelectedCategoryId('');
+    setSelectedGoalId(null);
+    setStartTime(new Date());
+    setEndTime(null);
+  };
+
+  // 停止当前计时
+  const handleStopTracking = async () => {
+    await stopTracking();
+    Toast.show({
+      icon: 'success',
+      content: '已停止计时'
+    });
+  };
+
+  // 保存手动添加的记录
+  const handleSaveManualEntry = async () => {
+    if (!activity.trim()) {
+      Toast.show({
+        icon: 'fail',
+        content: '请输入活动名称'
+      });
+      return;
+    }
+
+    if (!endTime) {
+      Toast.show({
+        icon: 'fail',
+        content: '请设置结束时间或使用"开始计时"'
+      });
+      return;
+    }
+
+    if (endTime <= startTime) {
+      Toast.show({
+        icon: 'fail',
+        content: '结束时间必须晚于开始时间'
+      });
+      return;
+    }
+
+    await addEntry({
+      startTime,
+      endTime,
+      activity,
+      categoryId: selectedCategoryId || null,
+      goalId: selectedGoalId
+    });
+
+    Toast.show({
+      icon: 'success',
+      content: '记录已保存'
+    });
+
+    // 清空表单
+    setActivity('');
+    setSelectedCategoryId('');
+    setSelectedGoalId(null);
+    setStartTime(new Date());
+    setEndTime(null);
+  };
+
+  // 如果正在计时，显示计时器界面
+  if (currentEntry) {
+    return (
+      <div style={{ 
+        padding: '12px', 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        borderRadius: '8px',
+        color: 'white'
+      }}>
+        <Space direction="vertical" style={{ width: '100%' }} block>
+          <div style={{ fontSize: '14px', fontWeight: 'bold', opacity: 0.9 }}>
+            正在追踪
+          </div>
+          <div style={{ fontSize: '16px', fontWeight: 'bold', marginTop: '2px' }}>
+            {currentEntry.activity}
+          </div>
+          <div style={{ 
+            fontSize: '36px', 
+            fontWeight: 'bold', 
+            textAlign: 'center', 
+            margin: '12px 0',
+            fontFamily: 'monospace',
+            letterSpacing: '2px'
+          }}>
+            {elapsed}
+          </div>
+          <Button
+            block
+            size="middle"
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              color: 'white',
+              border: 'none',
+              fontWeight: 'bold'
+            }}
+            onClick={handleStopTracking}
+          >
+            停止计时
+          </Button>
+        </Space>
+      </div>
+    );
+  }
+
+  // 正常的录入界面
+  return (
+    <div style={{ padding: '12px', background: '#fafafa', borderRadius: '8px' }}>
+      <Space direction="vertical" style={{ width: '100%', '--gap': '10px' }} block>
+        <div>
+          <div style={{ marginBottom: '4px', fontWeight: '600', fontSize: '12px', color: '#666' }}>活动名称</div>
+          <Input
+            placeholder="输入活动名称..."
+            value={activity}
+            onChange={setActivity}
+            clearable
+            style={{
+              '--font-size': '14px',
+              '--text-align': 'left'
+            }}
+          />
+        </div>
+        
+        <div>
+          <div style={{ marginBottom: '4px', fontWeight: '600', fontSize: '12px', color: '#666' }}>类别</div>
+          <Selector
+            options={[
+              { label: '无', value: '' },
+              ...categories.map(c => ({
+                label: c.name,
+                value: c.id
+              }))
+            ]}
+            value={[selectedCategoryId]}
+            onChange={(arr) => setSelectedCategoryId(arr[0] as string)}
+            style={{
+              '--border-radius': '4px',
+              '--border': '1px solid #e0e0e0',
+              '--checked-border': '1px solid #667eea',
+              '--checked-color': '#667eea',
+              '--padding': '4px 8px',
+              '--font-size': '11px'
+            } as React.CSSProperties}
+          />
+        </div>
+        
+        <div>
+          <div style={{ marginBottom: '4px', fontWeight: '600', fontSize: '12px', color: '#666' }}>关联目标</div>
+          {availableGoals.length > 0 ? (
+            <Selector
+              options={[
+                { label: '无', value: '' },
+                ...todayGoals.map(g => ({
+                  label: `${g.name}`,
+                  value: g.id!
+                })),
+                ...filteredYesterdayGoals.map(g => ({
+                  label: `${g.name}*`,
+                  value: g.id!
+                }))
+              ]}
+              value={[selectedGoalId || '']}
+              onChange={(arr) => setSelectedGoalId(arr[0] === '' ? null : arr[0] as string)}
+              style={{
+                '--border-radius': '4px',
+                '--border': '1px solid #e0e0e0',
+                '--checked-border': '1px solid #667eea',
+                '--checked-color': '#667eea',
+                '--padding': '4px 8px',
+                '--font-size': '11px'
+              } as React.CSSProperties}
+            />
+          ) : (
+            <div style={{ color: '#999', fontSize: '12px', padding: '4px 0' }}>
+              今天暂无目标
+            </div>
+          )}
+        </div>
+
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+            <div style={{ fontWeight: '600', fontSize: '12px', color: '#666', minWidth: '56px' }}>开始时间</div>
+            <Button
+              onClick={() => setStartPickerVisible(true)}
+              style={{
+                flex: 1,
+                height: '32px',
+                fontSize: '14px'
+              }}
+            >
+              {dayjs(startTime).format('MM-DD HH:mm')}
+            </Button>
+          </div>
+          <Space wrap>
+            <Button
+              size="small"
+              fill="outline"
+              onClick={() => setToNow(true)}
+              style={{ fontSize: '12px', padding: '2px 8px' }}
+            >
+              现在
+            </Button>
+            <Button
+              size="small"
+              fill="outline"
+              color="primary"
+              onClick={setStartTimeToLastEnd}
+              style={{ fontSize: '12px', padding: '2px 8px' }}
+            >
+              上次结束
+            </Button>
+          </Space>
+        </div>
+
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+            <div style={{ fontWeight: '600', fontSize: '12px', color: '#666', minWidth: '56px' }}>结束时间</div>
+            <Button
+              onClick={() => setEndPickerVisible(true)}
+              style={{
+                flex: 1,
+                height: '32px',
+                fontSize: '14px'
+              }}
+            >
+              {endTime ? dayjs(endTime).format('MM-DD HH:mm') : '正在进行'}
+            </Button>
+          </div>
+          <Space wrap>
+            <Button
+              size="small"
+              fill="outline"
+              onClick={() => setToNow(false)}
+              style={{ fontSize: '12px', padding: '2px 8px' }}
+            >
+              现在
+            </Button>
+            <Button
+              size="small"
+              fill="outline"
+              color="warning"
+              onClick={setEndTimeToOngoing}
+              style={{ fontSize: '12px', padding: '2px 8px' }}
+            >
+              正在进行
+            </Button>
+          </Space>
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+          {endTime === null ? (
+            <Button
+              block
+              color="primary"
+              size="middle"
+              onClick={handleStartTracking}
+              disabled={!activity.trim()}
+            >
+              开始计时
+            </Button>
+          ) : (
+            <Button
+              block
+              color="primary"
+              size="middle"
+              onClick={handleSaveManualEntry}
+              disabled={!activity.trim()}
+            >
+              保存记录
+            </Button>
+          )}
+        </div>
+      </Space>
+
+      <DatePicker
+        visible={startPickerVisible}
+        onClose={() => setStartPickerVisible(false)}
+        value={startTime}
+        onConfirm={val => {
+          setStartTime(val);
+        }}
+        precision="minute"
+        renderLabel={(type, data) => {
+          switch (type) {
+            case 'year':
+              return data + '年';
+            case 'month':
+              return data + '月';
+            case 'day':
+              return data + '日';
+            case 'hour':
+              return data + '时';
+            case 'minute':
+              return data + '分';
+            default:
+              return data;
+          }
+        }}
+      >
+        {() => null}
+      </DatePicker>
+
+      <DatePicker
+        visible={endPickerVisible}
+        onClose={() => setEndPickerVisible(false)}
+        value={endTime || new Date()}
+        onConfirm={val => {
+          setEndTime(val);
+        }}
+        precision="minute"
+        renderLabel={(type, data) => {
+          switch (type) {
+            case 'year':
+              return data + '年';
+            case 'month':
+              return data + '月';
+            case 'day':
+              return data + '日';
+            case 'hour':
+              return data + '时';
+            case 'minute':
+              return data + '分';
+            default:
+              return data;
+          }
+        }}
+      >
+        {() => null}
+      </DatePicker>
+    </div>
+  );
+};

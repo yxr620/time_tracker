@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Input, DatePicker, Popup, Space, Selector } from 'antd-mobile';
+import { Button, Input, DatePicker, Popup, Space, Selector, Toast } from 'antd-mobile';
 import { useGoalStore } from '../../stores/goalStore';
 import { useCategoryStore } from '../../stores/categoryStore';
+import { useEntryStore } from '../../stores/entryStore';
 import type { TimeEntry } from '../../services/db';
 import dayjs from 'dayjs';
 
@@ -18,6 +19,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
   onClose,
   onSave
 }) => {
+  const { entries } = useEntryStore();
   const { goals, loadGoals } = useGoalStore();
   const { categories, loadCategories } = useCategoryStore();
   const [activity, setActivity] = useState('');
@@ -60,7 +62,10 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
     }
 
     if (endTime && endTime <= startTime) {
-      alert('结束时间必须晚于开始时间');
+      Toast.show({
+        icon: 'fail',
+        content: '结束时间必须晚于开始时间'
+      });
       return;
     }
 
@@ -75,20 +80,49 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
     onClose();
   };
 
-  const quickTimeButtons = [
-    { label: '现在', minutes: 0 },
-    { label: '5分钟前', minutes: -5 },
-    { label: '15分钟前', minutes: -15 },
-    { label: '30分钟前', minutes: -30 }
-  ];
+  // 获取上次记录的结束时间
+  const getLastEndTime = () => {
+    if (entries.length === 0) return null;
+    // 排除当前正在编辑的记录
+    const otherEntries = entries.filter(e => e.id !== entry?.id && e.endTime !== null);
+    if (otherEntries.length === 0) return null;
+    return otherEntries[0].endTime;
+  };
 
-  const setQuickTime = (minutes: number, isStart: boolean) => {
-    const time = dayjs().add(minutes, 'minute').toDate();
-    if (isStart) {
-      setStartTime(time);
+  // 设置开始时间为"上次结束"
+  const setStartTimeToLastEnd = () => {
+    const lastEndTime = getLastEndTime();
+    if (lastEndTime) {
+      setStartTime(lastEndTime);
+      Toast.show({
+        icon: 'success',
+        content: '已设置为上次结束时间'
+      });
     } else {
-      setEndTime(time);
+      Toast.show({
+        icon: 'fail',
+        content: '没有找到上次记录'
+      });
     }
+  };
+
+  // 设置当前时间
+  const setToNow = (isStart: boolean) => {
+    const now = new Date();
+    if (isStart) {
+      setStartTime(now);
+    } else {
+      setEndTime(now);
+    }
+  };
+
+  // 设置结束时间为"正在进行"
+  const setEndTimeToOngoing = () => {
+    setEndTime(null);
+    Toast.show({
+      icon: 'success',
+      content: '已设置为正在进行'
+    });
   };
 
   if (!entry) return null;
@@ -180,16 +214,21 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
             </Button>
             <div style={{ marginTop: '8px' }}>
               <Space wrap>
-                {quickTimeButtons.map(btn => (
-                  <Button
-                    key={btn.label}
-                    size="small"
-                    fill="outline"
-                    onClick={() => setQuickTime(btn.minutes, true)}
-                  >
-                    {btn.label}
-                  </Button>
-                ))}
+                <Button
+                  size="small"
+                  fill="outline"
+                  onClick={() => setToNow(true)}
+                >
+                  现在
+                </Button>
+                <Button
+                  size="small"
+                  fill="outline"
+                  color="primary"
+                  onClick={setStartTimeToLastEnd}
+                >
+                  上次结束
+                </Button>
               </Space>
             </div>
           </div>
@@ -200,27 +239,24 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
               block 
               onClick={() => setEndPickerVisible(true)}
             >
-              {endTime ? dayjs(endTime).format('YYYY-MM-DD HH:mm') : '进行中'}
+              {endTime ? dayjs(endTime).format('YYYY-MM-DD HH:mm') : '正在进行'}
             </Button>
             <div style={{ marginTop: '8px' }}>
               <Space wrap>
-                {quickTimeButtons.map(btn => (
-                  <Button
-                    key={btn.label}
-                    size="small"
-                    fill="outline"
-                    onClick={() => setQuickTime(btn.minutes, false)}
-                  >
-                    {btn.label}
-                  </Button>
-                ))}
+                <Button
+                  size="small"
+                  fill="outline"
+                  onClick={() => setToNow(false)}
+                >
+                  现在
+                </Button>
                 <Button
                   size="small"
                   fill="outline"
                   color="warning"
-                  onClick={() => setEndTime(null)}
+                  onClick={setEndTimeToOngoing}
                 >
-                  设为进行中
+                  正在进行
                 </Button>
               </Space>
             </div>

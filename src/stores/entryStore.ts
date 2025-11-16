@@ -13,7 +13,6 @@ interface EntryStore {
   addEntry: (entry: Omit<TimeEntry, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateEntry: (id: string, updates: Partial<TimeEntry>) => Promise<void>;
   deleteEntry: (id: string) => Promise<void>;
-  getLastEndTime: () => Date | null;
 }
 
 export const useEntryStore = create<EntryStore>((set, get) => ({
@@ -47,20 +46,6 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
     await db.entries.add(entry);
     set({ currentEntry: entry });
     await get().loadEntries();
-  },
-
-  getLastEndTime: () => {
-    const { entries } = get();
-    // 找到最近完成的任务（有结束时间的）
-    const completedEntries = entries.filter(e => e.endTime !== null);
-    if (completedEntries.length === 0) return null;
-    
-    // 按结束时间排序，取最近的
-    const lastEntry = completedEntries.sort((a, b) => 
-      (b.endTime?.getTime() || 0) - (a.endTime?.getTime() || 0)
-    )[0];
-    
-    return lastEntry.endTime;
   },
 
   stopTracking: async () => {
