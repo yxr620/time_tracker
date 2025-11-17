@@ -238,19 +238,27 @@ export const TimeEntryForm: React.FC = () => {
 
   // 正常的录入界面
   return (
-    <div style={{ padding: '12px', background: '#fafafa', borderRadius: '8px' }}>
-      <Space direction="vertical" style={{ width: '100%', '--gap': '10px' }} block>
-        <div>
-          <div style={{ marginBottom: '4px', fontWeight: '600', fontSize: '12px', color: '#666' }}>活动名称</div>
+    <div style={{ padding: '0 12px' }}>
+      <Space direction="vertical" style={{ width: '100%', '--gap': '12px' }} block>
+        <div style={{ 
+          background: '#ffffff',
+          padding: '12px',
+          borderRadius: '16px',
+          border: '1.5px solid #d0d0d0',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)'
+        }}>
           <Input
-            placeholder="输入活动名称..."
+            placeholder="输入活动名称"
             value={activity}
             onChange={setActivity}
             clearable
             style={{
-              '--font-size': '14px',
-              '--text-align': 'left'
-            }}
+              '--font-size': '16px',
+              '--text-align': 'left',
+              '--placeholder-color': '#999',
+              '--color': '#333',
+              fontWeight: '500'
+            } as React.CSSProperties}
           />
         </div>
         
@@ -310,74 +318,76 @@ export const TimeEntryForm: React.FC = () => {
           )}
         </div>
 
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <div style={{ fontWeight: '600', fontSize: '12px', color: '#666', minWidth: '56px' }}>开始时间</div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {/* 开始时间列 */}
+          <div style={{ flex: 1 }}>
+            <div style={{ marginBottom: '6px', fontWeight: '600', fontSize: '12px', color: '#666' }}>开始时间</div>
             <Button
+              block
               onClick={() => setStartPickerVisible(true)}
               style={{
-                flex: 1,
                 height: '32px',
-                fontSize: '14px'
+                fontSize: '14px',
+                marginBottom: '6px'
               }}
             >
               {dayjs(startTime).format('MM-DD HH:mm')}
             </Button>
+            <Space style={{ width: '100%', '--gap': '6px' }}>
+              <Button
+                size="small"
+                fill="outline"
+                onClick={() => setToNow(true)}
+                style={{ fontSize: '12px', padding: '4px 8px', flex: 1 }}
+              >
+                现在
+              </Button>
+              <Button
+                size="small"
+                fill="outline"
+                color="primary"
+                onClick={setStartTimeToLastEnd}
+                style={{ fontSize: '12px', padding: '4px 8px', flex: 1 }}
+              >
+                上次结束
+              </Button>
+            </Space>
           </div>
-          <Space wrap>
-            <Button
-              size="small"
-              fill="outline"
-              onClick={() => setToNow(true)}
-              style={{ fontSize: '12px', padding: '2px 8px' }}
-            >
-              现在
-            </Button>
-            <Button
-              size="small"
-              fill="outline"
-              color="primary"
-              onClick={setStartTimeToLastEnd}
-              style={{ fontSize: '12px', padding: '2px 8px' }}
-            >
-              上次结束
-            </Button>
-          </Space>
-        </div>
 
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <div style={{ fontWeight: '600', fontSize: '12px', color: '#666', minWidth: '56px' }}>结束时间</div>
+          {/* 结束时间列 */}
+          <div style={{ flex: 1 }}>
+            <div style={{ marginBottom: '6px', fontWeight: '600', fontSize: '12px', color: '#666' }}>结束时间</div>
             <Button
+              block
               onClick={() => setEndPickerVisible(true)}
               style={{
-                flex: 1,
                 height: '32px',
-                fontSize: '14px'
+                fontSize: '14px',
+                marginBottom: '6px'
               }}
             >
               {endTime ? dayjs(endTime).format('MM-DD HH:mm') : '正在进行'}
             </Button>
+            <Space style={{ width: '100%', '--gap': '6px' }}>
+              <Button
+                size="small"
+                fill="outline"
+                onClick={() => setToNow(false)}
+                style={{ fontSize: '12px', padding: '4px 8px', flex: 1 }}
+              >
+                现在
+              </Button>
+              <Button
+                size="small"
+                fill="outline"
+                color="warning"
+                onClick={setEndTimeToOngoing}
+                style={{ fontSize: '12px', padding: '4px 8px', flex: 1 }}
+              >
+                正在进行
+              </Button>
+            </Space>
           </div>
-          <Space wrap>
-            <Button
-              size="small"
-              fill="outline"
-              onClick={() => setToNow(false)}
-              style={{ fontSize: '12px', padding: '2px 8px' }}
-            >
-              现在
-            </Button>
-            <Button
-              size="small"
-              fill="outline"
-              color="warning"
-              onClick={setEndTimeToOngoing}
-              style={{ fontSize: '12px', padding: '2px 8px' }}
-            >
-              正在进行
-            </Button>
-          </Space>
         </div>
 
         <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>

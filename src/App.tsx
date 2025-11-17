@@ -260,9 +260,8 @@ function App() {
   return (
     <div className="app">
       <div className="app-header">
-        <h1>时间追踪工具</h1>
+        <h1>Time Tracker</h1>
       </div>
-
       <div className="app-body">
         {activeTab === 'records' && (
           <div>

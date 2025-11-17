@@ -24,16 +24,16 @@ body {
 
 .app-header {
   flex-shrink: 0;
-  padding: 16px;
-  padding-top: max(16px, env(safe-area-inset-top));
-  background: #1677ff;
-  color: white;
-  text-align: center;
+  padding: 4px 16px 4px 16px;
+  padding-top: max(8px, env(safe-area-inset-top));
+  background: transparent;
+  color: #333;
+  text-align: left;
 }
 
 .app-header h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
 }
 

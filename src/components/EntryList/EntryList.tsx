@@ -143,26 +143,25 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
               ]}
             >
               <List.Item
+                style={{ padding: '0px 12px' }}
                 description={
-                  <div>
-                    <div>{dayjs(entry.startTime).format('HH:mm')} - {entry.endTime ? dayjs(entry.endTime).format('HH:mm') : '进行中'}</div>
-                    <div style={{ color: '#999', fontSize: '12px' }}>
-                      {formatDuration(entry.startTime, entry.endTime)}
-                    </div>
-                    <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                      <Tag color="default" fill="solid" style={{ fontSize: '12px' }}>
-                        {getCategoryName(entry.categoryId) || '未分类'}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                    <span>{dayjs(entry.startTime).format('HH:mm')}-{entry.endTime ? dayjs(entry.endTime).format('HH:mm') : '进行中'}</span>
+                    <span>·</span>
+                    <span>{formatDuration(entry.startTime, entry.endTime)}</span>
+                    <span>·</span>
+                    <Tag color="default" fill="solid" style={{ fontSize: '10px', padding: '0 4px', height: '18px', lineHeight: '18px', display: 'inline-flex', alignItems: 'center' }}>
+                      {getCategoryName(entry.categoryId) || '未分类'}
+                    </Tag>
+                    {getGoalName(entry.goalId) && (
+                      <Tag color="primary" fill="outline" style={{ fontSize: '10px', padding: '0 4px', height: '18px', lineHeight: '18px', display: 'inline-flex', alignItems: 'center' }}>
+                        {getGoalName(entry.goalId)}
                       </Tag>
-                      {getGoalName(entry.goalId) && (
-                        <Tag color="primary" fill="outline" style={{ fontSize: '12px' }}>
-                          {getGoalName(entry.goalId)}
-                        </Tag>
-                      )}
-                    </div>
+                    )}
                   </div>
                 }
               >
-                {entry.activity}
+                <div style={{ fontSize: '14px', fontWeight: '500' }}>{entry.activity}</div>
               </List.Item>
             </SwipeAction>
           ))}

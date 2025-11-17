@@ -14,7 +14,7 @@ export const RecordsPage: React.FC = () => {
       touchAction: 'pan-y' /* 只允许垂直滑动 */
     }}>
       {/* 顶部：时间记录表单 */}
-      <div style={{ padding: '16px', paddingBottom: '8px' }}>
+      <div style={{ padding: '6px', paddingBottom: '6px' }}>
         <TimeEntryForm />
       </div>
 
