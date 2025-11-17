@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, List, Dialog, Input, Space, Card, DatePicker, Popup, Toast } from 'antd-mobile';
-import { AddOutline, DeleteOutline, LeftOutline, RightOutline } from 'antd-mobile-icons';
+import { AddOutline, DeleteOutline, LeftOutline, RightOutline, EditSOutline } from 'antd-mobile-icons';
 import { useGoalStore } from '../../stores/goalStore';
 import { useEntryStore } from '../../stores/entryStore';
 import dayjs from 'dayjs';
@@ -9,10 +9,13 @@ import type { Goal } from '../../services/db';
 export const GoalManager: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [showAddGoal, setShowAddGoal] = useState(false);
+  const [showEditGoal, setShowEditGoal] = useState(false);
   const [newGoalName, setNewGoalName] = useState('');
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const [editGoalName, setEditGoalName] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   
-  const { goals, loadGoals, addGoal, deleteGoal } = useGoalStore();
+  const { goals, loadGoals, addGoal, updateGoal, deleteGoal } = useGoalStore();
   const { entries, loadEntries } = useEntryStore();
 
   useEffect(() => {
@@ -93,6 +96,38 @@ export const GoalManager: React.FC = () => {
           content: '目标已删除'
         });
       }
+    });
+  };
+
+  // 打开编辑弹窗
+  const handleEditGoal = (goal: Goal) => {
+    setEditingGoal(goal);
+    setEditGoalName(goal.name);
+    setShowEditGoal(true);
+  };
+
+  // 保存编辑
+  const handleSaveEdit = async () => {
+    if (!editGoalName.trim()) {
+      Toast.show({
+        icon: 'fail',
+        content: '请输入目标名称'
+      });
+      return;
+    }
+
+    if (!editingGoal?.id) return;
+
+    await updateGoal(editingGoal.id, {
+      name: editGoalName.trim()
+    });
+    
+    setEditingGoal(null);
+    setEditGoalName('');
+    setShowEditGoal(false);
+    Toast.show({
+      icon: 'success',
+      content: '目标已更新'
     });
   };
 
@@ -230,14 +265,24 @@ export const GoalManager: React.FC = () => {
                 <List.Item
                   key={goal.id}
                   extra={
-                    <Button
-                      size="small"
-                      fill="none"
-                      color="danger"
-                      onClick={() => handleDeleteGoal(goal)}
-                    >
-                      <DeleteOutline />
-                    </Button>
+                    <Space>
+                      <Button
+                        size="small"
+                        fill="none"
+                        color="primary"
+                        onClick={() => handleEditGoal(goal)}
+                      >
+                        <EditSOutline />
+                      </Button>
+                      <Button
+                        size="small"
+                        fill="none"
+                        color="danger"
+                        onClick={() => handleDeleteGoal(goal)}
+                      >
+                        <DeleteOutline />
+                      </Button>
+                    </Space>
                   }
                   description={
                     <div style={{ marginTop: '8px' }}>
@@ -264,7 +309,7 @@ export const GoalManager: React.FC = () => {
           setShowAddGoal(false);
           setNewGoalName('');
         }}
-        bodyStyle={{ height: '35vh' }} // 调整 添加新目标 和输入法之间的间距
+        bodyStyle={{ height: '35vh' }}
       >
         <div style={{ padding: '16px' }}>
           <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>
@@ -276,7 +321,7 @@ export const GoalManager: React.FC = () => {
               value={newGoalName}
               onChange={setNewGoalName}
               clearable
-              autoFocus // 自动聚焦输入框，弹出输入法。
+              autoFocus
             />
             <div style={{ fontSize: '14px', color: '#999' }}>
               日期：{dayjs(currentDate).format('YYYY年MM月DD日')}
@@ -296,6 +341,55 @@ export const GoalManager: React.FC = () => {
               onClick={() => {
                 setShowAddGoal(false);
                 setNewGoalName('');
+              }}
+            >
+              取消
+            </Button>
+          </Space>
+        </div>
+      </Popup>
+
+      {/* 编辑目标弹窗 */}
+      <Popup
+        visible={showEditGoal}
+        onMaskClick={() => {
+          setShowEditGoal(false);
+          setEditingGoal(null);
+          setEditGoalName('');
+        }}
+        bodyStyle={{ height: '35vh' }}
+      >
+        <div style={{ padding: '16px' }}>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>
+            编辑目标
+          </div>
+          <Space direction="vertical" style={{ width: '100%' }} block>
+            <Input
+              placeholder="请输入目标名称"
+              value={editGoalName}
+              onChange={setEditGoalName}
+              clearable
+              autoFocus
+            />
+            <div style={{ fontSize: '14px', color: '#999' }}>
+              日期：{editingGoal ? dayjs(editingGoal.date).format('YYYY年MM月DD日') : ''}
+            </div>
+            <Button
+              block
+              color="primary"
+              size="large"
+              onClick={handleSaveEdit}
+            >
+              保存修改
+            </Button>
+            <Button
+              block
+              fill="outline"
+              size="large"
+              onClick={() => {
+                setShowEditGoal(false);
+                setEditingGoal(null);
+                setEditGoalName('');
               }}
             >
               取消
