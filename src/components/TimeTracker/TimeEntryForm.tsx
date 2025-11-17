@@ -6,7 +6,7 @@ import { useCategoryStore } from '../../stores/categoryStore';
 import dayjs from 'dayjs';
 
 export const TimeEntryForm: React.FC = () => {
-  const { entries, currentEntry, startTracking, stopTracking, addEntry } = useEntryStore();
+  const { currentEntry, startTracking, stopTracking, addEntry, nextStartTime, setNextStartTime } = useEntryStore();
   const { goals, loadGoals } = useGoalStore();
   const { categories, loadCategories } = useCategoryStore();
   
@@ -23,6 +23,14 @@ export const TimeEntryForm: React.FC = () => {
     loadGoals();
     loadCategories();
   }, []);
+
+  // 当从记录列表或时间轴点击时，自动设置开始时间
+  useEffect(() => {
+    if (nextStartTime) {
+      setStartTime(nextStartTime);
+      setNextStartTime(null);
+    }
+  }, [nextStartTime]);
 
   // 更新计时器显示
   useEffect(() => {
@@ -60,32 +68,6 @@ export const TimeEntryForm: React.FC = () => {
   );
   
   const availableGoals = [...todayGoals, ...filteredYesterdayGoals];
-
-  // 获取上次记录的结束时间
-  const getLastEndTime = () => {
-    if (entries.length === 0) return null;
-    // 找到最近完成的记录（有结束时间的）
-    const completedEntries = entries.filter(e => e.endTime !== null);
-    if (completedEntries.length === 0) return null;
-    return completedEntries[0].endTime;
-  };
-
-  // 设置开始时间为"上次结束"
-  const setStartTimeToLastEnd = () => {
-    const lastEndTime = getLastEndTime();
-    if (lastEndTime) {
-      setStartTime(lastEndTime);
-      Toast.show({
-        icon: 'success',
-        content: '已设置为上次结束时间'
-      });
-    } else {
-      Toast.show({
-        icon: 'fail',
-        content: '没有找到上次记录'
-      });
-    }
-  };
 
   // 设置结束时间为"正在进行"
   const setEndTimeToOngoing = () => {
@@ -318,57 +300,53 @@ export const TimeEntryForm: React.FC = () => {
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '20px' }}>
           {/* 开始时间列 */}
-          <div style={{ flex: 1 }}>
-            <div style={{ marginBottom: '6px', fontWeight: '600', fontSize: '12px', color: '#666' }}>开始时间</div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ marginBottom: '6px', fontWeight: '600', fontSize: '12px', color: '#666', textAlign: 'center' }}>开始时间</div>
             <Button
-              block
               onClick={() => setStartPickerVisible(true)}
               style={{
+                width: '80%',
                 height: '32px',
                 fontSize: '14px',
-                marginBottom: '6px'
+                marginBottom: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
             >
               {dayjs(startTime).format('MM-DD HH:mm')}
             </Button>
-            <Space style={{ width: '100%', '--gap': '6px' }}>
-              <Button
-                size="small"
-                fill="outline"
-                onClick={() => setToNow(true)}
-                style={{ fontSize: '12px', padding: '4px 8px', flex: 1 }}
-              >
-                现在
-              </Button>
-              <Button
-                size="small"
-                fill="outline"
-                color="primary"
-                onClick={setStartTimeToLastEnd}
-                style={{ fontSize: '12px', padding: '4px 8px', flex: 1 }}
-              >
-                上次结束
-              </Button>
-            </Space>
+            <Button
+              size="small"
+              fill="outline"
+              onClick={() => setToNow(true)}
+              style={{ fontSize: '12px', padding: '4px 8px', width: '80%' }}
+            >
+              现在
+            </Button>
           </div>
 
           {/* 结束时间列 */}
-          <div style={{ flex: 1 }}>
-            <div style={{ marginBottom: '6px', fontWeight: '600', fontSize: '12px', color: '#666' }}>结束时间</div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ marginBottom: '6px', fontWeight: '600', fontSize: '12px', color: '#666', textAlign: 'center' }}>结束时间</div>
             <Button
-              block
               onClick={() => setEndPickerVisible(true)}
               style={{
+                width: '80%',
                 height: '32px',
                 fontSize: '14px',
-                marginBottom: '6px'
+                marginBottom: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                alignSelf: 'flex-start'
               }}
             >
               {endTime ? dayjs(endTime).format('MM-DD HH:mm') : '正在进行'}
             </Button>
-            <Space style={{ width: '100%', '--gap': '6px' }}>
+            <Space style={{ width: '80%', '--gap': '6px' }}>
               <Button
                 size="small"
                 fill="outline"

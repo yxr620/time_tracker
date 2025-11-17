@@ -22,7 +22,7 @@ interface TimelineViewProps {
 }
 
 export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDateChange }) => {
-  const { entries, loadEntries } = useEntryStore();
+  const { entries, loadEntries, setNextStartTime } = useEntryStore();
   const { loadCategories, getCategoryColor } = useCategoryStore();
   const { goals, loadGoals } = useGoalStore();
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
@@ -198,6 +198,11 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
                   backgroundColor: block.color
                 }}
                 title={block.label}
+                onClick={() => {
+                  if (block.entry.endTime) {
+                    setNextStartTime(block.entry.endTime);
+                  }
+                }}
               />
             </Popover>
           ))}

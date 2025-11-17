@@ -12,7 +12,7 @@ interface EntryListProps {
 }
 
 export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
-  const { entries, loadEntries, deleteEntry, updateEntry } = useEntryStore();
+  const { entries, loadEntries, deleteEntry, updateEntry, setNextStartTime } = useEntryStore();
   const { goals, loadGoals } = useGoalStore();
   const { loadCategories, getCategoryName } = useCategoryStore();
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
@@ -144,6 +144,11 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
             >
               <List.Item
                 style={{ padding: '0px 12px' }}
+                onClick={() => {
+                  if (entry.endTime) {
+                    setNextStartTime(entry.endTime);
+                  }
+                }}
                 description={
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', fontSize: '11px', color: '#666', marginTop: '2px' }}>
                     <span>{dayjs(entry.startTime).format('HH:mm')}-{entry.endTime ? dayjs(entry.endTime).format('HH:mm') : '进行中'}</span>

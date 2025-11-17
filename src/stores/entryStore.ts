@@ -5,6 +5,7 @@ import { db, type TimeEntry } from '../services/db';
 interface EntryStore {
   entries: TimeEntry[];
   currentEntry: TimeEntry | null;
+  nextStartTime: Date | null;
   
   // 操作方法
   loadEntries: (date?: string) => Promise<void>;
@@ -13,11 +14,13 @@ interface EntryStore {
   addEntry: (entry: Omit<TimeEntry, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateEntry: (id: string, updates: Partial<TimeEntry>) => Promise<void>;
   deleteEntry: (id: string) => Promise<void>;
+  setNextStartTime: (time: Date | null) => void;
 }
 
 export const useEntryStore = create<EntryStore>((set, get) => ({
   entries: [],
   currentEntry: null,
+  nextStartTime: null,
 
   loadEntries: async (_date?: string) => {
     const entries = await db.entries
@@ -85,5 +88,9 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
   deleteEntry: async (id) => {
     await db.entries.delete(id);
     await get().loadEntries();
+  },
+
+  setNextStartTime: (time) => {
+    set({ nextStartTime: time });
   }
 }));
