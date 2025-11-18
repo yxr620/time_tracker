@@ -6,7 +6,7 @@ import { useCategoryStore } from '../../stores/categoryStore';
 import dayjs from 'dayjs';
 
 export const TimeEntryForm: React.FC = () => {
-  const { currentEntry, startTracking, stopTracking, addEntry, nextStartTime, setNextStartTime } = useEntryStore();
+  const { currentEntry, startTracking, stopTracking, addEntry, nextStartTime, setNextStartTime, getLastEntryEndTime, loadEntries } = useEntryStore();
   const { goals, loadGoals } = useGoalStore();
   const { categories, loadCategories } = useCategoryStore();
   
@@ -19,9 +19,17 @@ export const TimeEntryForm: React.FC = () => {
   const [endPickerVisible, setEndPickerVisible] = useState(false);
   const [elapsed, setElapsed] = useState('00:00:00');
 
+  // 初始化：加载数据
   useEffect(() => {
-    loadGoals();
-    loadCategories();
+    const init = async () => {
+      await Promise.all([loadGoals(), loadCategories(), loadEntries()]);
+      // 数据加载完成后，设置初始开始时间
+      const lastEndTime = getLastEntryEndTime();
+      if (lastEndTime) {
+        setStartTime(lastEndTime);
+      }
+    };
+    init();
   }, []);
 
   // 当从记录列表或时间轴点击时，自动设置开始时间
@@ -30,7 +38,7 @@ export const TimeEntryForm: React.FC = () => {
       setStartTime(nextStartTime);
       setNextStartTime(null);
     }
-  }, [nextStartTime]);
+  }, [nextStartTime, setNextStartTime]);
 
   // 更新计时器显示
   useEffect(() => {
@@ -114,7 +122,7 @@ export const TimeEntryForm: React.FC = () => {
     setActivity('');
     setSelectedCategoryId('');
     setSelectedGoalId(null);
-    setStartTime(new Date());
+    setStartTime(getLastEntryEndTime() || new Date());
     setEndTime(null);
   };
 
@@ -125,6 +133,8 @@ export const TimeEntryForm: React.FC = () => {
       icon: 'success',
       content: '已停止计时'
     });
+    // 重置开始时间为最后记录的结束时间
+    setStartTime(getLastEntryEndTime() || new Date());
   };
 
   // 保存手动添加的记录
@@ -170,7 +180,7 @@ export const TimeEntryForm: React.FC = () => {
     setActivity('');
     setSelectedCategoryId('');
     setSelectedGoalId(null);
-    setStartTime(new Date());
+    setStartTime(getLastEntryEndTime() || new Date());
     setEndTime(null);
   };
 

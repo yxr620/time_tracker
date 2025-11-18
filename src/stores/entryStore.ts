@@ -15,6 +15,7 @@ interface EntryStore {
   updateEntry: (id: string, updates: Partial<TimeEntry>) => Promise<void>;
   deleteEntry: (id: string) => Promise<void>;
   setNextStartTime: (time: Date | null) => void;
+  getLastEntryEndTime: () => Date | null;
 }
 
 export const useEntryStore = create<EntryStore>((set, get) => ({
@@ -92,5 +93,19 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
 
   setNextStartTime: (time) => {
     set({ nextStartTime: time });
+  },
+
+  getLastEntryEndTime: () => {
+    const { entries } = get();
+    // 找到最近的已完成记录（有结束时间的）
+    const completedEntries = entries.filter(e => e.endTime !== null);
+    if (completedEntries.length === 0) return null;
+    
+    // 按结束时间排序，取最新的
+    const sortedByEndTime = completedEntries.sort((a, b) => 
+      new Date(b.endTime!).getTime() - new Date(a.endTime!).getTime()
+    );
+    
+    return sortedByEndTime[0].endTime;
   }
 }));
