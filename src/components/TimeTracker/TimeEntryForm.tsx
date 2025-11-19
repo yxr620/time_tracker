@@ -187,37 +187,36 @@ export const TimeEntryForm: React.FC = () => {
   // 如果正在计时，显示计时器界面
   if (currentEntry) {
     return (
-      <div style={{ 
-        padding: '12px', 
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        borderRadius: '8px',
-        color: 'white'
-      }}>
+      <div style={{ padding: '20px 12px' }}>
         <Space direction="vertical" style={{ width: '100%' }} block>
-          <div style={{ fontSize: '14px', fontWeight: 'bold', opacity: 0.9 }}>
-            正在追踪
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00b578' }}></div>
+            <span style={{ fontSize: '14px', fontFamily: '"IBM Plex Mono"', color: '#666' }}>Tracking</span>
+            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>{currentEntry.activity}</span>
           </div>
-          <div style={{ fontSize: '16px', fontWeight: 'bold', marginTop: '2px' }}>
-            {currentEntry.activity}
-          </div>
+          
           <div style={{ 
-            fontSize: '36px', 
-            fontWeight: 'bold', 
+            fontSize: '40px', 
+            fontWeight: '700', 
             textAlign: 'center', 
-            margin: '12px 0',
-            fontFamily: 'monospace',
-            letterSpacing: '2px'
+            margin: '10px 0',
+            fontFamily: '"IBM Plex Mono", ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace',
+            letterSpacing: '0px',
+            color: '#000'
           }}>
             {elapsed}
           </div>
+          
           <Button
             block
-            size="middle"
+            // size="large"
+            color="danger"
             style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              color: 'white',
-              border: 'none',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              // borderRadius: '16px',
+              height: '56px',
+              fontSize: '20px',
+              boxShadow: '0 4px 12px rgba(255, 77, 79, 0.2)'
             }}
             onClick={handleStopTracking}
           >
