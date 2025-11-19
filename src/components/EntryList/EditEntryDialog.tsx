@@ -161,15 +161,12 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
           <div>
             <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>类别（可选）</div>
             <Selector
-              options={[
-                { label: '无分类', value: '' },
-                ...categories.map(c => ({
-                  label: c.name,
-                  value: c.id
-                }))
-              ]}
+              options={categories.map(c => ({
+                label: c.name,
+                value: c.id
+              }))}
               value={[selectedCategoryId]}
-              onChange={(arr) => setSelectedCategoryId(arr[0] as string)}
+              onChange={(arr) => setSelectedCategoryId(arr[0] || '')}
               style={{
                 '--border-radius': '8px',
                 '--border': '1px solid #d9d9d9',
@@ -184,7 +181,6 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
             {entryDateGoals.length > 0 ? (
               <Selector
                 options={[
-                  { label: '无', value: '' },
                   ...todayGoals.map(g => ({
                     label: `${g.name}`,
                     value: g.id!
@@ -195,7 +191,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
                   }))
                 ]}
                 value={[selectedGoalId || '']}
-                onChange={(arr) => setSelectedGoalId(arr[0] === '' ? null : arr[0] as string)}
+                onChange={(arr) => setSelectedGoalId(arr[0] || null)}
               />
             ) : (
               <div style={{ color: '#999', fontSize: '14px', padding: '8px' }}>

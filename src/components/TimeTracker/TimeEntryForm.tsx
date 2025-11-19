@@ -256,15 +256,12 @@ export const TimeEntryForm: React.FC = () => {
         <div>
           <div style={{ marginBottom: '4px', fontWeight: '600', fontSize: '12px', color: '#666' }}>类别</div>
           <Selector
-            options={[
-              { label: '无', value: '' },
-              ...categories.map(c => ({
-                label: c.name,
-                value: c.id
-              }))
-            ]}
+            options={categories.map(c => ({
+              label: c.name,
+              value: c.id
+            }))}
             value={[selectedCategoryId]}
-            onChange={(arr) => setSelectedCategoryId(arr[0] as string)}
+            onChange={(arr) => setSelectedCategoryId(arr[0] || '')}
             style={{
               '--border-radius': '4px',
               '--border': '1px solid #e0e0e0',
@@ -281,7 +278,6 @@ export const TimeEntryForm: React.FC = () => {
           {availableGoals.length > 0 ? (
             <Selector
               options={[
-                { label: '无', value: '' },
                 ...todayGoals.map(g => ({
                   label: `${g.name}`,
                   value: g.id!
@@ -292,7 +288,7 @@ export const TimeEntryForm: React.FC = () => {
                 }))
               ]}
               value={[selectedGoalId || '']}
-              onChange={(arr) => setSelectedGoalId(arr[0] === '' ? null : arr[0] as string)}
+              onChange={(arr) => setSelectedGoalId(arr[0] || null)}
               style={{
                 '--border-radius': '4px',
                 '--border': '1px solid #e0e0e0',

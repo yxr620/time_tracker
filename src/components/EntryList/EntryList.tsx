@@ -120,7 +120,7 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
         <List>
           {displayEntries.map(entry => (
             <SwipeAction
-              key={entry.id}
+              key={`${entry.id}-${dayjs(entry.updatedAt).valueOf()}`}
               rightActions={[
                 {
                   key: 'edit',
