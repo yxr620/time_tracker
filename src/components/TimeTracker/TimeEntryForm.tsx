@@ -6,7 +6,7 @@ import { useCategoryStore } from '../../stores/categoryStore';
 import dayjs from 'dayjs';
 
 export const TimeEntryForm: React.FC = () => {
-  const { currentEntry, startTracking, stopTracking, addEntry, nextStartTime, setNextStartTime, getLastEntryEndTime, loadEntries } = useEntryStore();
+  const { currentEntry, startTracking, stopTracking, addEntry, nextStartTime, nextEndTime, setTimeRange, getLastEntryEndTime, loadEntries } = useEntryStore();
   const { goals, loadGoals } = useGoalStore();
   const { categories, loadCategories } = useCategoryStore();
   
@@ -32,13 +32,20 @@ export const TimeEntryForm: React.FC = () => {
     init();
   }, []);
 
-  // 当从记录列表或时间轴点击时，自动设置开始时间
+  // 当从记录列表或时间轴点击时，自动设置开始时间和结束时间
   useEffect(() => {
     if (nextStartTime) {
       setStartTime(nextStartTime);
-      setNextStartTime(null);
+      if (nextEndTime) {
+        setEndTime(nextEndTime);
+      } else {
+        // 如果只设置了开始时间（点击已存在的记录），清空结束时间
+        setEndTime(null);
+      }
+      // 重置store中的时间
+      setTimeRange(null as any, null as any);
     }
-  }, [nextStartTime, setNextStartTime]);
+  }, [nextStartTime, nextEndTime, setTimeRange]);
 
   // 更新计时器显示
   useEffect(() => {

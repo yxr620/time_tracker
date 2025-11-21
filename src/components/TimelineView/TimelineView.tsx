@@ -16,16 +16,25 @@ interface TimeBlock {
   label: string;
 }
 
+interface GapBlock {
+  id: string;
+  startPercent: number;
+  widthPercent: number;
+  startTime: Date;
+  endTime: Date;
+}
+
 interface TimelineViewProps {
   selectedDate: Date;
   onDateChange: (date: Date) => void;
 }
 
 export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDateChange }) => {
-  const { entries, loadEntries, setNextStartTime } = useEntryStore();
+  const { entries, loadEntries, setNextStartTime, setTimeRange } = useEntryStore();
   const { loadCategories, getCategoryColor } = useCategoryStore();
   const { goals, loadGoals } = useGoalStore();
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
+  const [gapBlocks, setGapBlocks] = useState<GapBlock[]>([]);
 
   useEffect(() => {
     loadEntries();
@@ -101,6 +110,76 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
     });
 
     setTimeBlocks(blocks);
+
+    // 计算时间间隙（未记录的时间段）
+    const gaps: GapBlock[] = [];
+    
+    // 如果有记录，找出记录之间的间隙
+    if (blocks.length > 0) {
+      // 检查第一个记录之前是否有间隙
+      if (blocks[0].startPercent > 0) {
+        gaps.push({
+          id: `gap-start`,
+          startPercent: 0,
+          widthPercent: blocks[0].startPercent,
+          startTime: dayStart,
+          endTime: dayjs(blocks[0].entry.startTime).isBefore(dayStart) 
+            ? dayStart 
+            : blocks[0].entry.startTime
+        });
+      }
+
+      // 检查记录之间的间隙
+      for (let i = 0; i < blocks.length - 1; i++) {
+        const currentBlock = blocks[i];
+        const nextBlock = blocks[i + 1];
+        const gapStart = currentBlock.startPercent + currentBlock.widthPercent;
+        const gapWidth = nextBlock.startPercent - gapStart;
+        
+        if (gapWidth > 0.1) { // 只显示明显的间隙（> 0.1%）
+          const gapStartTime = dayjs(currentBlock.entry.endTime!).isAfter(dayEnd)
+            ? dayEnd
+            : currentBlock.entry.endTime!;
+          const gapEndTime = dayjs(nextBlock.entry.startTime).isBefore(dayStart)
+            ? dayStart
+            : nextBlock.entry.startTime;
+          
+          gaps.push({
+            id: `gap-${i}`,
+            startPercent: gapStart,
+            widthPercent: gapWidth,
+            startTime: gapStartTime,
+            endTime: gapEndTime
+          });
+        }
+      }
+
+      // 检查最后一个记录之后是否有间隙
+      const lastBlock = blocks[blocks.length - 1];
+      const lastBlockEnd = lastBlock.startPercent + lastBlock.widthPercent;
+      if (lastBlockEnd < 100) {
+        gaps.push({
+          id: `gap-end`,
+          startPercent: lastBlockEnd,
+          widthPercent: 100 - lastBlockEnd,
+          startTime: dayjs(lastBlock.entry.endTime!).isAfter(dayEnd)
+            ? dayEnd
+            : lastBlock.entry.endTime!,
+          endTime: dayEnd
+        });
+      }
+    } else {
+      // 如果没有任何记录，整天都是间隙
+      gaps.push({
+        id: 'gap-full-day',
+        startPercent: 0,
+        widthPercent: 100,
+        startTime: dayStart,
+        endTime: dayEnd
+      });
+    }
+
+    setGapBlocks(gaps);
   };
 
   // 格式化时长
@@ -172,6 +251,22 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
 
         {/* 时间轴条 */}
         <div className="timeline-bar">
+          {/* 间隙时间段（灰色，可点击） */}
+          {gapBlocks.map((gap) => (
+            <div
+              key={gap.id}
+              className="timeline-gap-block"
+              style={{
+                left: `${gap.startPercent}%`,
+                width: `${gap.widthPercent}%`
+              }}
+              onClick={() => {
+                setTimeRange(gap.startTime, gap.endTime);
+              }}
+              title={`${dayjs(gap.startTime).format('HH:mm')} - ${dayjs(gap.endTime).format('HH:mm')}`}
+            />
+          ))}
+          
           {/* 活动时间段（彩色） */}
           {timeBlocks.map((block, index) => (
             <Popover

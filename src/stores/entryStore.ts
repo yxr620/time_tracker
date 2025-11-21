@@ -6,6 +6,7 @@ interface EntryStore {
   entries: TimeEntry[];
   currentEntry: TimeEntry | null;
   nextStartTime: Date | null;
+  nextEndTime: Date | null;
   
   // 操作方法
   loadEntries: (date?: string) => Promise<void>;
@@ -15,6 +16,7 @@ interface EntryStore {
   updateEntry: (id: string, updates: Partial<TimeEntry>) => Promise<void>;
   deleteEntry: (id: string) => Promise<void>;
   setNextStartTime: (time: Date | null) => void;
+  setTimeRange: (startTime: Date, endTime: Date) => void;
   getLastEntryEndTime: () => Date | null;
 }
 
@@ -22,6 +24,7 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
   entries: [],
   currentEntry: null,
   nextStartTime: null,
+  nextEndTime: null,
 
   loadEntries: async (_date?: string) => {
     const entries = await db.entries
@@ -93,6 +96,10 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
 
   setNextStartTime: (time) => {
     set({ nextStartTime: time });
+  },
+
+  setTimeRange: (startTime, endTime) => {
+    set({ nextStartTime: startTime, nextEndTime: endTime });
   },
 
   getLastEntryEndTime: () => {
