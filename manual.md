@@ -641,21 +641,30 @@ A: 从最近的备份文件中导入：
 
 **技术栈：**
 - React 18 + TypeScript
-- Ant Design Mobile
+- Ionic React + Ant Design Mobile（UI 框架混用）
+- Tailwind CSS（样式方案）
 - Dexie.js (IndexedDB)
 - Zustand (状态管理)
 - Day.js (时间处理)
 - Vite (构建工具)
 - Capacitor (原生应用打包)
 
+**UI 组件混用说明：**
+
+应用采用 **Ionic React** 作为主要界面组件，结合 **Ant Design Mobile** 的工具型控件：
+- Ionic 负责页面框架、TabBar、Card、Modal、按钮等核心交互，确保与 Capacitor 原生体验一致。
+- AntD Mobile 用于日期/时间选择、确认弹窗、Toast 等工具组件，覆盖 Ionic 不提供的表单能力。
+
+Tailwind 仅在少量场景中提供间距和排版类名，整体样式保持轻量。
+
 **项目结构：**
 ```
 src/
 ├── components/
-│   ├── RecordsPage/      # 记录页面（集成）
+│   ├── RecordsPage/      # 记录页面
 │   ├── TimeTracker/      # 计时器组件
 │   ├── EntryList/        # 记录列表
-│   └── GoalManager/      # 目标管理
+│   └── GoalManager/      # 目标管理（Ionic 组件）
 ├── stores/               # 状态管理
 ├── services/             # 业务逻辑
 │   ├── db.ts            # 数据库
@@ -663,12 +672,9 @@ src/
 └── App.tsx              # 主应用
 ```
 
-**本地开发：**
-```bash
-npm run dev          # 启动开发服务器
-npm run build        # 构建生产版本
-npx cap copy         # 复制到原生项目
-```
+**安装和开发：**
+
+详细的安装和配置步骤请查看 [README.md](./README.md)。
 
 ---
 

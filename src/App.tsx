@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { TabBar, Button, Space, Toast, Dialog } from 'antd-mobile';
+import { IonApp } from '@ionic/react';
 import { 
   AppOutline, 
   FileOutline,
@@ -258,6 +259,7 @@ function App() {
   ];
 
   return (
+    <IonApp>
     <div className="app">
       <div className="app-header">
         <h1>Time Tracker</h1>
@@ -367,6 +369,7 @@ function App() {
         </TabBar>
       </div>
     </div>
+    </IonApp>
   );
 }
 
