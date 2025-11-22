@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Dialog, DatePicker } from 'antd-mobile';
+import { DatePicker } from 'antd-mobile';
 import { 
   IonModal, 
   IonContent, 
   IonButton, 
   IonInput, 
   useIonToast,
+  useIonAlert,
   IonCard,
   IonCardContent,
   IonList,
@@ -38,6 +39,7 @@ export const GoalManager: React.FC = () => {
   const [editGoalName, setEditGoalName] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [present] = useIonToast();
+  const [presentAlert] = useIonAlert();
   
   const addInputRef = useRef<HTMLIonInputElement>(null);
   const editInputRef = useRef<HTMLIonInputElement>(null);
@@ -118,17 +120,28 @@ export const GoalManager: React.FC = () => {
 
   // 删除目标
   const handleDeleteGoal = (goal: Goal) => {
-    Dialog.confirm({
-      content: `确认删除目标"${goal.name}"吗？`,
-      onConfirm: async () => {
-        await deleteGoal(goal.id!);
-        present({
-          message: '目标已删除',
-          duration: 1500,
-          position: 'top',
-          color: 'success'
-        });
-      }
+    presentAlert({
+      header: '确认删除',
+      message: `确认删除目标"${goal.name}"吗？`,
+      buttons: [
+        {
+          text: '取消',
+          role: 'cancel',
+        },
+        {
+          text: '确认',
+          role: 'confirm',
+          handler: async () => {
+            await deleteGoal(goal.id!);
+            present({
+              message: '目标已删除',
+              duration: 1500,
+              position: 'top',
+              color: 'success'
+            });
+          },
+        },
+      ],
     });
   };
 
