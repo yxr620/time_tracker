@@ -40,8 +40,9 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
   useEffect(() => {
     if (entry) {
       setActivity(entry.activity);
-      setStartTime(entry.startTime);
-      setEndTime(entry.endTime);
+      // 确保日期是 Date 对象
+      setStartTime(entry.startTime instanceof Date ? entry.startTime : new Date(entry.startTime));
+      setEndTime(entry.endTime ? (entry.endTime instanceof Date ? entry.endTime : new Date(entry.endTime)) : null);
       setSelectedCategoryId(entry.categoryId || '');
       setSelectedGoalId(entry.goalId || null);
     }
@@ -93,7 +94,8 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
   const setStartTimeToLastEnd = () => {
     const lastEndTime = getLastEndTime();
     if (lastEndTime) {
-      setStartTime(lastEndTime);
+      // 确保是 Date 对象
+      setStartTime(lastEndTime instanceof Date ? lastEndTime : new Date(lastEndTime));
       Toast.show({
         icon: 'success',
         content: '已设置为上次结束时间'

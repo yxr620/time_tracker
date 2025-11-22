@@ -20,6 +20,7 @@ import '@ionic/react/css/display.css';
 import { setupIonicReact } from '@ionic/react';
 
 import App from './App.tsx'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { Capacitor } from '@capacitor/core'
 
@@ -37,13 +38,30 @@ if (viewport) {
 
 // 初始化状态栏
 if (Capacitor.isNativePlatform()) {
-  StatusBar.setStyle({ style: Style.Light });
-  StatusBar.setBackgroundColor({ color: '#1677ff' });
-  StatusBar.setOverlaysWebView({ overlay: false });
+  try {
+    StatusBar.setStyle({ style: Style.Light });
+    StatusBar.setBackgroundColor({ color: '#1677ff' });
+    StatusBar.setOverlaysWebView({ overlay: false });
+  } catch (error) {
+    console.error('[Init] 状态栏初始化失败:', error);
+  }
 }
+
+// 全局错误处理
+window.addEventListener('error', (event) => {
+  console.error('[Global Error]', event.error);
+  // 不阻止默认行为，让应用继续运行
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('[Unhandled Promise Rejection]', event.reason);
+  // 不阻止默认行为
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 )

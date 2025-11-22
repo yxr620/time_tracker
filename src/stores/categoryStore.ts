@@ -16,9 +16,11 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
   categories: [],
 
   loadCategories: async () => {
-    const categories = await db.categories
+    const allCategories = await db.categories
       .orderBy('order')
       .toArray();
+    // 过滤掉软删除的记录
+    const categories = allCategories.filter(c => !c.deleted);
     set({ categories });
   },
 

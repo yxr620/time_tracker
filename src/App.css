@@ -29,6 +29,9 @@ body {
   background: transparent;
   color: #333;
   text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .app-header h1 {

@@ -4,7 +4,8 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  base: './', // 修复 Capacitor 打包后白屏问题
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -13,6 +14,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      disable: mode === 'development', // 开发模式禁用 PWA
       registerType: 'autoUpdate',
       manifest: {
         name: '时间追踪工具',
@@ -36,4 +38,4 @@ export default defineConfig({
       }
     })
   ]
-})
+}))

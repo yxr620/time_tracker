@@ -42,9 +42,14 @@ const updateLastSyncTime = async (time: Date): Promise<void> => {
 
 // 全量导出 JSON
 export const exportFullJSON = async () => {
-  const entries = await db.entries.toArray();
-  const goals = await db.goals.toArray();
-  const categoriesRaw = await db.categories.toArray();
+  const allEntries = await db.entries.toArray();
+  const allGoals = await db.goals.toArray();
+  const allCategories = await db.categories.toArray();
+  
+  // 过滤已删除的记录
+  const entries = allEntries.filter(e => !e.deleted);
+  const goals = allGoals.filter(g => !g.deleted);
+  const categoriesRaw = allCategories.filter(c => !c.deleted);
   
   // 清理 categories：移除可能存在的 color 字段（color 应从配置文件读取）
   // 兼容旧数据库中可能存在的 color 字段
@@ -90,9 +95,10 @@ export const exportIncrementalJSON = async () => {
     return exportFullJSON();
   }
   
-  // 获取自上次同步后创建或更新的记录
+  // 获取自上次同步后创建或更新的记录（排除已删除的）
   const entries = await db.entries
     .filter(entry => {
+      if (entry.deleted) return false;
       const entryUpdatedAt = entry.updatedAt || entry.createdAt;
       return entryUpdatedAt > lastSyncTime;
     })
@@ -100,12 +106,14 @@ export const exportIncrementalJSON = async () => {
     
   const goals = await db.goals
     .filter(goal => {
+      if (goal.deleted) return false;
       const goalUpdatedAt = goal.updatedAt || goal.createdAt;
       return goalUpdatedAt > lastSyncTime;
     })
     .toArray();
   
-  const categoriesRaw = await db.categories.toArray();
+  const allCategories = await db.categories.toArray();
+  const categoriesRaw = allCategories.filter(c => !c.deleted);
   
   // 清理 categories：移除可能存在的 color 字段
   const categories = categoriesRaw.map((cat: any) => {
@@ -141,9 +149,14 @@ export const exportIncrementalJSON = async () => {
 
 // 时间范围导出 JSON
 export const exportToJSON = async (startDate?: Date, endDate?: Date) => {
-  let entries = await db.entries.toArray();
-  let goals = await db.goals.toArray();
-  const categoriesRaw = await db.categories.toArray();
+  const allEntries = await db.entries.toArray();
+  const allGoals = await db.goals.toArray();
+  const allCategories = await db.categories.toArray();
+  
+  // 过滤已删除的记录
+  let entries = allEntries.filter(e => !e.deleted);
+  let goals = allGoals.filter(g => !g.deleted);
+  const categoriesRaw = allCategories.filter(c => !c.deleted);
   
   // 清理 categories：移除可能存在的 color 字段
   const categories = categoriesRaw.map((cat: any) => {
@@ -367,6 +380,12 @@ export const importFromJSON = async (
     // 导入 categories
     for (const category of importData.data.categories) {
       try {
+        // 跳过已删除的记录
+        if ((category as any).deleted) {
+          result.details.categoriesSkipped++;
+          continue;
+        }
+        
         // 移除可能存在的 color 字段（color 应从配置文件读取）
         const { color, ...categoryWithoutColor } = category as any;
         
@@ -397,6 +416,12 @@ export const importFromJSON = async (
     // 导入 goals
     for (const goal of importData.data.goals) {
       try {
+        // 跳过已删除的记录
+        if ((goal as any).deleted) {
+          result.details.goalsSkipped++;
+          continue;
+        }
+        
         // 确保日期字段是Date对象
         const goalData = {
           ...goal,
@@ -425,6 +450,12 @@ export const importFromJSON = async (
     // 导入 entries
     for (const entry of importData.data.entries) {
       try {
+        // 跳过已删除的记录
+        if ((entry as any).deleted) {
+          result.details.entriesSkipped++;
+          continue;
+        }
+        
         // 确保日期字段是Date对象
         const entryData = {
           ...entry,

@@ -26,7 +26,8 @@ export const TimeEntryForm: React.FC = () => {
       // 数据加载完成后，设置初始开始时间
       const lastEndTime = getLastEntryEndTime();
       if (lastEndTime) {
-        setStartTime(lastEndTime);
+        // 确保是 Date 对象
+        setStartTime(lastEndTime instanceof Date ? lastEndTime : new Date(lastEndTime));
       }
     };
     init();
@@ -35,9 +36,10 @@ export const TimeEntryForm: React.FC = () => {
   // 当从记录列表或时间轴点击时，自动设置开始时间和结束时间
   useEffect(() => {
     if (nextStartTime) {
-      setStartTime(nextStartTime);
+      // 确保是 Date 对象
+      setStartTime(nextStartTime instanceof Date ? nextStartTime : new Date(nextStartTime));
       if (nextEndTime) {
-        setEndTime(nextEndTime);
+        setEndTime(nextEndTime instanceof Date ? nextEndTime : new Date(nextEndTime));
       } else {
         // 如果只设置了开始时间（点击已存在的记录），清空结束时间
         setEndTime(null);
@@ -129,7 +131,8 @@ export const TimeEntryForm: React.FC = () => {
     setActivity('');
     setSelectedCategoryId('');
     setSelectedGoalId(null);
-    setStartTime(getLastEntryEndTime() || new Date());
+    const lastEndTime = getLastEntryEndTime();
+    setStartTime(lastEndTime ? (lastEndTime instanceof Date ? lastEndTime : new Date(lastEndTime)) : new Date());
     setEndTime(null);
   };
 
@@ -141,7 +144,8 @@ export const TimeEntryForm: React.FC = () => {
       content: '已停止计时'
     });
     // 重置开始时间为最后记录的结束时间
-    setStartTime(getLastEntryEndTime() || new Date());
+    const lastEndTime = getLastEntryEndTime();
+    setStartTime(lastEndTime ? (lastEndTime instanceof Date ? lastEndTime : new Date(lastEndTime)) : new Date());
   };
 
   // 保存手动添加的记录
@@ -187,7 +191,8 @@ export const TimeEntryForm: React.FC = () => {
     setActivity('');
     setSelectedCategoryId('');
     setSelectedGoalId(null);
-    setStartTime(getLastEntryEndTime() || new Date());
+    const lastEndTime = getLastEntryEndTime();
+    setStartTime(lastEndTime ? (lastEndTime instanceof Date ? lastEndTime : new Date(lastEndTime)) : new Date());
     setEndTime(null);
   };
 

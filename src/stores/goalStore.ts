@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { db, type Goal } from '../services/db';
+import { syncDb } from '../services/syncDb';
 
 interface GoalStore {
   goals: Goal[];
@@ -16,7 +17,9 @@ export const useGoalStore = create<GoalStore>((set, get) => ({
   goals: [],
 
   loadGoals: async () => {
-    const goals = await db.goals.toArray();
+    const allGoals = await db.goals.toArray();
+    // 过滤掉软删除的记录
+    const goals = allGoals.filter(g => !g.deleted);
     set({ goals });
   },
 
@@ -27,12 +30,12 @@ export const useGoalStore = create<GoalStore>((set, get) => ({
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    await db.goals.add(newGoal);
+    await syncDb.goals.add(newGoal);
     await get().loadGoals();
   },
 
   updateGoal: async (id, updates) => {
-    await db.goals.update(id, {
+    await syncDb.goals.update(id, {
       ...updates,
       updatedAt: new Date()
     });
@@ -40,7 +43,7 @@ export const useGoalStore = create<GoalStore>((set, get) => ({
   },
 
   deleteGoal: async (id) => {
-    await db.goals.delete(id);
+    await syncDb.goals.delete(id);
     await get().loadGoals();
   },
 

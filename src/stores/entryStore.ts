@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { db, type TimeEntry } from '../services/db';
+import { syncDb } from '../services/syncDb';
 
 interface EntryStore {
   entries: TimeEntry[];
@@ -27,10 +28,13 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
   nextEndTime: null,
 
   loadEntries: async (_date?: string) => {
-    const entries = await db.entries
+    const allEntries = await db.entries
       .orderBy('startTime')
       .reverse()
       .toArray();
+    
+    // 过滤掉软删除的记录
+    const entries = allEntries.filter(e => !e.deleted);
     
     // 找出进行中的记录
     const current = entries.find(e => e.endTime === null);
@@ -50,7 +54,7 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
       updatedAt: new Date()
     };
 
-    await db.entries.add(entry);
+    await syncDb.entries.add(entry);
     set({ currentEntry: entry });
     await get().loadEntries();
   },
@@ -60,7 +64,7 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
     if (!currentEntry?.id) return;
 
     const endTime = new Date();
-    await db.entries.update(currentEntry.id, {
+    await syncDb.entries.update(currentEntry.id, {
       endTime,
       updatedAt: new Date()
     });
@@ -77,12 +81,12 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
       updatedAt: new Date()
     };
 
-    await db.entries.add(newEntry);
+    await syncDb.entries.add(newEntry);
     await get().loadEntries();
   },
 
   updateEntry: async (id, updates) => {
-    await db.entries.update(id, {
+    await syncDb.entries.update(id, {
       ...updates,
       updatedAt: new Date()
     });
@@ -90,7 +94,7 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
   },
 
   deleteEntry: async (id) => {
-    await db.entries.delete(id);
+    await syncDb.entries.delete(id);
     await get().loadEntries();
   },
 

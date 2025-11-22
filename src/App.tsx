@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { TabBar, Button, Space, Toast, Dialog } from 'antd-mobile';
 import { IonApp } from '@ionic/react';
 import { 
@@ -8,13 +8,35 @@ import {
 } from 'antd-mobile-icons';
 import { RecordsPage } from './components/RecordsPage/RecordsPage';
 import { GoalManager } from './components/GoalManager/GoalManager';
+import { SyncButton } from './components/SyncButton/SyncButton';
 import { exportFullJSON, exportIncrementalJSON, importFromJSON, ImportStrategy } from './services/export';
+import { useSyncStore } from './stores/syncStore';
 import './App.css';
 
 function App() {
   const [activeTab, setActiveTab] = useState('records');
   const [importStrategy, setImportStrategy] = useState<typeof ImportStrategy.MERGE | typeof ImportStrategy.REPLACE>(ImportStrategy.MERGE);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { startAutoSync, stopAutoSync, checkConfig } = useSyncStore();
+
+  // 初始化自动同步
+  useEffect(() => {
+    try {
+      checkConfig();
+      startAutoSync(10); // 每10分钟自动同步一次
+    } catch (error) {
+      console.error('[App] 初始化同步失败:', error);
+      // 即使同步初始化失败，也不影响应用的基本功能
+    }
+
+    return () => {
+      try {
+        stopAutoSync();
+      } catch (error) {
+        console.error('[App] 停止同步失败:', error);
+      }
+    };
+  }, [startAutoSync, stopAutoSync, checkConfig]);
   
   const handleExportFullJSON = async () => {
     try {
@@ -263,6 +285,9 @@ function App() {
     <div className="app">
       <div className="app-header">
         <h1>Time Tracker</h1>
+        <div style={{ marginLeft: 'auto' }}>
+          <SyncButton />
+        </div>
       </div>
       <div className="app-body">
         {activeTab === 'records' && (
