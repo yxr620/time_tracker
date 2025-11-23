@@ -16,6 +16,7 @@
     "@capacitor/filesystem": "^7.1.4",
     "@capacitor/keyboard": "^7.0.3",
     "@capacitor/share": "^7.0.2",
+    "@capacitor/splash-screen": "^7.0.3",
     "@capacitor/status-bar": "^7.0.3",
     "@ionic/react": "^8.7.10",
     "ali-oss": "^6.23.0",

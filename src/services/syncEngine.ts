@@ -3,7 +3,7 @@
  * 核心同步逻辑：Push（推送）、Pull（拉取）、Merge（合并）
  */
 
-import { db, type SyncOperation, type TimeEntry, type Goal, type Category } from './db';
+import { db, type SyncOperation, type TimeEntry, type Goal, type Category, getDeviceId } from './db';
 import { uploadSyncFile, listSyncFiles, downloadSyncFile, extractTimestamp, isOSSConfigured } from './oss';
 
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error';
@@ -14,6 +14,14 @@ export interface SyncResult {
   pushedCount?: number;
   pulledCount?: number;
   error?: Error;
+}
+
+export interface SyncStats {
+  pendingOps: number;
+  syncedOps: number;
+  lastSyncTime: Date | null;
+  lastProcessedTimestamp: number | null;
+  deviceId: string;
 }
 
 /**
@@ -285,6 +293,374 @@ export class SyncEngine {
       isSyncing: this.isSyncing,
       lastSyncTime: this.lastSyncTime
     };
+  }
+
+  /**
+   * 强制全量 Push
+   * 忽略 synced 状态，上传所有当前数据
+   */
+  async forceFullPush(): Promise<SyncResult> {
+    if (this.isSyncing) {
+      return {
+        status: 'error',
+        message: '正在同步中，请稍候'
+      };
+    }
+
+    if (!isOSSConfigured()) {
+      return {
+        status: 'error',
+        message: 'OSS 未配置，无法同步'
+      };
+    }
+
+    this.isSyncing = true;
+
+    try {
+      console.log('[Sync] 开始强制全量 Push...');
+      
+      const deviceId = await getDeviceId();
+      
+      // 获取所有非删除的数据
+      const entries = await db.entries.filter(e => !e.deleted).toArray();
+      const goals = await db.goals.filter(g => !g.deleted).toArray();
+      const categories = await db.categories.filter(c => !c.deleted).toArray();
+      
+      // 创建操作日志
+      const operations: SyncOperation[] = [];
+      
+      for (const entry of entries) {
+        operations.push({
+          id: crypto.randomUUID(),
+          timestamp: new Date(),
+          deviceId,
+          tableName: 'entries',
+          recordId: entry.id!,
+          type: 'create',
+          data: entry,
+          synced: false
+        });
+      }
+      
+      for (const goal of goals) {
+        operations.push({
+          id: crypto.randomUUID(),
+          timestamp: new Date(),
+          deviceId,
+          tableName: 'goals',
+          recordId: goal.id!,
+          type: 'create',
+          data: goal,
+          synced: false
+        });
+      }
+      
+      for (const category of categories) {
+        operations.push({
+          id: crypto.randomUUID(),
+          timestamp: new Date(),
+          deviceId,
+          tableName: 'categories',
+          recordId: category.id,
+          type: 'create',
+          data: category,
+          synced: false
+        });
+      }
+      
+      // 直接上传（不写入 syncOperations 表）
+      if (operations.length > 0) {
+        await uploadSyncFile(operations);
+      }
+      
+      console.log(`[Sync] 强制全量 Push 完成，上传 ${operations.length} 条记录`);
+      
+      return {
+        status: 'success',
+        message: '强制全量 Push 完成',
+        pushedCount: operations.length,
+        pulledCount: 0
+      };
+    } catch (error) {
+      console.error('[Sync] 强制全量 Push 失败:', error);
+      return {
+        status: 'error',
+        message: error instanceof Error ? error.message : '强制全量 Push 失败',
+        error: error as Error
+      };
+    } finally {
+      this.isSyncing = false;
+    }
+  }
+
+  /**
+   * 强制全量 Pull
+   * 忽略 lastProcessedTimestamp，拉取所有远程文件
+   */
+  async forceFullPull(): Promise<SyncResult> {
+    if (this.isSyncing) {
+      return {
+        status: 'error',
+        message: '正在同步中，请稍候'
+      };
+    }
+
+    if (!isOSSConfigured()) {
+      return {
+        status: 'error',
+        message: 'OSS 未配置，无法同步'
+      };
+    }
+
+    this.isSyncing = true;
+
+    try {
+      console.log('[Sync] 开始强制全量 Pull...');
+      
+      // 列出所有远程文件（afterTimestamp = 0）
+      const files = await listSyncFiles(0);
+
+      if (files.length === 0) {
+        console.log('[Sync] OSS 上没有文件');
+        return {
+          status: 'success',
+          message: 'OSS 上没有文件',
+          pushedCount: 0,
+          pulledCount: 0
+        };
+      }
+
+      let totalOperations = 0;
+
+      // 按时间顺序处理每个文件
+      for (const file of files) {
+        const operations = await downloadSyncFile(file.name);
+        
+        for (const operation of operations) {
+          await this.mergeOperation(operation);
+          totalOperations++;
+        }
+      }
+
+      // 更新 lastProcessedTimestamp
+      if (files.length > 0) {
+        const lastFile = files[files.length - 1];
+        const timestamp = extractTimestamp(lastFile.name);
+        await db.syncMetadata.put({
+          key: 'lastProcessedTimestamp',
+          value: timestamp,
+          updatedAt: new Date()
+        });
+      }
+
+      console.log(`[Sync] 强制全量 Pull 完成，拉取 ${totalOperations} 条操作`);
+
+      return {
+        status: 'success',
+        message: '强制全量 Pull 完成',
+        pushedCount: 0,
+        pulledCount: totalOperations
+      };
+    } catch (error) {
+      console.error('[Sync] 强制全量 Pull 失败:', error);
+      return {
+        status: 'error',
+        message: error instanceof Error ? error.message : '强制全量 Pull 失败',
+        error: error as Error
+      };
+    } finally {
+      this.isSyncing = false;
+    }
+  }
+
+  /**
+   * 强制全量同步（Push + Pull）
+   */
+  async forceFullSync(): Promise<SyncResult> {
+    const pushResult = await this.forceFullPush();
+    if (pushResult.status === 'error') {
+      return pushResult;
+    }
+
+    const pullResult = await this.forceFullPull();
+    if (pullResult.status === 'error') {
+      return pullResult;
+    }
+
+    return {
+      status: 'success',
+      message: '强制全量同步完成',
+      pushedCount: pushResult.pushedCount,
+      pulledCount: pullResult.pulledCount
+    };
+  }
+
+  /**
+   * 增量 Push
+   */
+  async incrementalPush(): Promise<SyncResult> {
+    if (this.isSyncing) {
+      return {
+        status: 'error',
+        message: '正在同步中，请稍候'
+      };
+    }
+
+    if (!isOSSConfigured()) {
+      return {
+        status: 'error',
+        message: 'OSS 未配置，无法同步'
+      };
+    }
+
+    this.isSyncing = true;
+
+    try {
+      const pushedCount = await this.push();
+      return {
+        status: 'success',
+        message: '增量 Push 完成',
+        pushedCount,
+        pulledCount: 0
+      };
+    } catch (error) {
+      console.error('[Sync] 增量 Push 失败:', error);
+      return {
+        status: 'error',
+        message: error instanceof Error ? error.message : '增量 Push 失败',
+        error: error as Error
+      };
+    } finally {
+      this.isSyncing = false;
+    }
+  }
+
+  /**
+   * 增量 Pull
+   */
+  async incrementalPull(): Promise<SyncResult> {
+    if (this.isSyncing) {
+      return {
+        status: 'error',
+        message: '正在同步中，请稍候'
+      };
+    }
+
+    if (!isOSSConfigured()) {
+      return {
+        status: 'error',
+        message: 'OSS 未配置，无法同步'
+      };
+    }
+
+    this.isSyncing = true;
+
+    try {
+      const pulledCount = await this.pull();
+      return {
+        status: 'success',
+        message: '增量 Pull 完成',
+        pushedCount: 0,
+        pulledCount
+      };
+    } catch (error) {
+      console.error('[Sync] 增量 Pull 失败:', error);
+      return {
+        status: 'error',
+        message: error instanceof Error ? error.message : '增量 Pull 失败',
+        error: error as Error
+      };
+    } finally {
+      this.isSyncing = false;
+    }
+  }
+
+  /**
+   * 增量同步（Push + Pull）
+   */
+  async incrementalSync(): Promise<SyncResult> {
+    if (this.isSyncing) {
+      return {
+        status: 'error',
+        message: '正在同步中，请稍候'
+      };
+    }
+
+    if (!isOSSConfigured()) {
+      return {
+        status: 'error',
+        message: 'OSS 未配置，无法同步'
+      };
+    }
+
+    this.isSyncing = true;
+
+    try {
+      const pushedCount = await this.push();
+      const pulledCount = await this.pull();
+      return {
+        status: 'success',
+        message: '增量同步完成',
+        pushedCount,
+        pulledCount
+      };
+    } catch (error) {
+      console.error('[Sync] 增量同步失败:', error);
+      return {
+        status: 'error',
+        message: error instanceof Error ? error.message : '增量同步失败',
+        error: error as Error
+      };
+    } finally {
+      this.isSyncing = false;
+    }
+  }
+
+  /**
+   * 获取同步统计信息
+   */
+  async getSyncStats(): Promise<SyncStats> {
+    const pendingOps = await db.syncOperations.filter(op => !op.synced).count();
+    const syncedOps = await db.syncOperations.filter(op => op.synced).count();
+    
+    const lastSync = await db.syncMetadata.get('lastSyncTime');
+    const lastProcessed = await db.syncMetadata.get('lastProcessedTimestamp');
+    const deviceId = await getDeviceId();
+    
+    return {
+      pendingOps,
+      syncedOps,
+      lastSyncTime: lastSync?.value as Date | null,
+      lastProcessedTimestamp: lastProcessed?.value as number | null,
+      deviceId
+    };
+  }
+
+  /**
+   * 重置同步状态
+   */
+  async resetSyncState(): Promise<void> {
+    await db.syncMetadata.delete('lastProcessedTimestamp');
+    console.log('[Sync] 同步状态已重置');
+  }
+
+  /**
+   * 清理已同步的操作日志
+   */
+  async cleanupSyncedOperations(daysAgo = 7): Promise<number> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysAgo);
+    
+    const toDelete = await db.syncOperations
+      .filter(op => op.synced && op.timestamp < cutoffDate)
+      .toArray();
+    
+    await Promise.all(
+      toDelete.map(op => db.syncOperations.delete(op.id))
+    );
+    
+    console.log(`[Sync] 清理了 ${toDelete.length} 条已同步的操作日志`);
+    return toDelete.length;
   }
 }
 

@@ -28,13 +28,17 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
   nextEndTime: null,
 
   loadEntries: async (_date?: string) => {
-    const allEntries = await db.entries
-      .orderBy('startTime')
-      .reverse()
-      .toArray();
+    const allEntries = await db.entries.toArray();
     
     // 过滤掉软删除的记录
-    const entries = allEntries.filter(e => !e.deleted);
+    const validEntries = allEntries.filter(e => !e.deleted);
+    
+    // 手动按 startTime 降序排序（最新的在前）
+    const entries = validEntries.sort((a, b) => {
+      const timeA = new Date(a.startTime).getTime();
+      const timeB = new Date(b.startTime).getTime();
+      return timeB - timeA; // 降序
+    });
     
     // 找出进行中的记录
     const current = entries.find(e => e.endTime === null);

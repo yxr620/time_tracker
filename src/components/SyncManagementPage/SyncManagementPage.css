@@ -1,0 +1,55 @@
+.sync-management-page {
+  padding: 16px;
+  padding-bottom: 80px;
+}
+
+.sync-stats,
+.sync-result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-item,
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ion-color-light);
+}
+
+.stat-item:last-child,
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.stat-label,
+.result-label {
+  font-weight: 500;
+  color: var(--ion-color-medium);
+}
+
+.stat-value,
+.result-value {
+  font-weight: 600;
+  color: var(--ion-color-dark);
+}
+
+.result-value.success {
+  color: var(--ion-color-success);
+}
+
+.result-value.error {
+  color: var(--ion-color-danger);
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.button-group ion-button {
+  margin: 0;
+}

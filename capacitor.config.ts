@@ -13,9 +13,6 @@ const config: CapacitorConfig = {
       backgroundColor: '#1677ff',
       overlay: false,
     },
-    SplashScreen: {
-      launchAutoHide: true,
-    },
     Keyboard: {
       resize: 'ionic',
       style: 'dark',

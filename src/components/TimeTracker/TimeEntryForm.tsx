@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DatePicker, Space, Selector } from 'antd-mobile';
+import { DatePicker } from 'antd-mobile';
 import { 
   IonButton, 
   IonInput, 
@@ -7,9 +7,9 @@ import {
   IonIcon, 
   useIonToast,
   IonCard,
-  IonCardContent 
+  IonCardContent
 } from '@ionic/react';
-import { playOutline, stopOutline, saveOutline } from 'ionicons/icons';
+import { playOutline, stopOutline, saveOutline, chatbubbleOutline, pricetagOutline, flagOutline, refreshOutline } from 'ionicons/icons';
 import { useEntryStore } from '../../stores/entryStore';
 import { useGoalStore } from '../../stores/goalStore';
 import { useCategoryStore } from '../../stores/categoryStore';
@@ -226,8 +226,8 @@ export const TimeEntryForm: React.FC = () => {
   // 如果正在计时，显示计时器界面
   if (currentEntry) {
     return (
-      <div style={{ padding: '20px 16px' }}>
-        <Space direction="vertical" style={{ width: '100%', '--gap': '16px' }} block>
+      <div style={{ padding: '20px 8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ 
               display: 'inline-flex', 
@@ -279,94 +279,154 @@ export const TimeEntryForm: React.FC = () => {
             <IonIcon slot="start" icon={stopOutline} />
             停止计时
           </IonButton>
-        </Space>
+        </div>
       </div>
     );
   }
 
   // 正常的录入界面
   return (
-    <div style={{ padding: '12px 12px' }}>
-      <Space direction="vertical" style={{ width: '100%', '--gap': '12px' }} block>
-        {/* 活动名称输入 - Ionic风格 */}
-        <IonCard style={{ margin: 0, borderRadius: '16px', boxShadow: 'none', border: '1px solid #f0f0f0', background: '#fff' }}>
-          <IonCardContent style={{ padding: '0' }}>
-            <IonItem lines="none" style={{ '--background': 'transparent', '--padding-start': '16px' }}>
+    <div style={{ padding: '16px', background: '#ffffff', minHeight: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* 活动名称输入 */}
+        <IonCard style={{ 
+          margin: 0, 
+          borderRadius: '20px', 
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)', 
+          border: '1px solid #f0f0f0',
+          background: '#ffffff'
+        }}>
+          <IonCardContent style={{ padding: 0 }}>
+            <IonItem lines="none" style={{ '--background': 'transparent', '--padding-start': '20px', '--padding-end': '20px' }}>
+              <IonIcon icon={chatbubbleOutline} slot="start" style={{ color: '#bbb', fontSize: '20px', marginRight: '8px' }} />
               <IonInput
                 placeholder="准备做什么？"
                 value={activity}
                 onIonInput={e => setActivity(e.detail.value!)}
                 clearInput
                 style={{
-                  fontSize: '18px',
-                  fontWeight: '600',
-                  '--placeholder-color': '#ccc',
+                  fontSize: '17px',
+                  fontWeight: '500',
+                  '--placeholder-color': '#bbb',
                   '--color': '#333',
-                  paddingTop: '12px',
-                  paddingBottom: '12px'
+                  paddingTop: '16px',
+                  paddingBottom: '16px'
                 }}
               />
             </IonItem>
           </IonCardContent>
         </IonCard>
         
-        {/* 类别选择 - 胶囊风格 */}
-        <div>
-          <div style={{ marginBottom: '4px', fontWeight: '600', fontSize: '13px', color: '#333' }}>类别</div>
-          <Selector
-            options={categories.map(c => ({
-              label: c.name,
-              value: c.id
-            }))}
-            value={[selectedCategoryId]}
-            onChange={(arr) => setSelectedCategoryId(arr[0] || '')}
-            style={{
-              '--border-radius': '100px',
-              '--border': 'none',
-              '--checked-border': 'none',
-              '--checked-color': '#e6f7ff',
-              '--checked-text-color': '#1677ff',
-              '--padding': '4px 10px',
-              '--font-size': '12px',
-              '--color': '#f7f8fa',
-              '--text-color': '#666',
-              '--gap': '6px'
-            } as React.CSSProperties}
-          />
+        {/* 类别选择 */}
+        <div style={{ 
+          background: '#ffffff', 
+          borderRadius: '20px', 
+          padding: '14px 18px',
+          border: '1px solid #f0f0f0',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
+        }}>
+          <div style={{ 
+            marginBottom: '10px', 
+            fontWeight: '600', 
+            fontSize: '12px', 
+            color: '#999',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+            <IonIcon icon={pricetagOutline} style={{ fontSize: '14px' }} />
+            类别
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+            {categories.map((c, index) => (
+              <React.Fragment key={c.id}>
+                {index > 0 && <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>}
+                <span
+                  onClick={() => setSelectedCategoryId(c.id === selectedCategoryId ? '' : c.id)}
+                  style={{
+                    fontSize: '15px',
+                    fontWeight: c.id === selectedCategoryId ? '600' : '400',
+                    color: c.id === selectedCategoryId ? '#3b82f6' : '#666',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    userSelect: 'none'
+                  }}
+                >
+                  {c.name}
+                </span>
+              </React.Fragment>
+            ))}
+          </div>
         </div>
         
-        {/* 目标选择 - 胶囊风格 */}
-        <div>
-          <div style={{ marginBottom: '4px', fontWeight: '600', fontSize: '13px', color: '#333' }}>关联目标</div>
+        {/* 目标选择 */}
+        <div style={{ 
+          background: '#ffffff', 
+          borderRadius: '20px', 
+          padding: '14px 18px',
+          border: '1px solid #f0f0f0',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
+        }}>
+          <div style={{ 
+            marginBottom: '10px', 
+            fontWeight: '600', 
+            fontSize: '12px', 
+            color: '#999',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+            <IonIcon icon={flagOutline} style={{ fontSize: '14px' }} />
+            关联目标
+          </div>
           {availableGoals.length > 0 ? (
-            <Selector
-              options={[
-                ...currentGoals.map(g => ({
-                  label: `${g.name}`,
-                  value: g.id!
-                })),
-                ...filteredPrevGoals.map(g => ({
-                  label: `${g.name}*`,
-                  value: g.id!
-                }))
-              ]}
-              value={[selectedGoalId || '']}
-              onChange={(arr) => setSelectedGoalId(arr[0] || null)}
-              style={{
-                '--border-radius': '100px',
-                '--border': 'none',
-                '--checked-border': 'none',
-                '--checked-color': '#fff7e6', // 橙色系背景
-                '--checked-text-color': '#fa8c16', // 橙色系文字
-                '--padding': '4px 10px',
-                '--font-size': '12px',
-                '--color': '#f7f8fa',
-                '--text-color': '#666',
-                '--gap': '6px'
-              } as React.CSSProperties}
-            />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+              {currentGoals.map((g, index) => (
+                <React.Fragment key={g.id}>
+                  {index > 0 && <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>}
+                  <span
+                    onClick={() => setSelectedGoalId(g.id === selectedGoalId ? null : g.id!)}
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: g.id === selectedGoalId ? '600' : '400',
+                      color: g.id === selectedGoalId ? '#f59e0b' : '#666',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      userSelect: 'none'
+                    }}
+                  >
+                    {g.name}
+                  </span>
+                </React.Fragment>
+              ))}
+              {currentGoals.length > 0 && filteredPrevGoals.length > 0 && 
+                <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>
+              }
+              {filteredPrevGoals.map((g, index) => (
+                <React.Fragment key={g.id}>
+                  {index > 0 && <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>}
+                  <span
+                    onClick={() => setSelectedGoalId(g.id === selectedGoalId ? null : g.id!)}
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: g.id === selectedGoalId ? '600' : '400',
+                      color: g.id === selectedGoalId ? '#f59e0b' : '#999',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      userSelect: 'none'
+                    }}
+                  >
+                    {g.name}*
+                  </span>
+                </React.Fragment>
+              ))}
+            </div>
           ) : (
-            <div style={{ color: '#999', fontSize: '12px', padding: '2px 0' }}>
+            <div style={{ color: '#bbb', fontSize: '14px' }}>
               该日期暂无目标
             </div>
           )}
@@ -374,68 +434,70 @@ export const TimeEntryForm: React.FC = () => {
 
         {/* 时间选择卡片 */}
         <div style={{ 
-          background: '#f9f9f9', 
-          borderRadius: '16px', 
-          padding: '12px 16px',
-          marginTop: '4px'
+          background: '#ffffff', 
+          borderRadius: '20px', 
+          padding: '16px 18px',
+          border: '1px solid #f0f0f0',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+          transition: 'all 0.2s'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
             {/* 开始时间 */}
-            <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => setStartPickerVisible(true)}>
-               <div style={{ color: '#999', fontSize: '12px', marginBottom: '2px' }}>开始时间</div>
-               <div style={{ fontSize: '22px', fontWeight: '600', color: '#333', lineHeight: 1.2, fontFamily: 'Monaco, monospace' }}>
+            <div style={{ flex: '0 0 auto', cursor: 'pointer', minWidth: '80px' }} onClick={() => setStartPickerVisible(true)}>
+               <div style={{ fontSize: '28px', fontWeight: '700', color: '#333', lineHeight: 1.2, fontFamily: 'Monaco, Menlo, monospace', marginBottom: '10px' }}>
                  {dayjs(startTime).format('HH:mm')}
                </div>
-               <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                 {dayjs(startTime).format('MM月DD日')}
-               </div>
-               <div style={{ marginTop: '8px' }}>
+               <div>
                  <span
                    onClick={(e) => { e.stopPropagation(); setToNow(true); }}
                    style={{ 
                      fontSize: '11px', 
                      color: '#666', 
-                     background: '#fff', 
-                     padding: '2px 8px', 
-                     borderRadius: '10px', 
-                     boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                     display: 'inline-block'
+                     background: '#f7f8fa', 
+                     padding: '4px 10px', 
+                     borderRadius: '12px',
+                     display: 'inline-flex',
+                     alignItems: 'center',
+                     gap: '4px',
+                     cursor: 'pointer',
+                     transition: 'all 0.2s'
                    }}
                  >
-                   设为现在
+                   <IonIcon icon={refreshOutline} style={{ fontSize: '12px' }} />
+                   现在
                  </span>
                </div>
             </div>
 
-            {/* 分割线 */}
-            <div style={{ width: '1px', height: '50px', background: '#e0e0e0', margin: '0 16px', alignSelf: 'center' }}></div>
+            {/* 时间轴箭头 */}
+            <div style={{ color: '#e0e0e0', fontSize: '20px', flexShrink: 0 }}>→</div>
 
             {/* 结束时间 */}
-            <div style={{ flex: 1, textAlign: 'right', cursor: 'pointer' }} onClick={() => setEndPickerVisible(true)}>
-               <div style={{ color: '#999', fontSize: '12px', marginBottom: '2px' }}>结束时间</div>
+            <div style={{ flex: 1, textAlign: 'right', cursor: 'pointer', minWidth: 0 }} onClick={() => setEndPickerVisible(true)}>
                <div style={{ 
-                 fontSize: '22px', 
-                 fontWeight: '600', 
-                 color: endTime ? '#333' : '#00b578', 
+                 fontSize: '24px', 
+                 fontWeight: '700', 
+                 color: endTime ? '#333' : '#10b981', 
                  lineHeight: 1.2,
-                 fontFamily: endTime ? 'Monaco, monospace' : 'inherit'
+                 fontFamily: endTime ? 'Monaco, Menlo, monospace' : 'inherit',
+                 marginBottom: '4px'
                }}>
                  {endTime ? dayjs(endTime).format('HH:mm') : '进行中'}
+                 {!endTime && <span style={{ fontSize: '16px', marginLeft: '4px' }}>●</span>}
                </div>
-               <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                 {endTime ? dayjs(endTime).format('MM月DD日') : '点击停止'}
-               </div>
-               <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px', marginTop: '10px', flexWrap: 'nowrap' }}>
                  <span
                    onClick={(e) => { e.stopPropagation(); setToNow(false); }}
                    style={{ 
                      fontSize: '11px', 
                      color: '#666', 
-                     background: '#fff', 
-                     padding: '2px 8px', 
-                     borderRadius: '10px', 
-                     boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                     display: 'inline-block'
+                     background: '#f7f8fa', 
+                     padding: '3px 8px', 
+                     borderRadius: '10px',
+                     display: 'inline-block',
+                     cursor: 'pointer',
+                     transition: 'all 0.2s',
+                     whiteSpace: 'nowrap'
                    }}
                  >
                    现在
@@ -444,11 +506,14 @@ export const TimeEntryForm: React.FC = () => {
                    onClick={(e) => { e.stopPropagation(); setEndTimeToOngoing(); }}
                    style={{ 
                      fontSize: '11px', 
-                     color: '#00b578', 
-                     background: '#e6f7ff', 
-                     padding: '2px 8px', 
+                     color: '#10b981', 
+                     background: 'rgba(16, 185, 129, 0.1)', 
+                     padding: '3px 8px', 
                      borderRadius: '10px',
-                     display: 'inline-block'
+                     display: 'inline-block',
+                     cursor: 'pointer',
+                     transition: 'all 0.2s',
+                     whiteSpace: 'nowrap'
                    }}
                  >
                    进行中
@@ -459,44 +524,48 @@ export const TimeEntryForm: React.FC = () => {
         </div>
 
         {/* 操作按钮 */}
-        <div style={{ marginTop: '8px' }}>
+        <div style={{ marginTop: '4px' }}>
           {endTime === null ? (
             <IonButton
               expand="block"
               color="primary"
-              shape="round"
               onClick={handleStartTracking}
               disabled={!activity.trim()}
               style={{
-                height: '48px',
-                fontSize: '16px',
+                height: '52px',
+                fontSize: '17px',
                 fontWeight: '600',
-                '--box-shadow': '0 6px 16px rgba(22, 119, 255, 0.25)'
+                '--border-radius': '26px',
+                '--background': 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                '--box-shadow': '0 4px 12px rgba(59, 130, 246, 0.3)',
+                transition: 'all 0.2s'
               }}
             >
-              <IonIcon slot="start" icon={playOutline} />
               开始计时
+              <IonIcon slot="end" icon={playOutline} style={{ fontSize: '20px' }} />
             </IonButton>
           ) : (
             <IonButton
               expand="block"
               color="primary"
-              shape="round"
               onClick={handleSaveManualEntry}
               disabled={!activity.trim()}
               style={{
-                height: '48px',
-                fontSize: '16px',
+                height: '52px',
+                fontSize: '17px',
                 fontWeight: '600',
-                '--box-shadow': '0 6px 16px rgba(22, 119, 255, 0.25)'
+                '--border-radius': '26px',
+                '--background': 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                '--box-shadow': '0 4px 12px rgba(59, 130, 246, 0.3)',
+                transition: 'all 0.2s'
               }}
             >
-              <IonIcon slot="start" icon={saveOutline} />
               保存记录
+              <IonIcon slot="end" icon={saveOutline} style={{ fontSize: '20px' }} />
             </IonButton>
           )}
         </div>
-      </Space>
+      </div>
 
       <DatePicker
         visible={startPickerVisible}

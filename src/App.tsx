@@ -1,42 +1,34 @@
 import { useState, useRef, useEffect } from 'react';
 import { TabBar, Button, Space, Toast, Dialog } from 'antd-mobile';
-import { IonApp } from '@ionic/react';
-import { 
-  AppOutline, 
-  FileOutline,
-  StarOutline
-} from 'antd-mobile-icons';
+import { IonApp, IonIcon } from '@ionic/react';
+// import { timeOutline } from 'ionicons/icons';
+import { checkmarkDoneOutline, cloudUploadOutline } from 'ionicons/icons';
 import { RecordsPage } from './components/RecordsPage/RecordsPage';
+// 导入你的 PNG 图片
+import recordsIcon from './assets/recordsIcon.png';
+// import goalsIcon from './assets/goals.png';
+// import exportIcon from './assets/export.png';
 import { GoalManager } from './components/GoalManager/GoalManager';
-import { SyncButton } from './components/SyncButton/SyncButton';
+import { SyncManagementPage } from './components/SyncManagementPage/SyncManagementPage';
 import { exportFullJSON, exportIncrementalJSON, importFromJSON, ImportStrategy } from './services/export';
 import { useSyncStore } from './stores/syncStore';
+import { isOSSConfigured } from './services/oss';
 import './App.css';
 
 function App() {
   const [activeTab, setActiveTab] = useState('records');
   const [importStrategy, setImportStrategy] = useState<typeof ImportStrategy.MERGE | typeof ImportStrategy.REPLACE>(ImportStrategy.MERGE);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { startAutoSync, stopAutoSync, checkConfig } = useSyncStore();
+  const { checkConfig } = useSyncStore();
 
-  // 初始化自动同步
+  // 检查 OSS 配置
   useEffect(() => {
     try {
       checkConfig();
-      startAutoSync(10); // 每10分钟自动同步一次
     } catch (error) {
-      console.error('[App] 初始化同步失败:', error);
-      // 即使同步初始化失败，也不影响应用的基本功能
+      console.error('[App] 检查配置失败:', error);
     }
-
-    return () => {
-      try {
-        stopAutoSync();
-      } catch (error) {
-        console.error('[App] 停止同步失败:', error);
-      }
-    };
-  }, [startAutoSync, stopAutoSync, checkConfig]);
+  }, [checkConfig]);
   
   const handleExportFullJSON = async () => {
     try {
@@ -265,18 +257,21 @@ function App() {
   const tabs = [
     {
       key: 'records',
-      title: '记录',
-      icon: <AppOutline />,
+      title: '',
+      // 使用 PNG 图片：将下面这行取消注释，并注释掉 IonIcon 那行
+      icon: <img src={recordsIcon} alt="" style={{ width: '24px', height: '24px' }} />,
+      // icon: <IonIcon icon={timeOutline} style={{ fontSize: '24px' }} />,
     },
     {
       key: 'goals',
-      title: '目标',
-      icon: <StarOutline />,
+      title: '',
+      icon: <IonIcon icon={checkmarkDoneOutline} style={{ fontSize: '24px' }} />,
+      
     },
     {
       key: 'export',
-      title: '导出',
-      icon: <FileOutline />,
+      title: '',
+      icon: <IonIcon icon={cloudUploadOutline} style={{ fontSize: '24px' }} />,
     },
   ];
 
@@ -285,9 +280,6 @@ function App() {
     <div className="app">
       <div className="app-header">
         <h1>Time Tracker</h1>
-        <div style={{ marginLeft: 'auto' }}>
-          <SyncButton />
-        </div>
       </div>
       <div className="app-body">
         {activeTab === 'records' && (
@@ -305,6 +297,17 @@ function App() {
         {activeTab === 'export' && (
           <div style={{ padding: '16px' }}>
             <Space direction="vertical" style={{ width: '100%' }} block>
+              {/* 同步管理（如果配置了 OSS） */}
+              {isOSSConfigured() && (
+                <>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>
+                    云端同步
+                  </div>
+                  <SyncManagementPage />
+                  <div style={{ marginTop: '24px', borderTop: '1px solid #e5e5e5', paddingTop: '16px' }} />
+                </>
+              )}
+
               {/* 导入部分 */}
               <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>
                 数据导入
