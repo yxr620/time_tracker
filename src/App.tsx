@@ -13,6 +13,7 @@ import { SyncManagementPage } from './components/SyncManagementPage/SyncManageme
 import { exportFullJSON, exportIncrementalJSON, importFromJSON, ImportStrategy } from './services/export';
 import { useSyncStore } from './stores/syncStore';
 import { isOSSConfigured } from './services/oss';
+import { DashboardPlaceholder } from './components/Desktop/DashboardPlaceholder';
 import './App.css';
 
 function App() {
@@ -20,6 +21,17 @@ function App() {
   const [importStrategy, setImportStrategy] = useState<typeof ImportStrategy.MERGE | typeof ImportStrategy.REPLACE>(ImportStrategy.MERGE);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { checkConfig } = useSyncStore();
+  
+  // 简单的屏幕宽度检测
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // 检查 OSS 配置
   useEffect(() => {
@@ -275,8 +287,7 @@ function App() {
     },
   ];
 
-  return (
-    <IonApp>
+  const MobileContent = () => (
     <div className="app">
       <div className="app-header">
         <h1>Time Tracker</h1>
@@ -397,6 +408,24 @@ function App() {
         </TabBar>
       </div>
     </div>
+  );
+
+  return (
+    <IonApp>
+      <div className="app">
+        {isDesktop ? (
+          <>
+            <div className="mobile-container">
+              <MobileContent />
+            </div>
+            <div className="desktop-dashboard">
+              <DashboardPlaceholder />
+            </div>
+          </>
+        ) : (
+          <MobileContent />
+        )}
+      </div>
     </IonApp>
   );
 }

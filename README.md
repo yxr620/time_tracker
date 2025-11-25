@@ -21,6 +21,7 @@
 - 💾 **本地存储**：使用 IndexedDB 实现离线数据存储
 - 📱 **PWA 支持**：可作为 Progressive Web App 安装
 - 🤖 **Android 应用**：使用 Capacitor 打包为原生 Android 应用
+- 💻 **macOS 桌面应用**：使用 Electron 打包为原生 macOS 应用，支持分栏布局和数据分析
 
 ## 🛠️ 技术栈
 
@@ -32,6 +33,7 @@
 - **数据库**：Dexie.js (IndexedDB 封装)
 - **时间处理**：Day.js
 - **移动端打包**：Capacitor
+- **桌面端打包**：Electron (via Capacitor Community Plugin)
 - **PWA**：vite-plugin-pwa
 - **UUID 生成**：uuid
 
@@ -207,6 +209,59 @@ npx cap open android
 
 ---
 
+## 💻 macOS 桌面端开发和部署
+
+本项目支持打包为 macOS 桌面应用，采用 Electron 技术，数据与 Web 端隔离（存储在本地应用数据目录），但可以通过 OSS 同步。
+
+### 1️⃣ 安装 Electron 依赖
+
+```bash
+# 安装 Capacitor Electron 社区插件
+npm install @capacitor-community/electron
+
+# 添加 Electron 平台
+npx cap add @capacitor-community/electron
+```
+
+### 2️⃣ 初始化与同步
+
+这会在项目根目录下生成一个 `electron` 文件夹，包含 Electron 的主进程代码。
+
+```bash
+# 同步构建文件到 electron 目录
+npx cap sync @capacitor-community/electron
+```
+
+### 3️⃣ 启动开发预览
+
+```bash
+# 在 Electron 窗口中运行应用
+npx cap open @capacitor-community/electron
+```
+
+此命令会启动一个 Electron 窗口加载你的应用。你可以在这里测试桌面端的布局（如分栏效果）。
+
+### 4️⃣ 打包发布 (.dmg / .app)
+
+进入 `electron` 目录进行打包：
+
+```bash
+cd electron
+npm install          # 确保 electron 目录下的依赖已安装
+npm run electron:build
+```
+
+**打包结果**：
+- 打包完成后，查看 `electron/dist` 目录。
+- 你会找到 `.dmg` 安装包或 `.app` 应用程序文件。
+- 直接双击安装即可使用。
+
+**数据存储说明**：
+- 桌面应用的数据存储在 macOS 的 `~/Library/Application Support/时间追踪工具/` 目录下。
+- 即使更新应用（只要 App ID 不变），数据也会自动保留。
+
+---
+
 ## 🔄 日常开发流程
 
 ### Web 端开发
@@ -238,6 +293,21 @@ npm run build && npx cap copy
 
 # 或者使用部署脚本（如果有）
 ./deploy-android.sh
+```
+
+### macOS 端开发
+
+每次修改代码后，需要同步到 Electron 目录：
+
+```bash
+# 1. 构建 Web 资源
+npm run build
+
+# 2. 同步到 Electron
+npx cap sync @capacitor-community/electron
+
+# 3. 预览
+npx cap open @capacitor-community/electron
 ```
 
 **完整流程**：
@@ -290,6 +360,7 @@ npm run lint        # 运行 ESLint 检查代码
 **数据位置**：
 - **Web 端**：浏览器的 IndexedDB
 - **Android 端**：应用的 WebView 存储
+- **macOS 端**：`~/Library/Application Support/时间追踪工具/` 目录
 
 **数据持久化**：
 - 数据保存在本地，不会丢失

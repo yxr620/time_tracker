@@ -50,6 +50,39 @@ body {
   position: relative;
 }
 
+/* Desktop Layout Styles */
+@media (min-width: 1024px) {
+  .app {
+    flex-direction: row;
+    background-color: #f0f2f5;
+  }
+
+  .mobile-container {
+    width: 400px;
+    min-width: 400px;
+    border-right: 1px solid #e0e0e0;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+  }
+
+  .desktop-dashboard {
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+    background-color: #f5f7fa;
+  }
+  
+  /* 在桌面模式下，调整一些手机端的样式以适应容器 */
+  .mobile-container .app-header {
+    padding-top: 16px; /* 移除 safe-area */
+  }
+}
+
 .app-footer {
   flex-shrink: 0;
   border-top: 1px solid #e5e5e5;
