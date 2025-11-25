@@ -40,7 +40,7 @@ if (viewport) {
 if (Capacitor.isNativePlatform()) {
   try {
     StatusBar.setStyle({ style: Style.Light });
-    StatusBar.setBackgroundColor({ color: '#1677ff' });
+    StatusBar.setBackgroundColor({ color: '#ffffff' });
     StatusBar.setOverlaysWebView({ overlay: false });
   } catch (error) {
     console.error('[Init] 状态栏初始化失败:', error);
