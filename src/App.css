@@ -22,6 +22,11 @@ body {
   bottom: 0;
 }
 
+/* 移动端布局 */
+.mobile-layout {
+  flex-direction: column;
+}
+
 .app-header {
   flex-shrink: 0;
   padding: 4px 16px 4px 16px;
@@ -43,44 +48,11 @@ body {
 .app-body {
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden; /* 禁止水平滚动 */
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  min-height: 0; /* 重要：允许 flex 子元素缩小 */
+  min-height: 0;
   width: 100%;
   position: relative;
-}
-
-/* Desktop Layout Styles */
-@media (min-width: 1024px) {
-  .app {
-    flex-direction: row;
-    background-color: #f0f2f5;
-  }
-
-  .mobile-container {
-    width: 400px;
-    min-width: 400px;
-    border-right: 1px solid #e0e0e0;
-    background-color: #fff;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    position: relative;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
-    z-index: 10;
-  }
-
-  .desktop-dashboard {
-    flex: 1;
-    height: 100%;
-    overflow: hidden;
-    background-color: #f5f7fa;
-  }
-  
-  /* 在桌面模式下，调整一些手机端的样式以适应容器 */
-  .mobile-container .app-header {
-    padding-top: 16px; /* 移除 safe-area */
-  }
 }
 
 .app-footer {
@@ -91,6 +63,68 @@ body {
   z-index: 100;
 }
 
+/* 页面内容包装器 - 用于同步/导出页面 */
+.page-content-wrapper {
+  padding: 16px;
+}
+
+/* 桌面端布局 */
+@media (min-width: 1024px) {
+  .desktop-layout {
+    flex-direction: row;
+    background-color: #f5f7fa;
+  }
+
+  .desktop-main {
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .desktop-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* 桌面端内容区域限制最大宽度 */
+  .desktop-content > * {
+    width: 100%;
+    max-width: 800px;
+  }
+
+  /* 桌面端页面内容样式 */
+  .desktop-layout .page-content-wrapper {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+
+  /* 桌面端 RecordsPage 样式 */
+  .desktop-layout .timeline-view,
+  .desktop-layout .entry-list-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    margin-bottom: 16px;
+    /* timeline-view 允许装饰元素外溢，entry-list 保持裁切 */
+  }
+
+  .desktop-layout .timeline-view {
+    overflow: visible;
+  }
+
+  .desktop-layout .entry-list-container {
+    overflow: hidden;
+  }
+}
+
 /* 修复 Selector 选中状态的文字颜色 */
 .adm-selector-item-active {
   background-color: #1677ff !important;
@@ -99,4 +133,52 @@ body {
 
 .adm-selector-item-active .adm-selector-item-label {
   color: white !important;
+}
+
+/* 桌面端交互优化 */
+@media (min-width: 1024px) {
+  /* 按钮 hover 效果 */
+  button:hover {
+    opacity: 0.9;
+  }
+
+  /* 可点击元素的鼠标指针 */
+  .clickable,
+  [role="button"],
+  .adm-button,
+  .ion-button,
+  .sidebar-nav-item,
+  .entry-item {
+    cursor: pointer;
+  }
+
+  /* 卡片 hover 效果 */
+  .ion-card:hover,
+  .adm-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  /* 列表项 hover 效果 */
+  .entry-item:hover {
+    background-color: #f9f9f9;
+  }
+
+  /* 滚动条样式 */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #d0d0d0;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #b0b0b0;
+  }
 }

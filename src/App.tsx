@@ -1,19 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { TabBar, Button, Space, Toast, Dialog } from 'antd-mobile';
 import { IonApp, IonIcon } from '@ionic/react';
-// import { timeOutline } from 'ionicons/icons';
 import { checkmarkDoneOutline, cloudUploadOutline } from 'ionicons/icons';
 import { RecordsPage } from './components/RecordsPage/RecordsPage';
-// 导入你的 PNG 图片
+import { Dashboard } from './components/Dashboard/Dashboard';
 import recordsIcon from './assets/recordsIcon.png';
-// import goalsIcon from './assets/goals.png';
-// import exportIcon from './assets/export.png';
 import { GoalManager } from './components/GoalManager/GoalManager';
 import { SyncManagementPage } from './components/SyncManagementPage/SyncManagementPage';
 import { exportFullJSON, exportIncrementalJSON, importFromJSON, ImportStrategy } from './services/export';
 import { useSyncStore } from './stores/syncStore';
 import { isOSSConfigured } from './services/oss';
-import { DashboardPlaceholder } from './components/Desktop/DashboardPlaceholder';
+import { DesktopSidebar } from './components/Desktop/DesktopSidebar';
 import './App.css';
 
 function App() {
@@ -287,26 +284,18 @@ function App() {
     },
   ];
 
-  const MobileContent = () => (
-    <div className="app">
-      <div className="app-header">
-        <h1>Time Tracker</h1>
-      </div>
-      <div className="app-body">
-        {activeTab === 'records' && (
-          <div>
-            <RecordsPage />
-          </div>
-        )}
-
-        {activeTab === 'goals' && (
-          <div>
-            <GoalManager />
-          </div>
-        )}
-
-        {activeTab === 'export' && (
-          <div style={{ padding: '16px' }}>
+  // 渲染页面内容（桌面端和移动端共用）
+  const renderPageContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'records':
+        return <RecordsPage />;
+      case 'goals':
+        return <GoalManager />;
+      case 'export':
+        return (
+          <div className="page-content-wrapper">
             <Space direction="vertical" style={{ width: '100%' }} block>
               {/* 同步管理（如果配置了 OSS） */}
               {isOSSConfigured() && (
@@ -397,9 +386,21 @@ function App() {
               </div>
             </Space>
           </div>
-        )}
-      </div>
+        );
+      default:
+        return null;
+    }
+  };
 
+  // 移动端布局
+  const MobileLayout = () => (
+    <div className="app mobile-layout">
+      <div className="app-header">
+        <h1>Time Tracker</h1>
+      </div>
+      <div className="app-body">
+        {renderPageContent()}
+      </div>
       <div className="app-footer">
         <TabBar activeKey={activeTab} onChange={setActiveTab}>
           {tabs.map(item => (
@@ -410,22 +411,21 @@ function App() {
     </div>
   );
 
+  // 桌面端布局
+  const DesktopLayout = () => (
+    <div className="app desktop-layout">
+      <DesktopSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <div className="desktop-main">
+        <div className="desktop-content">
+          {renderPageContent()}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <IonApp>
-      <div className="app">
-        {isDesktop ? (
-          <>
-            <div className="mobile-container">
-              <MobileContent />
-            </div>
-            <div className="desktop-dashboard">
-              <DashboardPlaceholder />
-            </div>
-          </>
-        ) : (
-          <MobileContent />
-        )}
-      </div>
+      {isDesktop ? <DesktopLayout /> : <MobileLayout />}
     </IonApp>
   );
 }

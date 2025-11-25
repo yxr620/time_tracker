@@ -117,6 +117,8 @@ export class ElectronCapacitorApp {
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: true,
+        // 允许跨域请求（用于访问阿里云 OSS 等外部服务）
+        webSecurity: false,
         // Use preload to inject the electron varriant overrides for capacitor plugins.
         // preload: join(app.getAppPath(), "node_modules", "@capacitor-community", "electron", "dist", "runtime", "electron-rt.js"),
         preload: preloadPath,
@@ -224,8 +226,8 @@ export function setupContentSecurityPolicy(customScheme: string): void {
         ...details.responseHeaders,
         'Content-Security-Policy': [
           electronIsDev
-            ? `default-src ${customScheme}://* 'unsafe-inline' devtools://* 'unsafe-eval' data:`
-            : `default-src ${customScheme}://* 'unsafe-inline' data:`,
+            ? `default-src ${customScheme}://* https://*.aliyuncs.com 'unsafe-inline' devtools://* 'unsafe-eval' data:; connect-src ${customScheme}://* https://*.aliyuncs.com https://*.oss-cn-shenzhen.aliyuncs.com *;`
+            : `default-src ${customScheme}://* https://*.aliyuncs.com 'unsafe-inline' data:; connect-src ${customScheme}://* https://*.aliyuncs.com https://*.oss-cn-shenzhen.aliyuncs.com;`,
         ],
       },
     });

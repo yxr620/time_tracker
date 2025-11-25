@@ -2,6 +2,7 @@
   padding: 12px 16px;
   background: #fff;
   margin-bottom: 12px;
+  /* 移动端保持裁切，防止与底部 TabBar 冲突 */
   overflow: hidden;
   width: 100%;
   max-width: 100%;
@@ -252,5 +253,61 @@
   .timeline-container {
     padding-top: 14px;
     padding-bottom: 4px;
+  }
+}
+
+/* 桌面端优化 */
+@media (min-width: 1024px) {
+  .timeline-view {
+    padding: 16px 20px;
+    margin-bottom: 0;
+    /* 桌面端允许装饰元素（时间指示线、按钮阴影）外溢 */
+    overflow: visible;
+  }
+
+  .timeline-bar {
+    height: 18px;
+  }
+
+  .timeline-labels {
+    height: 20px;
+    margin-bottom: 8px;
+  }
+
+  .timeline-label {
+    font-size: 11px;
+  }
+
+  .date-nav-btn {
+    padding: 6px 12px;
+    font-size: 15px;
+  }
+
+  .date-nav-btn:hover:not(:disabled) {
+    background: #d0d0d0;
+  }
+
+  .today-btn:hover {
+    background: #1565d8;
+  }
+
+  .date-display {
+    font-size: 16px;
+  }
+
+  .timeline-stats {
+    font-size: 13px;
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+
+  .timeline-header {
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+  }
+
+  .timeline-container {
+    padding-top: 20px;
+    padding-bottom: 8px;
   }
 }

@@ -1,0 +1,86 @@
+.desktop-sidebar {
+  width: 220px;
+  min-width: 220px;
+  height: 100%;
+  background-color: #fafafa;
+  border-right: 1px solid #e8e8e8;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+.sidebar-header {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid #e8e8e8;
+  /* 为 Electron 标题栏留出空间 */
+  -webkit-app-region: drag;
+}
+
+.sidebar-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  width: 100%;
+  color: #666;
+  font-size: 14px;
+  -webkit-app-region: no-drag;
+}
+
+.sidebar-nav-item:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.sidebar-nav-item.active {
+  background-color: #e8f4ff;
+  color: #1677ff;
+}
+
+.sidebar-nav-item.active .sidebar-nav-icon {
+  color: #1677ff;
+}
+
+.sidebar-nav-icon {
+  font-size: 20px;
+  color: inherit;
+}
+
+.sidebar-nav-label {
+  font-weight: 500;
+}
+
+.sidebar-footer {
+  padding: 12px 8px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.settings-btn {
+  color: #999;
+}
+
+.settings-btn:hover {
+  color: #666;
+}

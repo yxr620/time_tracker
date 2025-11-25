@@ -2,27 +2,25 @@ import React, { useState } from 'react';
 import { TimeEntryForm } from '../TimeTracker/TimeEntryForm';
 import { TimelineView } from '../TimelineView/TimelineView';
 import { EntryList } from '../EntryList/EntryList';
+import './RecordsPage.css';
 
 export const RecordsPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   return (
-    <div style={{ 
-      paddingBottom: '80px', 
-      overflow: 'hidden', 
-      width: '100%',
-      touchAction: 'pan-y' /* 只允许垂直滑动 */
-    }}>
+    <div className="records-page">
       {/* 顶部：时间记录表单 */}
-      <div style={{ padding: '6px', paddingBottom: '6px' }}>
+      <div className="records-section form-section">
         <TimeEntryForm />
       </div>
 
       {/* 24小时时间轴可视化 */}
-      <TimelineView selectedDate={selectedDate} onDateChange={setSelectedDate} />
+      <div className="records-section">
+        <TimelineView selectedDate={selectedDate} onDateChange={setSelectedDate} />
+      </div>
 
       {/* 当日记录列表 */}
-      <div>
+      <div className="records-section">
         <EntryList selectedDate={selectedDate} />
       </div>
     </div>

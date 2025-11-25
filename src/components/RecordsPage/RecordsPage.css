@@ -1,0 +1,52 @@
+.records-page {
+  width: 100%;
+  padding-bottom: 80px;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.records-section {
+  margin-bottom: 0;
+}
+
+.form-section {
+  padding: 6px;
+}
+
+/* 桌面端样式 */
+@media (min-width: 1024px) {
+  .records-page {
+    padding-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    /* 桌面端允许滚动，移除 overflow:hidden */
+    overflow: visible;
+  }
+
+  .records-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    /* 不使用 overflow:hidden，避免裁切子元素的阴影、装饰线等 */
+    overflow: visible;
+  }
+
+  .form-section {
+    padding: 16px;
+    /* 表单区域自己处理圆角，让按钮阴影可以外溢 */
+    border-radius: 12px;
+  }
+
+  /* 时间轴组件：自己处理圆角 */
+  .records-section .timeline-view {
+    margin-bottom: 0;
+    border-radius: 12px;
+  }
+
+  /* 列表区域：自己处理圆角 */
+  .records-section .entry-list-container {
+    border-radius: 12px;
+    overflow: hidden; /* 列表内容较多，保留裁切 */
+  }
+}

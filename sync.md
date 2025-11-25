@@ -526,6 +526,26 @@ OSS Bucket
 4. 检查 CORS 配置
 5. 测试 AccessKey 是否有效
 
+### 问题 2.1：Electron 桌面端同步失败
+
+**错误信息**：`XHR error ... connected: false, keepalive socket: false`
+
+**原因**：Electron 运行在 Chromium 内核中，默认启用严格的安全策略（CSP + 同源策略），会在请求发出前拦截跨域请求。这是**程序自己阻止了请求**，不是阿里云拒绝。
+
+> 📝 与浏览器/手机端不同：浏览器开发模式可通过代理绕过，手机端 Capacitor 使用原生 HTTP 不受限制，但 Electron 使用完整的 Chromium 内核会严格检查。
+
+**解决方案**：修改 `electron/src/setup.ts`：
+
+1. 在 `BrowserWindow` 的 `webPreferences` 中添加 `webSecurity: false`
+2. 在 CSP 中添加阿里云域名白名单
+
+修改后重新构建：
+```bash
+npm run build && npx cap sync @capacitor-community/electron
+cd electron && npm run build
+npx cap open @capacitor-community/electron
+```
+
 ### 问题 3：数据不同步
 
 **可能原因**：
