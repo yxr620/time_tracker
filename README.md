@@ -21,7 +21,14 @@
 - 💾 **本地存储**：使用 IndexedDB 实现离线数据存储
 - 📱 **PWA 支持**：可作为 Progressive Web App 安装
 - 🤖 **Android 应用**：使用 Capacitor 打包为原生 Android 应用
-- 💻 **macOS 桌面应用**：使用 Electron 打包为原生 macOS 应用，支持分栏布局和数据分析
+- 💻 **macOS 桌面应用**：使用 Electron 打包为原生 macOS 应用，支持分栏布局
+- 📈 **数据分析看板**（桌面端专属）：
+  - KPI 指标卡片（总时长、活跃天数、最常用目标/类别）
+  - 分类别趋势折线图（按日期展示各类别时长变化）
+  - 目标分布柱状图（Top 10）
+  - 类别分布饼图
+  - 时段分布图（24小时）
+  - 支持 7/14/30/90 天时间范围切换
 
 ## 🛠️ 技术栈
 
@@ -31,7 +38,8 @@
 - **样式方案**：Tailwind CSS
 - **状态管理**：Zustand
 - **数据库**：Dexie.js (IndexedDB 封装)
-- **时间处理**：Day.js
+- **时间处理**：Day.js + date-fns
+- **图表库**：Recharts（桌面端数据分析）
 - **移动端打包**：Capacitor
 - **桌面端打包**：Electron (via Capacitor Community Plugin)
 - **PWA**：vite-plugin-pwa
@@ -57,15 +65,24 @@ time-tracker/
 │   │   │   └── GoalManager.tsx      # 目标管理（Ionic 组件）
 │   │   └── RecordsPage/
 │   │       └── RecordsPage.tsx      # 记录页面
+│   │   ├── Dashboard/
+│   │   │   ├── Dashboard.tsx        # 数据分析看板（桌面端）
+│   │   │   └── Dashboard.css        # 看板样式
+│   │   └── Desktop/
+│   │       └── DesktopSidebar.tsx   # 桌面端侧边栏导航
 │   ├── config/
 │   │   └── categoryColors.ts # 类别颜色配置
+│   ├── types/
+│   │   └── analysis.ts       # 数据分析类型定义
 │   ├── stores/               # 状态管理
 │   │   ├── entryStore.ts
 │   │   ├── goalStore.ts
 │   │   └── categoryStore.ts
 │   └── services/
 │       ├── db.ts             # 数据库配置
-│       └── export.ts         # 数据导出导入功能
+│       ├── export.ts         # 数据导出导入功能
+│       └── analysis/
+│           └── processor.ts  # 数据分析处理器
 ├── android/                  # Android 原生项目
 ├── tailwind.config.js        # Tailwind CSS 配置
 ├── postcss.config.js         # PostCSS 配置
@@ -610,6 +627,19 @@ git push
 ---
 
 ## ✨ 更新日志
+
+### v2.1.0 (2025-11-25)
+- ✅ **桌面端数据分析看板**：全新的数据可视化功能
+  - KPI 指标卡片：总时长、活跃天数、最常用目标/类别
+  - 分类别趋势折线图：按日期展示各类别时长变化，未分类用浅色显示
+  - 目标分布柱状图：展示 Top 10 目标的时间投入
+  - 类别分布饼图：直观展示各类别时间占比
+  - 时段分布图：24小时时间分布热力图
+  - 时间范围选择器：支持 7/14/30/90 天快速切换
+- ✅ 新增 `src/services/analysis/processor.ts` 数据分析处理器
+- ✅ 新增 `src/types/analysis.ts` 分析类型定义
+- ✅ 集成 Recharts 图表库
+- ✅ 桌面端侧边栏新增「分析」入口
 
 ### v2.0.1 (2024-11-22)
 - ✅ **手动同步管理**：重新设计同步界面，提供更精细的控制
