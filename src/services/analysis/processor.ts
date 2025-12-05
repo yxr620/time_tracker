@@ -191,25 +191,37 @@ export function groupByDay(entries: ProcessedEntry[], dateRange: DateRange): Tre
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-/** 按日期+类别分组（分类别趋势图） */
+/** 按日期+类别分组（分类别趋势图）
+ * 未分类时间包括：1) 已记录但未分类的事件 2) 当天未记录的空白时间
+ */
 export function groupByDayAndCategory(
   entries: ProcessedEntry[],
   dateRange: DateRange
 ): { data: CategoryTrendDataPoint[]; categoryKeys: { id: string; name: string; color: string }[] } {
-  // 获取所有出现的类别
+  // 获取所有出现的类别（不包括 uncategorized，后面单独处理）
   const categorySet = new Map<string, { name: string; color: string }>();
   entries.forEach(e => {
-    const id = e.categoryId || 'uncategorized';
-    if (!categorySet.has(id)) {
-      categorySet.set(id, {
-        name: e.categoryName || '未分类',
-        color: e.categoryId ? (CATEGORY_COLORS[e.categoryId]?.color || '#999') : '#e0e0e0',
-      });
+    if (e.categoryId) {
+      const id = e.categoryId;
+      if (!categorySet.has(id)) {
+        categorySet.set(id, {
+          name: e.categoryName || '未分类',
+          color: CATEGORY_COLORS[id]?.color || '#999',
+        });
+      }
     }
+  });
+
+  // 确保有"未分类"类别
+  categorySet.set('uncategorized', {
+    name: '未分类',
+    color: '#e0e0e0',
   });
 
   // 初始化日期范围内所有日期
   const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
+  const today = format(new Date(), 'yyyy-MM-dd');
+  
   const data: CategoryTrendDataPoint[] = days.map(day => {
     const dateStr = format(day, 'yyyy-MM-dd');
     const point: CategoryTrendDataPoint = {
@@ -223,15 +235,36 @@ export function groupByDayAndCategory(
     return point;
   });
 
-  // 聚合数据
+  // 聚合已记录的数据，并计算每天已记录的总时长
   const dateIndexMap = new Map(data.map((d, i) => [d.date, i]));
+  const dailyRecordedTime = new Map<string, number>(); // 每天已记录的总分钟数
+  
   entries.forEach(e => {
     const idx = dateIndexMap.get(e.date);
     if (idx !== undefined) {
       const categoryId = e.categoryId || 'uncategorized';
       const current = data[idx][categoryId];
       data[idx][categoryId] = (typeof current === 'number' ? current : 0) + e.duration / 60;
+      
+      // 累计该天已记录的时间
+      dailyRecordedTime.set(e.date, (dailyRecordedTime.get(e.date) || 0) + e.duration);
     }
+  });
+
+  // 计算每天未记录的时间，加入"未分类"
+  const MINUTES_PER_DAY = 24 * 60;
+  data.forEach(d => {
+    const dateStr = d.date as string;
+    // 跳过未来的日期
+    if (dateStr > today) return;
+    
+    const recordedMinutes = dailyRecordedTime.get(dateStr) || 0;
+    const unrecordedMinutes = Math.max(0, MINUTES_PER_DAY - recordedMinutes);
+    const unrecordedHours = unrecordedMinutes / 60;
+    
+    // 将未记录时间加入"未分类"
+    const current = d['uncategorized'];
+    d['uncategorized'] = (typeof current === 'number' ? current : 0) + unrecordedHours;
   });
 
   // 四舍五入保留1位小数

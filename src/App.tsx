@@ -4,6 +4,7 @@ import { IonApp, IonIcon } from '@ionic/react';
 import { checkmarkDoneOutline, cloudUploadOutline } from 'ionicons/icons';
 import { RecordsPage } from './components/RecordsPage/RecordsPage';
 import { Dashboard } from './components/Dashboard/Dashboard';
+import { TrendPage } from './components/TrendPage/TrendPage';
 import recordsIcon from './assets/recordsIcon.png';
 import { GoalManager } from './components/GoalManager/GoalManager';
 import { SyncManagementPage } from './components/SyncManagementPage/SyncManagementPage';
@@ -288,7 +289,9 @@ function App() {
   const renderPageContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard />;
+        return <Dashboard onOpenTrend={() => setActiveTab('trend')} />;
+      case 'trend':
+        return <TrendPage onBack={() => setActiveTab('dashboard')} />;
       case 'records':
         return <RecordsPage />;
       case 'goals':

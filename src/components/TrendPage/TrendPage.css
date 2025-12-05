@@ -1,0 +1,198 @@
+/* 趋势分析页面容器 */
+.trend-page-container {
+  padding: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+.trend-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.trend-page-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.trend-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-right: 12px;
+  transition: all 0.2s;
+}
+
+.trend-back-btn:hover {
+  background: #f0f0f0;
+}
+
+.trend-back-btn ion-icon {
+  font-size: 20px;
+  color: #666;
+}
+
+/* 筛选器 */
+.trend-filters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.trend-range-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 400;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.trend-range-btn:hover {
+  background: #f0f0f0;
+}
+
+.trend-range-btn.active {
+  background: #1890ff;
+  color: white;
+  font-weight: 500;
+}
+
+.trend-custom-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.trend-custom-range input {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  font-size: 13px;
+}
+
+.trend-custom-range span {
+  color: #666;
+}
+
+/* 图表网格 - 每行显示2-3个小图表 */
+.trend-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .trend-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1400px) {
+  .trend-charts-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* 单个图表卡片 */
+.trend-chart-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.trend-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.trend-chart-title {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.trend-chart-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.trend-chart-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #666;
+}
+
+.trend-stat strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.trend-chart-wrapper {
+  height: 180px;
+  width: 100%;
+}
+
+/* 加载和空状态 */
+.trend-page-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: 16px;
+  color: #666;
+}
+
+.trend-page-empty {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.trend-page-empty-icon {
+  font-size: 64px;
+  color: #ccc;
+  margin-bottom: 16px;
+}
+
+.trend-page-empty-text {
+  font-size: 16px;
+  color: #999;
+  line-height: 1.6;
+}

@@ -16,10 +16,8 @@ import {
   IonText
 } from '@ionic/react';
 import { 
-  // create,
   addOutline,
   createOutline,
-  // trash, 
   trashOutline,
   chevronBackOutline, 
   chevronForwardOutline, 
@@ -201,7 +199,6 @@ export const GoalManager: React.FC = () => {
   }, 0);
 
   const isToday = currentDate === dayjs().format('YYYY-MM-DD');
-  // const numericDate = dayjs(currentDate).format('YYYY-MM-DD');
 
   return (
     <div
@@ -273,15 +270,6 @@ export const GoalManager: React.FC = () => {
                 />
                 <span>{getDateDisplayText()}</span>
               </div>
-              {/* <div
-                style={{
-                  fontSize: '12px',
-                  color: '#94a3b8',
-                  letterSpacing: '0.08em'
-                }}
-              >
-                {numericDate}
-              </div> */}
             </div>
 
             <IonButton

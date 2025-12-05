@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { DatePicker } from 'antd-mobile';
-import { 
-  IonButton, 
-  IonInput, 
-  IonItem, 
-  IonIcon, 
+import {
+  IonButton,
+  IonInput,
+  IonItem,
+  IonIcon,
   useIonToast,
   IonCard,
   IonCardContent
@@ -19,7 +19,7 @@ export const TimeEntryForm: React.FC = () => {
   const { currentEntry, startTracking, stopTracking, addEntry, nextStartTime, nextEndTime, setTimeRange, getLastEntryEndTime, loadEntries } = useEntryStore();
   const { goals, loadGoals } = useGoalStore();
   const { categories, loadCategories } = useCategoryStore();
-  
+
   const [activity, setActivity] = useState('');
   const [startTime, setStartTime] = useState(new Date());
   const [endTime, setEndTime] = useState<Date | null>(null);
@@ -71,11 +71,11 @@ export const TimeEntryForm: React.FC = () => {
       const now = dayjs();
       const start = dayjs(currentEntry.startTime);
       const diff = now.diff(start, 'second');
-      
+
       const hours = Math.floor(diff / 3600).toString().padStart(2, '0');
       const minutes = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
       const seconds = (diff % 60).toString().padStart(2, '0');
-      
+
       setElapsed(`${hours}:${minutes}:${seconds}`);
     }, 1000);
 
@@ -85,16 +85,16 @@ export const TimeEntryForm: React.FC = () => {
   // 获取当前选中日期和前一天的目标（基于开始时间）
   const currentDateStr = dayjs(startTime).format('YYYY-MM-DD');
   const prevDateStr = dayjs(startTime).subtract(1, 'day').format('YYYY-MM-DD');
-  
+
   const currentGoals = goals.filter(g => g.date === currentDateStr);
   const prevGoals = goals.filter(g => g.date === prevDateStr);
-  
+
   // 过滤掉与当前日期目标重复的前一天目标
   const currentGoalNamesLower = currentGoals.map(g => g.name.toLowerCase().trim());
   const filteredPrevGoals = prevGoals.filter(
     g => !currentGoalNamesLower.includes(g.name.toLowerCase().trim())
   );
-  
+
   const availableGoals = [...currentGoals, ...filteredPrevGoals];
 
   // 设置结束时间为"正在进行"
@@ -229,18 +229,18 @@ export const TimeEntryForm: React.FC = () => {
       <div style={{ padding: '20px 8px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
               gap: '6px',
               background: 'rgba(0, 181, 120, 0.1)',
               padding: '4px 10px',
               borderRadius: '16px'
             }}>
-              <div style={{ 
-                width: '6px', 
-                height: '6px', 
-                borderRadius: '50%', 
+              <div style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
                 background: '#00b578',
                 boxShadow: '0 0 8px rgba(0, 181, 120, 0.5)'
               }}></div>
@@ -250,11 +250,11 @@ export const TimeEntryForm: React.FC = () => {
               {currentEntry.activity}
             </div>
           </div>
-          
-          <div style={{ 
-            fontSize: '48px', 
-            fontWeight: '700', 
-            textAlign: 'center', 
+
+          <div style={{
+            fontSize: '48px',
+            fontWeight: '700',
+            textAlign: 'center',
             fontFamily: 'Monaco, Menlo, Consolas, "Courier New", monospace',
             color: '#333',
             letterSpacing: '-1px',
@@ -262,7 +262,7 @@ export const TimeEntryForm: React.FC = () => {
           }}>
             {elapsed}
           </div>
-          
+
           <IonButton
             expand="block"
             color="danger"
@@ -289,10 +289,10 @@ export const TimeEntryForm: React.FC = () => {
     <div style={{ padding: '16px', background: '#ffffff', minHeight: '100%' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {/* 活动名称输入 */}
-        <IonCard style={{ 
-          margin: 0, 
-          borderRadius: '20px', 
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)', 
+        <IonCard style={{
+          margin: 0,
+          borderRadius: '20px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
           border: '1px solid #f0f0f0',
           background: '#ffffff'
         }}>
@@ -316,19 +316,19 @@ export const TimeEntryForm: React.FC = () => {
             </IonItem>
           </IonCardContent>
         </IonCard>
-        
+
         {/* 类别选择 */}
-        <div style={{ 
-          background: '#ffffff', 
-          borderRadius: '20px', 
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '20px',
           padding: '14px 18px',
           border: '1px solid #f0f0f0',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
         }}>
-          <div style={{ 
-            marginBottom: '10px', 
-            fontWeight: '600', 
-            fontSize: '12px', 
+          <div style={{
+            marginBottom: '10px',
+            fontWeight: '600',
+            fontSize: '12px',
             color: '#999',
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
@@ -360,19 +360,19 @@ export const TimeEntryForm: React.FC = () => {
             ))}
           </div>
         </div>
-        
+
         {/* 目标选择 */}
-        <div style={{ 
-          background: '#ffffff', 
-          borderRadius: '20px', 
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '20px',
           padding: '14px 18px',
           border: '1px solid #f0f0f0',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
         }}>
-          <div style={{ 
-            marginBottom: '10px', 
-            fontWeight: '600', 
-            fontSize: '12px', 
+          <div style={{
+            marginBottom: '10px',
+            fontWeight: '600',
+            fontSize: '12px',
             color: '#999',
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
@@ -403,7 +403,7 @@ export const TimeEntryForm: React.FC = () => {
                   </span>
                 </React.Fragment>
               ))}
-              {currentGoals.length > 0 && filteredPrevGoals.length > 0 && 
+              {currentGoals.length > 0 && filteredPrevGoals.length > 0 &&
                 <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>
               }
               {filteredPrevGoals.map((g, index) => (
@@ -433,9 +433,9 @@ export const TimeEntryForm: React.FC = () => {
         </div>
 
         {/* 时间选择卡片 */}
-        <div style={{ 
-          background: '#ffffff', 
-          borderRadius: '20px', 
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '20px',
           padding: '16px 18px',
           border: '1px solid #f0f0f0',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
@@ -444,29 +444,29 @@ export const TimeEntryForm: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
             {/* 开始时间 */}
             <div style={{ flex: '0 0 auto', cursor: 'pointer', minWidth: '80px' }} onClick={() => setStartPickerVisible(true)}>
-               <div style={{ fontSize: '28px', fontWeight: '700', color: '#333', lineHeight: 1.2, fontFamily: 'Monaco, Menlo, monospace', marginBottom: '10px' }}>
-                 {dayjs(startTime).format('HH:mm')}
-               </div>
-               <div>
-                 <span
-                   onClick={(e) => { e.stopPropagation(); setToNow(true); }}
-                   style={{ 
-                     fontSize: '11px', 
-                     color: '#666', 
-                     background: '#f7f8fa', 
-                     padding: '4px 10px', 
-                     borderRadius: '12px',
-                     display: 'inline-flex',
-                     alignItems: 'center',
-                     gap: '4px',
-                     cursor: 'pointer',
-                     transition: 'all 0.2s'
-                   }}
-                 >
-                   <IonIcon icon={refreshOutline} style={{ fontSize: '12px' }} />
-                   现在
-                 </span>
-               </div>
+              <div style={{ fontSize: '28px', fontWeight: '700', color: '#333', lineHeight: 1.2, fontFamily: 'Monaco, Menlo, monospace', marginBottom: '10px' }}>
+                {dayjs(startTime).format('HH:mm')}
+              </div>
+              <div>
+                <span
+                  onClick={(e) => { e.stopPropagation(); setToNow(true); }}
+                  style={{
+                    fontSize: '11px',
+                    color: '#666',
+                    background: '#f7f8fa',
+                    padding: '4px 10px',
+                    borderRadius: '12px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <IonIcon icon={refreshOutline} style={{ fontSize: '12px' }} />
+                  现在
+                </span>
+              </div>
             </div>
 
             {/* 时间轴箭头 */}
@@ -474,51 +474,36 @@ export const TimeEntryForm: React.FC = () => {
 
             {/* 结束时间 */}
             <div style={{ flex: 1, textAlign: 'right', cursor: 'pointer', minWidth: 0 }} onClick={() => setEndPickerVisible(true)}>
-               <div style={{ 
-                 fontSize: '24px', 
-                 fontWeight: '700', 
-                 color: endTime ? '#333' : '#10b981', 
-                 lineHeight: 1.2,
-                 fontFamily: endTime ? 'Monaco, Menlo, monospace' : 'inherit',
-                 marginBottom: '4px'
-               }}>
-                 {endTime ? dayjs(endTime).format('HH:mm') : '进行中'}
-                 {!endTime && <span style={{ fontSize: '16px', marginLeft: '4px' }}>●</span>}
-               </div>
-               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px', marginTop: '10px', flexWrap: 'nowrap' }}>
-                 <span
-                   onClick={(e) => { e.stopPropagation(); setToNow(false); }}
-                   style={{ 
-                     fontSize: '11px', 
-                     color: '#666', 
-                     background: '#f7f8fa', 
-                     padding: '3px 8px', 
-                     borderRadius: '10px',
-                     display: 'inline-block',
-                     cursor: 'pointer',
-                     transition: 'all 0.2s',
-                     whiteSpace: 'nowrap'
-                   }}
-                 >
-                   现在
-                 </span>
-                 <span
-                   onClick={(e) => { e.stopPropagation(); setEndTimeToOngoing(); }}
-                   style={{ 
-                     fontSize: '11px', 
-                     color: '#10b981', 
-                     background: 'rgba(16, 185, 129, 0.1)', 
-                     padding: '3px 8px', 
-                     borderRadius: '10px',
-                     display: 'inline-block',
-                     cursor: 'pointer',
-                     transition: 'all 0.2s',
-                     whiteSpace: 'nowrap'
-                   }}
-                 >
-                   进行中
-                 </span>
-               </div>
+              <div style={{
+                fontSize: '28px',
+                fontWeight: '700',
+                color: endTime ? '#333' : '#10b981',
+                lineHeight: 1.2,
+                fontFamily: endTime ? 'Monaco, Menlo, monospace' : 'inherit',
+                marginBottom: '10px'
+              }}>
+                {endTime ? dayjs(endTime).format('HH:mm') : '进行中'}
+                {!endTime && <span style={{ fontSize: '16px', marginLeft: '4px' }}>●</span>}
+              </div>
+              <div>
+                <span
+                  onClick={(e) => { e.stopPropagation(); setEndTimeToOngoing(); }}
+                  style={{
+                    fontSize: '11px',
+                    color: '#10b981',
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    padding: '4px 10px',
+                    borderRadius: '12px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  进行中
+                </span>
+              </div>
             </div>
           </div>
         </div>

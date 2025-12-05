@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { IonCard, IonSpinner, IonIcon } from '@ionic/react';
-import { calendarOutline, analyticsOutline } from 'ionicons/icons';
+import { calendarOutline, analyticsOutline, trendingUpOutline } from 'ionicons/icons';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line, Legend
+  PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { subDays } from 'date-fns';
 import {
@@ -23,9 +23,8 @@ import './Dashboard.css';
 // 预设时间范围选项
 const DATE_RANGES = [
   { label: '最近7天', days: 7 },
-  { label: '最近14天', days: 14 },
   { label: '最近30天', days: 30 },
-  { label: '最近90天', days: 90 },
+  { label: '自定义', days: -1 },
 ];
 
 // 类别趋势数据类型
@@ -34,7 +33,11 @@ interface CategoryTrendData {
   categoryKeys: { id: string; name: string; color: string }[];
 }
 
-export const Dashboard: React.FC = () => {
+interface DashboardProps {
+  onOpenTrend?: () => void;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend }) => {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
   const [selectedRange, setSelectedRange] = useState(30);
@@ -76,9 +79,17 @@ export const Dashboard: React.FC = () => {
   // 处理时间范围变更
   const handleRangeChange = (days: number) => {
     setSelectedRange(days);
-    const end = new Date();
-    const start = subDays(end, days);
-    setDateRange({ start, end });
+    if (days > 0) {
+      const end = new Date();
+      const start = subDays(end, days);
+      setDateRange({ start, end });
+    }
+    // 如果是自定义（days === -1），保持当前的 dateRange 不变
+  };
+
+  // 处理自定义日期范围变更
+  const handleCustomRangeChange = (range: DateRange) => {
+    setDateRange(range);
   };
 
   // 加载中状态
@@ -97,7 +108,12 @@ export const Dashboard: React.FC = () => {
       <div className="dashboard-container">
         <div className="dashboard-header">
           <h1>数据分析</h1>
-          <DateRangeSelector selected={selectedRange} onChange={handleRangeChange} />
+          <DateRangeSelector 
+            selected={selectedRange} 
+            onChange={handleRangeChange} 
+            customRange={dateRange}
+            onCustomRangeChange={handleCustomRangeChange}
+          />
         </div>
         <div className="dashboard-empty">
           <IonIcon icon={analyticsOutline} className="dashboard-empty-icon" />
@@ -115,7 +131,12 @@ export const Dashboard: React.FC = () => {
       {/* 头部 */}
       <div className="dashboard-header">
         <h1>数据分析</h1>
-        <DateRangeSelector selected={selectedRange} onChange={handleRangeChange} />
+        <DateRangeSelector 
+          selected={selectedRange} 
+          onChange={handleRangeChange} 
+          customRange={dateRange}
+          onCustomRangeChange={handleCustomRangeChange}
+        />
       </div>
 
       {/* KPI 指标卡片 */}
@@ -123,18 +144,37 @@ export const Dashboard: React.FC = () => {
 
       {/* 图表区域 */}
       <div className="charts-grid">
-        {/* 分类别趋势图 - 全宽 */}
-        <div className="chart-card chart-card-full">
-          <div className="chart-card-header">
-            <h3 className="chart-card-title">每日时长趋势（按类别）</h3>
+        {/* 趋势分析入口卡片 */}
+        {onOpenTrend && (
+          <div 
+            className="chart-card chart-card-full trend-entry-card"
+            onClick={onOpenTrend}
+          >
+            <div className="trend-entry-content">
+              <div className="trend-entry-left">
+                <IonIcon icon={trendingUpOutline} className="trend-entry-icon" />
+                <div className="trend-entry-text">
+                  <h3>类别趋势分析</h3>
+                  <p>查看每个类别的独立时长趋势图</p>
+                </div>
+              </div>
+              <div className="trend-entry-preview">
+                {categoryTrendData.categoryKeys.slice(0, 5).map(cat => (
+                  <span 
+                    key={cat.id} 
+                    className="trend-preview-tag"
+                    style={{ backgroundColor: cat.color + '20', color: cat.color, borderColor: cat.color }}
+                  >
+                    {cat.name}
+                  </span>
+                ))}
+                {categoryTrendData.categoryKeys.length > 5 && (
+                  <span className="trend-preview-more">+{categoryTrendData.categoryKeys.length - 5}</span>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="chart-wrapper">
-            <CategoryTrendChart 
-              data={categoryTrendData.data} 
-              categoryKeys={categoryTrendData.categoryKeys} 
-            />
-          </div>
-        </div>
+        )}
 
         {/* 目标分析 */}
         <div className="chart-card">
@@ -173,30 +213,81 @@ export const Dashboard: React.FC = () => {
 // === 子组件 ===
 
 /** 时间范围选择器 */
-const DateRangeSelector: React.FC<{ selected: number; onChange: (days: number) => void }> = ({ selected, onChange }) => (
-  <div className="dashboard-filters">
-    <IonIcon icon={calendarOutline} style={{ fontSize: 18, color: '#666' }} />
-    {DATE_RANGES.map(range => (
-      <button
-        key={range.days}
-        className={`date-range-btn ${selected === range.days ? 'active' : ''}`}
-        onClick={() => onChange(range.days)}
-        style={{
-          padding: '6px 12px',
-          borderRadius: 6,
-          border: 'none',
-          background: selected === range.days ? '#1890ff' : '#f5f5f5',
-          color: selected === range.days ? 'white' : '#666',
-          cursor: 'pointer',
-          fontSize: 13,
-          fontWeight: selected === range.days ? 500 : 400,
-        }}
-      >
-        {range.label}
-      </button>
-    ))}
-  </div>
-);
+const DateRangeSelector: React.FC<{ 
+  selected: number; 
+  onChange: (days: number) => void;
+  customRange: DateRange;
+  onCustomRangeChange: (range: DateRange) => void;
+}> = ({ selected, onChange, customRange, onCustomRangeChange }) => {
+  const formatDateForInput = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  return (
+    <div className="dashboard-filters">
+      <IonIcon icon={calendarOutline} style={{ fontSize: 18, color: '#666' }} />
+      {DATE_RANGES.map(range => (
+        <button
+          key={range.days}
+          className={`date-range-btn ${selected === range.days ? 'active' : ''}`}
+          onClick={() => onChange(range.days)}
+          style={{
+            padding: '6px 12px',
+            borderRadius: 6,
+            border: 'none',
+            background: selected === range.days ? '#1890ff' : '#f5f5f5',
+            color: selected === range.days ? 'white' : '#666',
+            cursor: 'pointer',
+            fontSize: 13,
+            fontWeight: selected === range.days ? 500 : 400,
+          }}
+        >
+          {range.label}
+        </button>
+      ))}
+      {selected === -1 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 8 }}>
+          <input
+            type="date"
+            value={formatDateForInput(customRange.start)}
+            onChange={(e) => {
+              const newStart = new Date(e.target.value);
+              if (!isNaN(newStart.getTime()) && newStart <= customRange.end) {
+                onCustomRangeChange({ ...customRange, start: newStart });
+              }
+            }}
+            style={{
+              padding: '4px 8px',
+              borderRadius: 4,
+              border: '1px solid #d9d9d9',
+              fontSize: 13,
+            }}
+          />
+          <span style={{ color: '#666' }}>至</span>
+          <input
+            type="date"
+            value={formatDateForInput(customRange.end)}
+            onChange={(e) => {
+              const newEnd = new Date(e.target.value);
+              if (!isNaN(newEnd.getTime()) && newEnd >= customRange.start) {
+                onCustomRangeChange({ ...customRange, end: newEnd });
+              }
+            }}
+            style={{
+              padding: '4px 8px',
+              borderRadius: 4,
+              border: '1px solid #d9d9d9',
+              fontSize: 13,
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
 /** KPI 卡片组 */
 const KPICards: React.FC<{ metrics: AnalysisMetrics }> = ({ metrics }) => (
@@ -220,45 +311,6 @@ const KPICards: React.FC<{ metrics: AnalysisMetrics }> = ({ metrics }) => (
       <div className="kpi-card-value" style={{ fontSize: 20 }}>{metrics.topCategory || '-'}</div>
     </IonCard>
   </div>
-);
-
-/** 分类别趋势折线图 */
-const CategoryTrendChart: React.FC<{
-  data: CategoryTrendDataPoint[];
-  categoryKeys: { id: string; name: string; color: string }[];
-}> = ({ data, categoryKeys }) => (
-  <ResponsiveContainer width="100%" height="100%">
-    <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-      <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="#999" />
-      <YAxis tick={{ fontSize: 12 }} stroke="#999" unit="h" />
-      <Tooltip
-        formatter={(value: number, name: string) => {
-          const cat = categoryKeys.find(c => c.id === name);
-          return [`${value} 小时`, cat?.name || name];
-        }}
-        labelFormatter={(label) => `日期: ${label}`}
-      />
-      <Legend
-        formatter={(value) => {
-          const cat = categoryKeys.find(c => c.id === value);
-          return <span style={{ color: '#666', fontSize: 12 }}>{cat?.name || value}</span>;
-        }}
-      />
-      {categoryKeys.map((cat) => (
-        <Line
-          key={cat.id}
-          type="monotone"
-          dataKey={cat.id}
-          stroke={cat.color}
-          strokeWidth={cat.id === 'uncategorized' ? 1 : 2}
-          strokeOpacity={cat.id === 'uncategorized' ? 0.5 : 1}
-          dot={false}
-          activeDot={{ r: 4 }}
-        />
-      ))}
-    </LineChart>
-  </ResponsiveContainer>
 );
 
 /** 目标柱状图 */

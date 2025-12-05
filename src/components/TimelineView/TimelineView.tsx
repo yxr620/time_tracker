@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useEntryStore } from '../../stores/entryStore';
 import { useCategoryStore } from '../../stores/categoryStore';
 import { useGoalStore } from '../../stores/goalStore';
 import type { TimeEntry } from '../../services/db';
 import dayjs from 'dayjs';
 import { Popover } from 'antd-mobile';
+import { IonDatetime, IonModal, IonContent } from '@ionic/react';
 import './TimelineView.css';
 
 interface TimeBlock {
@@ -35,6 +36,8 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
   const { goals, loadGoals } = useGoalStore();
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const [gapBlocks, setGapBlocks] = useState<GapBlock[]>([]);
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const datetimeRef = useRef<HTMLIonDatetimeElement>(null);
 
   useEffect(() => {
     loadEntries();
@@ -219,10 +222,13 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
       {/* 日期选择器 */}
       <div className="timeline-header">
         <button onClick={goToPreviousDay} className="date-nav-btn">←</button>
-        <div className="date-display">
+        <div 
+          className="date-display date-display-clickable"
+          onClick={() => setDatePickerVisible(true)}
+        >
           {dayjs(selectedDate).format('YYYY-MM-DD')}
           {!isToday && (
-            <button onClick={goToToday} className="today-btn">今天</button>
+            <button onClick={(e) => { e.stopPropagation(); goToToday(); }} className="today-btn">今天</button>
           )}
         </div>
         <button 
@@ -233,6 +239,38 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
           →
         </button>
       </div>
+
+      {/* 日期选择弹窗 */}
+      <IonModal 
+        isOpen={datePickerVisible} 
+        onDidDismiss={() => setDatePickerVisible(false)}
+        initialBreakpoint={0.65}
+        breakpoints={[0, 0.65, 0.8]}
+      >
+        <IonContent className="ion-padding">
+          <IonDatetime
+            ref={datetimeRef}
+            presentation="date"
+            value={dayjs(selectedDate).format('YYYY-MM-DD')}
+            max={dayjs().format('YYYY-MM-DD')}
+            locale="zh-CN"
+            firstDayOfWeek={1}
+            showDefaultButtons={true}
+            doneText="确定"
+            cancelText="取消"
+            onIonChange={(e) => {
+              const value = e.detail.value;
+              if (value) {
+                const dateStr = typeof value === 'string' ? value : value[0];
+                onDateChange(dayjs(dateStr).toDate());
+              }
+              setDatePickerVisible(false);
+            }}
+            onIonCancel={() => setDatePickerVisible(false)}
+            style={{ width: '100%', margin: '0 auto' }}
+          />
+        </IonContent>
+      </IonModal>
 
       {/* 24小时时间轴 */}
       <div className="timeline-container">
@@ -275,10 +313,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
                 <div className="timeline-popover">
                   <div className="popover-activity">{block.entry.activity}</div>
                   <div className="popover-time">
-                    {dayjs(block.entry.startTime).format('HH:mm')} - {dayjs(block.entry.endTime).format('HH:mm')}
-                  </div>
-                  <div className="popover-duration">
-                    时长: {formatDuration(block.entry.startTime, block.entry.endTime)}
+                    {dayjs(block.entry.startTime).format('HH:mm')} - {dayjs(block.entry.endTime).format('HH:mm')} ({formatDuration(block.entry.startTime, block.entry.endTime)})
                   </div>
                 </div>
               }

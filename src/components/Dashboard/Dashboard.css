@@ -188,3 +188,67 @@
   height: 12px;
   border-radius: 2px;
 }
+
+/* 趋势分析入口卡片 */
+.trend-entry-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: auto !important;
+}
+
+.trend-entry-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.trend-entry-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.trend-entry-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.trend-entry-icon {
+  font-size: 36px;
+  color: #1890ff;
+}
+
+.trend-entry-text h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 4px 0;
+}
+
+.trend-entry-text p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.trend-entry-preview {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.trend-preview-tag {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid;
+}
+
+.trend-preview-more {
+  font-size: 12px;
+  color: #999;
+}

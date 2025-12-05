@@ -16,6 +16,9 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       disable: mode === 'development', // 开发模式禁用 PWA
       registerType: 'autoUpdate',
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+      },
       manifest: {
         name: '时间追踪工具',
         short_name: '时间追踪',
