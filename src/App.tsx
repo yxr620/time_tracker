@@ -12,6 +12,8 @@ import { exportFullJSON, exportIncrementalJSON, importFromJSON, ImportStrategy }
 import { useSyncStore } from './stores/syncStore';
 import { isOSSConfigured } from './services/oss';
 import { DesktopSidebar } from './components/Desktop/DesktopSidebar';
+import { getDefaultDateRange } from './services/analysis/processor';
+import type { DateRange } from './types/analysis';
 import './App.css';
 
 function App() {
@@ -19,6 +21,8 @@ function App() {
   const [importStrategy, setImportStrategy] = useState<typeof ImportStrategy.MERGE | typeof ImportStrategy.REPLACE>(ImportStrategy.MERGE);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { checkConfig } = useSyncStore();
+  const [analysisDateRange, setAnalysisDateRange] = useState<DateRange>(getDefaultDateRange());
+  const [analysisSelectedRange, setAnalysisSelectedRange] = useState(30);
   
   // 简单的屏幕宽度检测
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
@@ -289,9 +293,29 @@ function App() {
   const renderPageContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard onOpenTrend={() => setActiveTab('trend')} />;
+        return (
+          <Dashboard
+            dateRange={analysisDateRange}
+            selectedRange={analysisSelectedRange}
+            onDateRangeChange={(range, selected) => {
+              setAnalysisDateRange(range);
+              setAnalysisSelectedRange(selected);
+            }}
+            onOpenTrend={() => setActiveTab('trend')}
+          />
+        );
       case 'trend':
-        return <TrendPage onBack={() => setActiveTab('dashboard')} />;
+        return (
+          <TrendPage
+            dateRange={analysisDateRange}
+            selectedRange={analysisSelectedRange}
+            onDateRangeChange={(range, selected) => {
+              setAnalysisDateRange(range);
+              setAnalysisSelectedRange(selected);
+            }}
+            onBack={() => setActiveTab('dashboard')}
+          />
+        );
       case 'records':
         return <RecordsPage />;
       case 'goals':

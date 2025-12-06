@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { TimeEntryForm } from '../TimeTracker/TimeEntryForm';
 import { TimelineView } from '../TimelineView/TimelineView';
 import { EntryList } from '../EntryList/EntryList';
+import { useDateStore } from '../../stores/dateStore';
+import dayjs from 'dayjs';
 import './RecordsPage.css';
 
 export const RecordsPage: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const selectedDateStr = useDateStore(state => state.selectedDate);
+  const setSelectedDate = useDateStore(state => state.setSelectedDate);
+
+  const selectedDate = useMemo(() => dayjs(selectedDateStr).toDate(), [selectedDateStr]);
 
   return (
     <div className="records-page">
@@ -16,7 +21,7 @@ export const RecordsPage: React.FC = () => {
 
       {/* 24小时时间轴可视化 */}
       <div className="records-section">
-        <TimelineView selectedDate={selectedDate} onDateChange={setSelectedDate} />
+        <TimelineView selectedDate={selectedDate} onDateChange={(date) => setSelectedDate(date)} />
       </div>
 
       {/* 当日记录列表 */}

@@ -35,12 +35,27 @@ interface CategoryTrendData {
 
 interface DashboardProps {
   onOpenTrend?: () => void;
+  dateRange?: DateRange;
+  selectedRange?: number;
+  onDateRangeChange?: (range: DateRange, selected: number) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend, dateRange: dateRangeProp, selectedRange: selectedRangeProp, onDateRangeChange }) => {
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
-  const [selectedRange, setSelectedRange] = useState(30);
+  const [dateRange, setDateRange] = useState<DateRange>(dateRangeProp ?? getDefaultDateRange());
+  const [selectedRange, setSelectedRange] = useState(selectedRangeProp ?? 30);
+
+  useEffect(() => {
+    if (dateRangeProp) {
+      setDateRange(dateRangeProp);
+    }
+  }, [dateRangeProp]);
+
+  useEffect(() => {
+    if (selectedRangeProp !== undefined) {
+      setSelectedRange(selectedRangeProp);
+    }
+  }, [selectedRangeProp]);
   
   // 数据状态
   const [entries, setEntries] = useState<ProcessedEntry[]>([]);
@@ -82,7 +97,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend }) => {
     if (days > 0) {
       const end = new Date();
       const start = subDays(end, days);
-      setDateRange({ start, end });
+      const range = { start, end };
+      setDateRange(range);
+      onDateRangeChange?.(range, days);
+    } else {
+      onDateRangeChange?.(dateRange, days);
     }
     // 如果是自定义（days === -1），保持当前的 dateRange 不变
   };
@@ -90,7 +109,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend }) => {
   // 处理自定义日期范围变更
   const handleCustomRangeChange = (range: DateRange) => {
     setDateRange(range);
+    onDateRangeChange?.(range, selectedRange);
   };
+
+  const noGoalStat = goalData.find(g => g.name === '无目标');
+  const goalsForChart = goalData.filter(g => g.name !== '无目标');
+
+  const displayTopGoal = goalData.find(g => g.name !== '无目标')?.name || metrics?.topGoal || '-';
 
   // 加载中状态
   if (loading) {
@@ -140,7 +165,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend }) => {
       </div>
 
       {/* KPI 指标卡片 */}
-      {metrics && <KPICards metrics={metrics} />}
+      {metrics && <KPICards metrics={metrics} topGoalOverride={displayTopGoal} />}
 
       {/* 图表区域 */}
       <div className="charts-grid">
@@ -180,9 +205,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend }) => {
         <div className="chart-card">
           <div className="chart-card-header">
             <h3 className="chart-card-title">目标分布 (Top 10)</h3>
+            {noGoalStat && (
+              <span
+                style={{
+                  marginLeft: 8,
+                  padding: '2px 8px',
+                  borderRadius: 999,
+                  background: '#f5f5f5',
+                  color: '#666',
+                  fontSize: 12,
+                  border: '1px solid #e5e5e5',
+                }}
+              >
+                无目标 {Math.round((noGoalStat.value / 60) * 10) / 10}h
+              </span>
+            )}
           </div>
           <div className="chart-wrapper">
-            <GoalBarChart data={goalData} />
+            <GoalBarChart data={goalsForChart} />
           </div>
         </div>
 
@@ -290,7 +330,7 @@ const DateRangeSelector: React.FC<{
 };
 
 /** KPI 卡片组 */
-const KPICards: React.FC<{ metrics: AnalysisMetrics }> = ({ metrics }) => (
+const KPICards: React.FC<{ metrics: AnalysisMetrics; topGoalOverride?: string | null }> = ({ metrics, topGoalOverride }) => (
   <div className="kpi-grid">
     <IonCard className="kpi-card">
       <div className="kpi-card-label">总时长</div>
@@ -304,11 +344,7 @@ const KPICards: React.FC<{ metrics: AnalysisMetrics }> = ({ metrics }) => (
     </IonCard>
     <IonCard className="kpi-card">
       <div className="kpi-card-label">最常用目标</div>
-      <div className="kpi-card-value" style={{ fontSize: 20 }}>{metrics.topGoal || '-'}</div>
-    </IonCard>
-    <IonCard className="kpi-card">
-      <div className="kpi-card-label">最常用类别</div>
-      <div className="kpi-card-value" style={{ fontSize: 20 }}>{metrics.topCategory || '-'}</div>
+      <div className="kpi-card-value" style={{ fontSize: 20 }}>{topGoalOverride || metrics.topGoal || '-'}</div>
     </IonCard>
   </div>
 );

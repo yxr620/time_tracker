@@ -13,12 +13,28 @@ import { playOutline, stopOutline, saveOutline, chatbubbleOutline, pricetagOutli
 import { useEntryStore } from '../../stores/entryStore';
 import { useGoalStore } from '../../stores/goalStore';
 import { useCategoryStore } from '../../stores/categoryStore';
+import { useDateStore } from '../../stores/dateStore';
 import dayjs from 'dayjs';
+
+const ensureDate = (value: Date | string) => (value instanceof Date ? value : new Date(value));
+
+const alignDateWithTime = (time: Date, dateStr: string) => {
+  const base = dayjs(dateStr);
+  const timePart = dayjs(time);
+  return base
+    .hour(timePart.hour())
+    .minute(timePart.minute())
+    .second(timePart.second())
+    .millisecond(timePart.millisecond())
+    .toDate();
+};
 
 export const TimeEntryForm: React.FC = () => {
   const { currentEntry, startTracking, stopTracking, addEntry, nextStartTime, nextEndTime, setTimeRange, getLastEntryEndTime, loadEntries } = useEntryStore();
   const { goals, loadGoals } = useGoalStore();
   const { categories, loadCategories } = useCategoryStore();
+  const selectedDate = useDateStore(state => state.selectedDate);
+  const setSelectedDate = useDateStore(state => state.setSelectedDate);
 
   const [activity, setActivity] = useState('');
   const [startTime, setStartTime] = useState(new Date());
@@ -36,21 +52,27 @@ export const TimeEntryForm: React.FC = () => {
       await Promise.all([loadGoals(), loadCategories(), loadEntries()]);
       // 数据加载完成后，设置初始开始时间
       const lastEndTime = getLastEntryEndTime();
+      const baseDate = selectedDate;
       if (lastEndTime) {
-        // 确保是 Date 对象
-        setStartTime(lastEndTime instanceof Date ? lastEndTime : new Date(lastEndTime));
+        // 用最后一次结束的时间片来决定时间部分，但日期保持用户当前选中的日期
+        const normalized = ensureDate(lastEndTime);
+        setStartTime(alignDateWithTime(normalized, baseDate));
+      } else {
+        // 无最近结束时间时，用当前时间的时分秒叠加到选中日期
+        setStartTime(alignDateWithTime(new Date(), baseDate));
       }
     };
     init();
-  }, []);
+  }, [alignDateWithTime, ensureDate, getLastEntryEndTime, loadCategories, loadEntries, loadGoals, selectedDate]);
 
   // 当从记录列表或时间轴点击时，自动设置开始时间和结束时间
   useEffect(() => {
     if (nextStartTime) {
-      // 确保是 Date 对象
-      setStartTime(nextStartTime instanceof Date ? nextStartTime : new Date(nextStartTime));
+      const normalizedStart = ensureDate(nextStartTime);
+      setStartTime(normalizedStart);
+      setSelectedDate(dayjs(normalizedStart).format('YYYY-MM-DD'));
       if (nextEndTime) {
-        setEndTime(nextEndTime instanceof Date ? nextEndTime : new Date(nextEndTime));
+        setEndTime(ensureDate(nextEndTime));
       } else {
         // 如果只设置了开始时间（点击已存在的记录），清空结束时间
         setEndTime(null);
@@ -58,7 +80,16 @@ export const TimeEntryForm: React.FC = () => {
       // 重置store中的时间
       setTimeRange(null as any, null as any);
     }
-  }, [nextStartTime, nextEndTime, setTimeRange]);
+  }, [ensureDate, nextEndTime, nextStartTime, setSelectedDate, setTimeRange]);
+
+  // 当选中的日期发生变化时，将开始时间对齐到该日期但保留具体时间点
+  useEffect(() => {
+    const startDateStr = dayjs(startTime).format('YYYY-MM-DD');
+    if (startDateStr !== selectedDate) {
+      setStartTime(alignDateWithTime(startTime, selectedDate));
+      setEndTime(null);
+    }
+  }, [alignDateWithTime, selectedDate, startTime]);
 
   // 更新计时器显示
   useEffect(() => {
@@ -83,8 +114,8 @@ export const TimeEntryForm: React.FC = () => {
   }, [currentEntry]);
 
   // 获取当前选中日期和前一天的目标（基于开始时间）
-  const currentDateStr = dayjs(startTime).format('YYYY-MM-DD');
-  const prevDateStr = dayjs(startTime).subtract(1, 'day').format('YYYY-MM-DD');
+  const currentDateStr = selectedDate;
+  const prevDateStr = dayjs(selectedDate).subtract(1, 'day').format('YYYY-MM-DD');
 
   const currentGoals = goals.filter(g => g.date === currentDateStr);
   const prevGoals = goals.filter(g => g.date === prevDateStr);
@@ -113,6 +144,7 @@ export const TimeEntryForm: React.FC = () => {
     const now = new Date();
     if (isStart) {
       setStartTime(now);
+      setSelectedDate(dayjs(now).format('YYYY-MM-DD'));
     } else {
       setEndTime(now);
     }
@@ -149,7 +181,9 @@ export const TimeEntryForm: React.FC = () => {
     setSelectedCategoryId('');
     setSelectedGoalId(null);
     const lastEndTime = getLastEntryEndTime();
-    setStartTime(lastEndTime ? (lastEndTime instanceof Date ? lastEndTime : new Date(lastEndTime)) : new Date());
+    const nextStart = lastEndTime ? ensureDate(lastEndTime) : new Date();
+    setStartTime(nextStart);
+    setSelectedDate(dayjs(nextStart).format('YYYY-MM-DD'));
     setEndTime(null);
   };
 
@@ -164,7 +198,9 @@ export const TimeEntryForm: React.FC = () => {
     });
     // 重置开始时间为最后记录的结束时间
     const lastEndTime = getLastEntryEndTime();
-    setStartTime(lastEndTime ? (lastEndTime instanceof Date ? lastEndTime : new Date(lastEndTime)) : new Date());
+    const nextStart = lastEndTime ? ensureDate(lastEndTime) : new Date();
+    setStartTime(nextStart);
+    setSelectedDate(dayjs(nextStart).format('YYYY-MM-DD'));
   };
 
   // 保存手动添加的记录
@@ -219,7 +255,9 @@ export const TimeEntryForm: React.FC = () => {
     setSelectedCategoryId('');
     setSelectedGoalId(null);
     const lastEndTime = getLastEntryEndTime();
-    setStartTime(lastEndTime ? (lastEndTime instanceof Date ? lastEndTime : new Date(lastEndTime)) : new Date());
+    const nextStart = lastEndTime ? ensureDate(lastEndTime) : new Date();
+    setStartTime(nextStart);
+    setSelectedDate(dayjs(nextStart).format('YYYY-MM-DD'));
     setEndTime(null);
   };
 
@@ -558,6 +596,7 @@ export const TimeEntryForm: React.FC = () => {
         value={startTime}
         onConfirm={val => {
           setStartTime(val);
+          setSelectedDate(dayjs(val).format('YYYY-MM-DD'));
         }}
         precision="minute"
         renderLabel={(type, data) => {

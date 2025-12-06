@@ -25,11 +25,13 @@ import {
 } from 'ionicons/icons';
 import { useGoalStore } from '../../stores/goalStore';
 import { useEntryStore } from '../../stores/entryStore';
+import { useDateStore } from '../../stores/dateStore';
 import dayjs from 'dayjs';
 import type { Goal } from '../../services/db';
 
 export const GoalManager: React.FC = () => {
-  const [currentDate, setCurrentDate] = useState(dayjs().format('YYYY-MM-DD'));
+  const currentDate = useDateStore(state => state.selectedDate);
+  const setSelectedDate = useDateStore(state => state.setSelectedDate);
   const [showAddGoal, setShowAddGoal] = useState(false);
   const [showEditGoal, setShowEditGoal] = useState(false);
   const [newGoalName, setNewGoalName] = useState('');
@@ -48,7 +50,7 @@ export const GoalManager: React.FC = () => {
   useEffect(() => {
     loadGoals();
     loadEntries(currentDate);
-  }, [currentDate]);
+  }, [currentDate, loadEntries, loadGoals]);
 
   // 获取当天的目标
   const todayGoals = goals.filter(g => g.date === currentDate);
@@ -76,16 +78,16 @@ export const GoalManager: React.FC = () => {
   // 日期切换
   const handlePrevDay = () => {
     const prevDay = dayjs(currentDate).subtract(1, 'day').format('YYYY-MM-DD');
-    setCurrentDate(prevDay);
+    setSelectedDate(prevDay);
   };
 
   const handleNextDay = () => {
     const nextDay = dayjs(currentDate).add(1, 'day').format('YYYY-MM-DD');
-    setCurrentDate(nextDay);
+    setSelectedDate(nextDay);
   };
 
   const handleToday = () => {
-    setCurrentDate(dayjs().format('YYYY-MM-DD'));
+    setSelectedDate(dayjs().format('YYYY-MM-DD'));
   };
 
   // 添加目标
@@ -316,7 +318,7 @@ export const GoalManager: React.FC = () => {
         value={new Date(currentDate)}
         onConfirm={(val) => {
           if (val) {
-            setCurrentDate(dayjs(val).format('YYYY-MM-DD'));
+            setSelectedDate(dayjs(val).format('YYYY-MM-DD'));
           }
           setShowDatePicker(false);
         }}

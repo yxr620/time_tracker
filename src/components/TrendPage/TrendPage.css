@@ -96,22 +96,16 @@
   color: #666;
 }
 
-/* 图表网格 - 每行显示2-3个小图表 */
+/* 图表网格 - 桌面两列、移动一列 */
 .trend-charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 @media (max-width: 900px) {
   .trend-charts-grid {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (min-width: 1400px) {
-  .trend-charts-grid {
-    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -123,6 +117,10 @@
   padding: 16px;
   display: flex;
   flex-direction: column;
+}
+
+.trend-area-overview {
+  margin-bottom: 16px;
 }
 
 .trend-chart-header {
@@ -162,7 +160,7 @@
 }
 
 .trend-chart-wrapper {
-  height: 180px;
+  height: 150px;
   width: 100%;
 }
 
@@ -195,4 +193,114 @@
   font-size: 16px;
   color: #999;
   line-height: 1.6;
+}
+
+/* 周度对比区域 */
+.trend-weekly-section {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+/* 对比行布局 - 图表与摘要并排 */
+.trend-comparison-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.trend-comparison-chart-col {
+  flex: 2 1 400px;
+  min-width: 0;
+}
+
+.trend-comparison-summary-col {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+/* 摘要列表样式 */
+.trend-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.trend-summary-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #f9fafb;
+  transition: background-color 0.2s;
+}
+
+.trend-summary-item:hover {
+  background-color: #f0f2f5;
+}
+
+.trend-summary-bar {
+  width: 4px;
+  height: 36px;
+  border-radius: 2px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.trend-summary-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.trend-summary-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.trend-summary-details {
+  font-size: 12px;
+  color: #666;
+}
+
+.trend-summary-divider {
+  margin: 0 6px;
+  color: #ddd;
+}
+
+.trend-summary-diff {
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.trend-summary-diff.positive {
+  color: #ef4444;
+}
+
+.trend-summary-diff.negative {
+  color: #10b981;
+}
+
+.trend-summary-diff.neutral {
+  color: #666;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .trend-page-container {
+    padding: 16px;
+  }
+  
+  .trend-comparison-row {
+    gap: 12px;
+  }
+  
+  .trend-comparison-chart-col,
+  .trend-comparison-summary-col {
+    flex: 1 1 100%;
+  }
 }

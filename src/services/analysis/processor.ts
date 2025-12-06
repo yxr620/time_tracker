@@ -348,3 +348,103 @@ export function formatHours(minutes: number): string {
   const hours = Math.round(minutes / 60 * 10) / 10;
   return `${hours}h`;
 }
+
+/** 按周和类别分组（用于周度对比） */
+export function groupByWeekAndCategory(
+  entries: ProcessedEntry[],
+  weeks: { start: Date; end: Date; label: string }[]
+): { data: CategoryTrendDataPoint[]; categoryKeys: { id: string; name: string; color: string }[] } {
+  const categorySet = new Map<string, { name: string; color: string }>();
+  
+  // 确保有"未分类"类别
+  categorySet.set('uncategorized', {
+    name: '未分类',
+    color: '#e0e0e0',
+  });
+  
+  // 初始化数据结构
+  const data = weeks.map(week => {
+    const point = {
+      date: week.label,
+      label: week.label,
+    } as CategoryTrendDataPoint;
+    // 初始化未分类为0
+    point['uncategorized'] = 0;
+    return point;
+  });
+
+  // 记录每周已记录的总时长
+  const weeklyRecordedTime = new Map<number, number>();
+  weeks.forEach((_, idx) => weeklyRecordedTime.set(idx, 0));
+
+  // 遍历记录
+  entries.forEach(e => {
+    // 找到所属的周
+    const weekIndex = weeks.findIndex(w => 
+      e.startTime.getTime() >= w.start.getTime() && e.startTime.getTime() <= w.end.getTime()
+    );
+
+    if (weekIndex !== -1) {
+      const categoryId = e.categoryId || 'uncategorized';
+      const categoryName = e.categoryName || '未分类';
+      
+      // 记录类别信息
+      if (!categorySet.has(categoryId)) {
+        const color = CATEGORY_COLORS[categoryId]?.color || '#999999';
+        categorySet.set(categoryId, { name: categoryName, color });
+      }
+
+      // 累加时长 (小时)
+      const currentVal = (data[weekIndex][categoryId] as number) || 0;
+      data[weekIndex][categoryId] = currentVal + (e.duration / 60);
+      
+      // 累计该周已记录的时间（分钟）
+      weeklyRecordedTime.set(weekIndex, (weeklyRecordedTime.get(weekIndex) || 0) + e.duration);
+    }
+  });
+
+  // 计算每周未记录的时间，加入"未分类"
+  const MINUTES_PER_WEEK = 7 * 24 * 60; // 一周的总分钟数
+  const today = new Date();
+  
+  weeks.forEach((week, idx) => {
+    // 跳过未来的周
+    if (week.start > today) return;
+    
+    // 计算这一周实际应该有多少天（处理当前周可能不完整的情况）
+    const weekEnd = week.end > today ? today : week.end;
+    const daysInWeek = Math.ceil((weekEnd.getTime() - week.start.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+    const maxMinutes = Math.min(MINUTES_PER_WEEK, daysInWeek * 24 * 60);
+    
+    const recordedMinutes = weeklyRecordedTime.get(idx) || 0;
+    const unrecordedMinutes = Math.max(0, maxMinutes - recordedMinutes);
+    const unrecordedHours = unrecordedMinutes / 60;
+    
+    // 将未记录时间加入"未分类"
+    const current = data[idx]['uncategorized'];
+    data[idx]['uncategorized'] = (typeof current === 'number' ? current : 0) + unrecordedHours;
+  });
+
+  // 四舍五入
+  data.forEach(d => {
+    categorySet.forEach((_, id) => {
+      const val = d[id];
+      if (typeof val === 'number') {
+        d[id] = Math.round(val * 10) / 10;
+      }
+    });
+  });
+
+  // 构建类别列表
+  const categoryKeys = Array.from(categorySet.entries())
+    .map(([id, info]) => ({ id, ...info }))
+    .sort((a, b) => {
+      if (a.id === 'uncategorized') return 1;
+      if (b.id === 'uncategorized') return -1;
+      const orderA = CATEGORY_COLORS[a.id]?.order ?? 999;
+      const orderB = CATEGORY_COLORS[b.id]?.order ?? 999;
+      return orderA - orderB;
+    });
+
+  return { data, categoryKeys };
+}
