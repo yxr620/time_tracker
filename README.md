@@ -39,6 +39,11 @@
   - 包含未分类时间（未记录的时间也纳入分析）
   - 支持 7/30 天及自定义日期范围
   - 显示每个类别的总计和日均时长
+- 🎯 **目标深度分析**（桌面端专属）：
+  - 智能目标聚类：自动将相似目标（如"开发 app"、"修复 bug"）归为同一簇
+  - 健康状态追踪：活跃/放缓/停滞三种状态，快速了解目标投入情况
+  - 趋势可视化：Top 8 目标簇的时间投入趋势叠加面积图
+  - 未关联事件建议：识别可能与现有目标簇相关的无目标记录
 
 ## 🛠️ 技术栈
 
@@ -81,12 +86,16 @@ time-tracker/
 │   │   ├── TrendPage/
 │   │   │   ├── TrendPage.tsx        # 趋势分析页面（桌面端）
 │   │   │   └── TrendPage.css        # 趋势页面样式
+│   │   ├── GoalAnalysisPage/
+│   │   │   ├── GoalAnalysisPage.tsx # 目标深度分析页面（桌面端）
+│   │   │   └── GoalAnalysisPage.css # 目标分析页面样式
 │   │   └── Desktop/
 │   │       └── DesktopSidebar.tsx   # 桌面端侧边栏导航
 │   ├── config/
 │   │   └── categoryColors.ts # 类别颜色配置
 │   ├── types/
-│   │   └── analysis.ts       # 数据分析类型定义
+│   │   ├── analysis.ts       # 数据分析类型定义
+│   │   └── goalAnalysis.ts   # 目标分析类型定义
 │   ├── stores/               # 状态管理
 │   │   ├── entryStore.ts
 │   │   ├── goalStore.ts
@@ -95,7 +104,9 @@ time-tracker/
 │       ├── db.ts             # 数据库配置
 │       ├── export.ts         # 数据导出导入功能
 │       └── analysis/
-│           └── processor.ts  # 数据分析处理器
+│           ├── processor.ts  # 数据分析处理器
+│           ├── goalCluster.ts        # 目标聚类算法
+│           └── goalAnalysisProcessor.ts  # 目标分析处理器
 ├── android/                  # Android 原生项目
 ├── tailwind.config.js        # Tailwind CSS 配置
 ├── postcss.config.js         # PostCSS 配置

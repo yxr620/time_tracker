@@ -1,0 +1,627 @@
+/**
+ * 目标分析页面样式
+ */
+
+.goal-analysis-container {
+  padding: 16px;
+  padding-bottom: 100px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.goal-analysis-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #666;
+  font-size: 15px;
+}
+
+.goal-analysis-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.goal-analysis-empty-icon {
+  font-size: 64px;
+  color: #d9d9d9;
+  margin-bottom: 16px;
+}
+
+.goal-analysis-empty-text {
+  color: #999;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* 头部 */
+.goal-analysis-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.goal-analysis-header h1 {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+  min-width: 120px;
+}
+
+.goal-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #f5f5f5;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 20px;
+  color: #666;
+  transition: background 0.2s;
+}
+
+.goal-back-btn:hover {
+  background: #e8e8e8;
+}
+
+/* 时间范围选择器 */
+.goal-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.goal-range-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #f5f5f5;
+  color: #666;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 400;
+  transition: all 0.2s;
+}
+
+.goal-range-btn:hover {
+  background: #e8e8e8;
+}
+
+.goal-range-btn.active {
+  background: #3b82f6;
+  color: white;
+  font-weight: 500;
+}
+
+.goal-custom-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.goal-custom-range input {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  font-size: 13px;
+}
+
+.goal-custom-range span {
+  color: #666;
+}
+
+/* 健康度总览卡片 */
+.health-summary-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.health-summary-card h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.health-stats-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.health-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.health-emoji {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.health-count {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.health-stat.active .health-count {
+  color: #10b981;
+}
+
+.health-stat.slowing .health-count {
+  color: #f59e0b;
+}
+
+.health-stat.stalled .health-count {
+  color: #ef4444;
+}
+
+.health-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-top: 2px;
+}
+
+.health-desc {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.health-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+
+.health-bar-active {
+  background: #10b981;
+}
+
+.health-bar-slowing {
+  background: #f59e0b;
+}
+
+.health-bar-stalled {
+  background: #ef4444;
+}
+
+/* 图表卡片 */
+.goal-chart-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.goal-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.goal-chart-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.goal-chart-subtitle {
+  font-size: 12px;
+  color: #999;
+  margin-left: 8px;
+}
+
+.goal-chart-wrapper {
+  width: 100%;
+}
+
+/* Tooltip 样式 */
+.goal-tooltip {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  padding: 12px;
+  min-width: 160px;
+}
+
+.tooltip-header {
+  font-weight: 600;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 12px;
+}
+
+.tooltip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.tooltip-name {
+  flex: 1;
+  color: #666;
+}
+
+.tooltip-value {
+  font-weight: 500;
+}
+
+.tooltip-total {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #f0f0f0;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* 聚类区域 */
+.goal-cluster-section {
+  margin-bottom: 20px;
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.section-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.section-subtitle {
+  font-size: 13px;
+  color: #999;
+}
+
+.cluster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 显示更多按钮 */
+.show-more-btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  background: #f8fafc;
+  border: 1px dashed #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.show-more-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+/* 聚类卡片 */
+.cluster-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.2s;
+}
+
+.cluster-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.cluster-card.expanded {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cluster-card-main {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
+  gap: 12px;
+}
+
+.cluster-color-bar {
+  width: 4px;
+  height: 48px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.cluster-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cluster-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.cluster-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cluster-health {
+  font-size: 12px;
+}
+
+.cluster-stats {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.cluster-stat strong {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.cluster-stat-divider {
+  color: #d9d9d9;
+}
+
+.cluster-meta {
+  font-size: 12px;
+  color: #999;
+}
+
+.cluster-arrow {
+  font-size: 18px;
+  color: #999;
+  transition: transform 0.2s;
+}
+
+.cluster-arrow.rotated {
+  transform: rotate(90deg);
+}
+
+/* 聚类详情展开区域 */
+.cluster-details {
+  border-top: 1px solid #f0f0f0;
+  padding: 16px;
+  background: #fafafa;
+}
+
+.subgoal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subgoal-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.subgoal-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.subgoal-name {
+  flex: 1;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subgoal-date {
+  color: #999;
+  font-size: 12px;
+}
+
+.subgoal-duration {
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+/* 未关联事件区域 */
+.unlinked-section {
+  margin-bottom: 20px;
+}
+
+.unlinked-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.unlinked-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.unlinked-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.unlinked-activity {
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.unlinked-meta {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 6px;
+}
+
+.unlinked-divider {
+  margin: 0 4px;
+  color: #d9d9d9;
+}
+
+.unlinked-suggestion {
+  font-size: 13px;
+  color: #666;
+}
+
+.unlinked-suggestion strong {
+  color: #3b82f6;
+}
+
+.confidence-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  background: #e0f2fe;
+  color: #0369a1;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.unlinked-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.unlinked-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+.unlinked-btn.link {
+  background: #10b981;
+  color: white;
+}
+
+.unlinked-btn.link:hover {
+  background: #059669;
+}
+
+.unlinked-btn.dismiss {
+  background: #f5f5f5;
+  color: #999;
+}
+
+.unlinked-btn.dismiss:hover {
+  background: #e8e8e8;
+  color: #666;
+}
+
+/* 响应式适配 */
+@media (max-width: 640px) {
+  .goal-analysis-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .goal-analysis-header h1 {
+    margin-bottom: 8px;
+  }
+  
+  .goal-filters {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .health-stats-row {
+    gap: 8px;
+  }
+  
+  .health-stat {
+    padding: 10px 4px;
+  }
+  
+  .health-count {
+    font-size: 24px;
+  }
+  
+  .health-label {
+    font-size: 12px;
+  }
+  
+  .health-desc {
+    font-size: 10px;
+  }
+  
+  .cluster-card-main {
+    padding: 12px;
+  }
+  
+  .cluster-stats {
+    flex-wrap: wrap;
+  }
+}

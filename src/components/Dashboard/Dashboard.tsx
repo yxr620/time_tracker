@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { IonCard, IonSpinner, IonIcon } from '@ionic/react';
-import { calendarOutline, analyticsOutline, trendingUpOutline } from 'ionicons/icons';
+import { calendarOutline, analyticsOutline, trendingUpOutline, flagOutline } from 'ionicons/icons';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
@@ -35,12 +35,13 @@ interface CategoryTrendData {
 
 interface DashboardProps {
   onOpenTrend?: () => void;
+  onOpenGoalAnalysis?: () => void;
   dateRange?: DateRange;
   selectedRange?: number;
   onDateRangeChange?: (range: DateRange, selected: number) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend, dateRange: dateRangeProp, selectedRange: selectedRangeProp, onDateRangeChange }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend, onOpenGoalAnalysis, dateRange: dateRangeProp, selectedRange: selectedRangeProp, onDateRangeChange }) => {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>(dateRangeProp ?? getDefaultDateRange());
   const [selectedRange, setSelectedRange] = useState(selectedRangeProp ?? 30);
@@ -196,6 +197,35 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend, dateRange: da
                 {categoryTrendData.categoryKeys.length > 5 && (
                   <span className="trend-preview-more">+{categoryTrendData.categoryKeys.length - 5}</span>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 目标分析入口卡片 */}
+        {onOpenGoalAnalysis && (
+          <div 
+            className="chart-card chart-card-full trend-entry-card goal-entry-card"
+            onClick={onOpenGoalAnalysis}
+          >
+            <div className="trend-entry-content">
+              <div className="trend-entry-left">
+                <IonIcon icon={flagOutline} className="trend-entry-icon" style={{ color: '#f59e0b' }} />
+                <div className="trend-entry-text">
+                  <h3>目标深度分析</h3>
+                  <p>智能聚类相似目标，追踪推进进度</p>
+                </div>
+              </div>
+              <div className="trend-entry-preview">
+                <span className="trend-preview-tag" style={{ backgroundColor: '#10b98120', color: '#10b981', borderColor: '#10b981' }}>
+                  🟢 活跃
+                </span>
+                <span className="trend-preview-tag" style={{ backgroundColor: '#f59e0b20', color: '#f59e0b', borderColor: '#f59e0b' }}>
+                  🟡 放缓
+                </span>
+                <span className="trend-preview-tag" style={{ backgroundColor: '#ef444420', color: '#ef4444', borderColor: '#ef4444' }}>
+                  🔴 停滞
+                </span>
               </div>
             </div>
           </div>

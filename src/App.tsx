@@ -5,6 +5,7 @@ import { checkmarkDoneOutline, cloudUploadOutline } from 'ionicons/icons';
 import { RecordsPage } from './components/RecordsPage/RecordsPage';
 import { Dashboard } from './components/Dashboard/Dashboard';
 import { TrendPage } from './components/TrendPage/TrendPage';
+import { GoalAnalysisPage } from './components/GoalAnalysisPage/GoalAnalysisPage';
 import recordsIcon from './assets/recordsIcon.png';
 import { GoalManager } from './components/GoalManager/GoalManager';
 import { SyncManagementPage } from './components/SyncManagementPage/SyncManagementPage';
@@ -302,11 +303,24 @@ function App() {
               setAnalysisSelectedRange(selected);
             }}
             onOpenTrend={() => setActiveTab('trend')}
+            onOpenGoalAnalysis={() => setActiveTab('goalAnalysis')}
           />
         );
       case 'trend':
         return (
           <TrendPage
+            dateRange={analysisDateRange}
+            selectedRange={analysisSelectedRange}
+            onDateRangeChange={(range, selected) => {
+              setAnalysisDateRange(range);
+              setAnalysisSelectedRange(selected);
+            }}
+            onBack={() => setActiveTab('dashboard')}
+          />
+        );
+      case 'goalAnalysis':
+        return (
+          <GoalAnalysisPage
             dateRange={analysisDateRange}
             selectedRange={analysisSelectedRange}
             onDateRangeChange={(range, selected) => {
