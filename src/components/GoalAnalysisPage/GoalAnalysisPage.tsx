@@ -15,7 +15,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   AreaChart, Area,
 } from 'recharts';
-import { subDays } from 'date-fns';
+import { subDays, differenceInDays } from 'date-fns';
 import {
   analyzeGoals,
   getDefaultGoalAnalysisDateRange,
@@ -36,6 +36,7 @@ import type {
 } from '../../types/goalAnalysis';
 import type { DateRange } from '../../types/analysis';
 import { db } from '../../services/db';
+import { syncDb } from '../../services/syncDb';
 import './GoalAnalysisPage.css';
 
 // 预设时间范围选项
@@ -255,9 +256,10 @@ export const GoalAnalysisPage: React.FC<GoalAnalysisPageProps> = ({
       {/* 未关联事件推荐 */}
       {unlinkedSuggestions.length > 0 && (
         <UnlinkedEventSection 
-          suggestions={unlinkedSuggestions} 
-          onRefresh={fetchData}
-        />
+            suggestions={unlinkedSuggestions} 
+            clusters={clusters}
+            onRefresh={fetchData}
+          />
       )}
     </div>
   );
@@ -567,21 +569,47 @@ const ClusterCard: React.FC<{
 /** 未关联事件推荐区域 */
 const UnlinkedEventSection: React.FC<{
   suggestions: UnlinkedEventSuggestion[];
+  clusters: GoalCluster[];
   onRefresh: () => void;
-}> = ({ suggestions, onRefresh: _onRefresh }) => {
+}> = ({ suggestions, clusters, onRefresh }) => {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
+  // 获取建议的最佳候选目标（±2天内最近的目标）
+  const getBestCandidate = (suggestion: UnlinkedEventSuggestion) => {
+    const cluster = clusters.find(c => c.id === suggestion.suggestedClusterId);
+    if (!cluster) return null;
+    
+    const suggestionDate = new Date(suggestion.date);
+    const candidates = cluster.goals
+      .map(g => ({ goal: g, diff: Math.abs(differenceInDays(new Date(g.date), suggestionDate)) }))
+      .filter(c => c.diff <= 2)
+      .sort((a, b) => a.diff - b.diff);
+    
+    return candidates[0]?.goal || null;
+  };
+
+  // 点击关联：直接关联到最近的候选目标
   const handleLink = async (suggestion: UnlinkedEventSuggestion) => {
-    // TODO: 实现关联逻辑 - 需要创建目标或关联到现有目标
-    // 暂时只隐藏该建议
-    setDismissed(prev => new Set(prev).add(suggestion.entryId));
+    const candidate = getBestCandidate(suggestion);
+    if (!candidate) return;
+    
+    try {
+      await syncDb.entries.update(suggestion.entryId, { goalId: candidate.id });
+      setDismissed(prev => new Set(prev).add(suggestion.entryId));
+      onRefresh();
+    } catch (err) {
+      console.error('关联失败:', err);
+    }
   };
 
   const handleDismiss = (entryId: string) => {
     setDismissed(prev => new Set(prev).add(entryId));
   };
 
-  const visibleSuggestions = suggestions.filter(s => !dismissed.has(s.entryId));
+  // 只显示有 ±2 天内可关联目标的建议
+  const visibleSuggestions = suggestions.filter(s => 
+    !dismissed.has(s.entryId) && getBestCandidate(s) !== null
+  );
 
   if (visibleSuggestions.length === 0) return null;
 
@@ -589,43 +617,36 @@ const UnlinkedEventSection: React.FC<{
     <div className="unlinked-section">
       <div className="section-header">
         <h2>🔗 未关联事件推荐</h2>
-        <span className="section-subtitle">
-          以下事件可能属于现有目标
-        </span>
+        <span className="section-subtitle">以下事件可能属于现有目标</span>
       </div>
       <div className="unlinked-list">
-        {visibleSuggestions.slice(0, 5).map((suggestion) => (
-          <div key={suggestion.entryId} className="unlinked-item">
-            <div className="unlinked-info">
-              <div className="unlinked-activity">{suggestion.activity}</div>
-              <div className="unlinked-meta">
-                <span>{suggestion.date}</span>
-                <span className="unlinked-divider">·</span>
-                <span>{formatGoalDuration(suggestion.duration)}</span>
+        {visibleSuggestions.slice(0, 5).map((suggestion) => {
+          const candidate = getBestCandidate(suggestion);
+          return (
+            <div key={suggestion.entryId} className="unlinked-item">
+              <div className="unlinked-info">
+                <div className="unlinked-activity">{suggestion.activity}</div>
+                <div className="unlinked-meta">
+                  <span>{suggestion.date}</span>
+                  <span className="unlinked-divider">·</span>
+                  <span>{formatGoalDuration(suggestion.duration)}</span>
+                </div>
+                <div className="unlinked-suggestion">
+                  → 关联到: <strong>{candidate?.name}</strong>
+                  <span className="confidence-badge">{candidate?.date}</span>
+                </div>
               </div>
-              <div className="unlinked-suggestion">
-                → 推荐关联: <strong>{suggestion.suggestedClusterName}</strong>
-                <span className="confidence-badge">
-                  {Math.round(suggestion.confidence * 100)}%匹配
-                </span>
+              <div className="unlinked-actions">
+                <button className="unlinked-btn link" onClick={() => handleLink(suggestion)}>
+                  <IonIcon icon={checkmarkOutline} />
+                </button>
+                <button className="unlinked-btn dismiss" onClick={() => handleDismiss(suggestion.entryId)}>
+                  <IonIcon icon={closeOutline} />
+                </button>
               </div>
             </div>
-            <div className="unlinked-actions">
-              <button 
-                className="unlinked-btn link"
-                onClick={() => handleLink(suggestion)}
-              >
-                <IonIcon icon={checkmarkOutline} />
-              </button>
-              <button 
-                className="unlinked-btn dismiss"
-                onClick={() => handleDismiss(suggestion.entryId)}
-              >
-                <IonIcon icon={closeOutline} />
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

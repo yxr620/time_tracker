@@ -170,63 +170,72 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend, onOpenGoalAna
 
       {/* 图表区域 */}
       <div className="charts-grid">
-        {/* 趋势分析入口卡片 */}
-        {onOpenTrend && (
-          <div 
-            className="chart-card chart-card-full trend-entry-card"
-            onClick={onOpenTrend}
-          >
-            <div className="trend-entry-content">
-              <div className="trend-entry-left">
-                <IonIcon icon={trendingUpOutline} className="trend-entry-icon" />
-                <div className="trend-entry-text">
-                  <h3>类别趋势分析</h3>
-                  <p>查看每个类别的独立时长趋势图</p>
+        {/* 趋势分析和目标分析入口卡片 - 同一行 */}
+        {(onOpenTrend || onOpenGoalAnalysis) && (
+          <div className="chart-card chart-card-full chart-card-compact">
+            <div style={{ display: 'flex', gap: 12 }}>
+              {/* 趋势分析入口卡片 */}
+              {onOpenTrend && (
+                <div 
+                  className="trend-entry-card"
+                  onClick={onOpenTrend}
+                  style={{ flex: 1, background: 'white', borderRadius: 12, padding: 16, cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', minHeight: 96 }}
+                >
+                  <div className="trend-entry-content" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                    <div className="trend-entry-left">
+                      <IonIcon icon={trendingUpOutline} className="trend-entry-icon" />
+                      <div className="trend-entry-text">
+                        <h3>类别趋势分析</h3>
+                        <p>查看每个类别的独立时长趋势图</p>
+                      </div>
+                    </div>
+                    <div className="trend-entry-preview" style={{ marginTop: 4 }}>
+                      {categoryTrendData.categoryKeys.slice(0, 3).map(cat => (
+                        <span 
+                          key={cat.id} 
+                          className="trend-preview-tag"
+                          style={{ backgroundColor: cat.color + '20', color: cat.color, borderColor: cat.color }}
+                        >
+                          {cat.name}
+                        </span>
+                      ))}
+                      {categoryTrendData.categoryKeys.length > 3 && (
+                        <span className="trend-preview-more">+{categoryTrendData.categoryKeys.length - 3}</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="trend-entry-preview">
-                {categoryTrendData.categoryKeys.slice(0, 5).map(cat => (
-                  <span 
-                    key={cat.id} 
-                    className="trend-preview-tag"
-                    style={{ backgroundColor: cat.color + '20', color: cat.color, borderColor: cat.color }}
-                  >
-                    {cat.name}
-                  </span>
-                ))}
-                {categoryTrendData.categoryKeys.length > 5 && (
-                  <span className="trend-preview-more">+{categoryTrendData.categoryKeys.length - 5}</span>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+              )}
 
-        {/* 目标分析入口卡片 */}
-        {onOpenGoalAnalysis && (
-          <div 
-            className="chart-card chart-card-full trend-entry-card goal-entry-card"
-            onClick={onOpenGoalAnalysis}
-          >
-            <div className="trend-entry-content">
-              <div className="trend-entry-left">
-                <IonIcon icon={flagOutline} className="trend-entry-icon" style={{ color: '#f59e0b' }} />
-                <div className="trend-entry-text">
-                  <h3>目标深度分析</h3>
-                  <p>智能聚类相似目标，追踪推进进度</p>
+              {/* 目标分析入口卡片 */}
+              {onOpenGoalAnalysis && (
+                <div 
+                  className="trend-entry-card goal-entry-card"
+                  onClick={onOpenGoalAnalysis}
+                  style={{ flex: 1, background: 'white', borderRadius: 12, padding: 16, cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', minHeight: 96 }}
+                >
+                  <div className="trend-entry-content" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                    <div className="trend-entry-left">
+                      <IonIcon icon={flagOutline} className="trend-entry-icon" style={{ color: '#f59e0b' }} />
+                      <div className="trend-entry-text">
+                        <h3>目标深度分析</h3>
+                        <p>智能聚类相似目标，追踪推进进度</p>
+                      </div>
+                    </div>
+                    <div className="trend-entry-preview" style={{ marginTop: 4 }}>
+                      <span className="trend-preview-tag" style={{ backgroundColor: '#10b98120', color: '#10b981', borderColor: '#10b981' }}>
+                        🟢 活跃
+                      </span>
+                      <span className="trend-preview-tag" style={{ backgroundColor: '#f59e0b20', color: '#f59e0b', borderColor: '#f59e0b' }}>
+                        🟡 放缓
+                      </span>
+                      <span className="trend-preview-tag" style={{ backgroundColor: '#ef444420', color: '#ef4444', borderColor: '#ef4444' }}>
+                        🔴 停滞
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="trend-entry-preview">
-                <span className="trend-preview-tag" style={{ backgroundColor: '#10b98120', color: '#10b981', borderColor: '#10b981' }}>
-                  🟢 活跃
-                </span>
-                <span className="trend-preview-tag" style={{ backgroundColor: '#f59e0b20', color: '#f59e0b', borderColor: '#f59e0b' }}>
-                  🟡 放缓
-                </span>
-                <span className="trend-preview-tag" style={{ backgroundColor: '#ef444420', color: '#ef4444', borderColor: '#ef4444' }}>
-                  🔴 停滞
-                </span>
-              </div>
+              )}
             </div>
           </div>
         )}
