@@ -200,49 +200,66 @@
   color: #666;
 }
 
-/* Popover 内容 */
-.timeline-popover {
+/* Tooltip 跟随时间块位置 */
+.timeline-tooltip {
+  position: absolute;
+  top: 16px;
+  transform: translate(-50%, -100%);
+  background: #ffffff;
+  color: #333;
   padding: 8px 12px;
-  min-width: 100px;
-  max-width: 200px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  pointer-events: none;
+  max-width: 90%;
 }
 
-.popover-activity {
+.timeline-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 7px solid #ffffff;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.05));
+}
+
+/* 左边缘对齐 - 当时间块在左侧时 */
+.timeline-tooltip.tooltip-align-left {
+  transform: translate(-10%, -100%);
+}
+
+.timeline-tooltip.tooltip-align-left::after {
+  left: 10%;
+}
+
+/* 右边缘对齐 - 当时间块在右侧时 */
+.timeline-tooltip.tooltip-align-right {
+  transform: translate(-90%, -100%);
+}
+
+.timeline-tooltip.tooltip-align-right::after {
+  left: 90%;
+}
+
+.tooltip-activity {
   font-weight: 600;
-  font-size: 13px;
-  margin-bottom: 4px;
-  color: #333;
-  white-space: nowrap;
+  margin-bottom: 3px;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 180px;
+  color: #1a1a1a;
 }
 
-.popover-time {
+.tooltip-time {
   font-size: 11px;
   color: #666;
-  margin-bottom: 0;
-  white-space: nowrap;
-}
-
-.popover-duration {
-  font-size: 12px;
-  color: #999;
-}
-
-/* IonPopover 轻量级样式 */
-.timeline-popover-container {
-  --width: auto;
-  --max-width: 220px;
-  --box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-}
-
-.timeline-popover-container::part(content) {
-  border-radius: 8px;
-  padding: 0;
-}
-
-.timeline-popover-container::part(arrow) {
-  display: block;
 }
 
 /* 移动端优化 */

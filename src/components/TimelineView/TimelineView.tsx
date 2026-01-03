@@ -4,7 +4,7 @@ import { useCategoryStore } from '../../stores/categoryStore';
 import { useGoalStore } from '../../stores/goalStore';
 import type { TimeEntry } from '../../services/db';
 import dayjs from 'dayjs';
-import { IonDatetime, IonModal, IonContent, IonPopover } from '@ionic/react';
+import { IonDatetime, IonModal, IonContent } from '@ionic/react';
 import './TimelineView.css';
 
 interface TimeBlock {
@@ -36,18 +36,36 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const [gapBlocks, setGapBlocks] = useState<GapBlock[]>([]);
   const [datePickerVisible, setDatePickerVisible] = useState(false);
-  const [popoverState, setPopoverState] = useState<{ isOpen: boolean; event: Event | undefined; block: TimeBlock | null }>({
+  const [popoverState, setPopoverState] = useState<{ isOpen: boolean; block: TimeBlock | null; positionPercent: number }>({
     isOpen: false,
-    event: undefined,
-    block: null
+    block: null,
+    positionPercent: 50
   });
   const datetimeRef = useRef<HTMLIonDatetimeElement>(null);
+  const timelineContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadEntries();
     loadCategories();
     loadGoals();
   }, [loadEntries, loadCategories, loadGoals]);
+
+  // 点击外部关闭 tooltip
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (popoverState.isOpen && timelineContainerRef.current) {
+        const target = e.target as HTMLElement;
+        if (!timelineContainerRef.current.contains(target)) {
+          setPopoverState({ isOpen: false, block: null, positionPercent: 50 });
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [popoverState.isOpen]);
 
   useEffect(() => {
     processTimelineData();
@@ -273,7 +291,16 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
       </IonModal>
 
       {/* 24小时时间轴 */}
-      <div className="timeline-container">
+      <div 
+        ref={timelineContainerRef}
+        className="timeline-container" 
+        onClick={(e) => {
+          // 点击非时间块区域时关闭 popover
+          if (!(e.target as HTMLElement).closest('.timeline-block')) {
+            setPopoverState({ isOpen: false, block: null, positionPercent: 50 });
+          }
+        }}
+      >
         {/* 时间刻度 */}
         <div className="timeline-labels">
           {timeLabels.map(hour => (
@@ -316,8 +343,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
                 backgroundColor: block.color
               }}
               title={block.label}
-              onClick={(e) => {
-                setPopoverState({ isOpen: true, event: e.nativeEvent, block });
+              onClick={() => {
+                // 计算时间块中心位置的百分比
+                const centerPercent = block.startPercent + block.widthPercent / 2;
+                setPopoverState({ isOpen: true, block, positionPercent: centerPercent });
                 if (block.entry.endTime) {
                   setNextStartTime(block.entry.endTime);
                 }
@@ -325,26 +354,20 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
             />
           ))}
           
-          {/* Popover 弹出框 */}
-          <IonPopover
-            isOpen={popoverState.isOpen}
-            event={popoverState.event}
-            onDidDismiss={() => setPopoverState({ isOpen: false, event: undefined, block: null })}
-            side="top"
-            alignment="center"
-            showBackdrop={false}
-            className="timeline-popover-container"
-          >
-            {popoverState.block && (
-              <div className="timeline-popover">
-                <div className="popover-activity">{popoverState.block.entry.activity}</div>
-                <div className="popover-time">
-                  {dayjs(popoverState.block.entry.startTime).format('HH:mm')} - {dayjs(popoverState.block.entry.endTime).format('HH:mm')} ({formatDuration(popoverState.block.entry.startTime, popoverState.block.entry.endTime)})
-                </div>
-              </div>
-            )}
-          </IonPopover>
         </div>
+
+        {/* 跟随时间块的 Tooltip */}
+        {popoverState.isOpen && popoverState.block && (
+          <div 
+            className={`timeline-tooltip ${popoverState.positionPercent < 15 ? 'tooltip-align-left' : popoverState.positionPercent > 85 ? 'tooltip-align-right' : ''}`}
+            style={{ left: `${Math.max(5, Math.min(95, popoverState.positionPercent))}%` }}
+          >
+            <div className="tooltip-activity">{popoverState.block.entry.activity}</div>
+            <div className="tooltip-time">
+              {dayjs(popoverState.block.entry.startTime).format('HH:mm')} - {dayjs(popoverState.block.entry.endTime).format('HH:mm')} ({formatDuration(popoverState.block.entry.startTime, popoverState.block.entry.endTime)})
+            </div>
+          </div>
+        )}
 
         {/* 当前时间指示线（只在今天显示） */}
         {isToday && (

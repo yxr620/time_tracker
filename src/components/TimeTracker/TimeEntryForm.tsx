@@ -329,16 +329,17 @@ export const TimeEntryForm: React.FC = () => {
 
   // 正常的录入界面
   return (
-    <div style={{ padding: '16px', background: '#ffffff', minHeight: '100%' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div style={{ padding: '16px', minHeight: '100%' }}>
         {/* 活动名称输入 */}
-        <IonCard style={{
-          margin: 0,
-          borderRadius: '20px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-          border: '1px solid #f0f0f0',
-          background: '#ffffff'
-        }}>
+        <IonCard
+          className="mb-2"
+          style={{
+            margin: 0,
+            borderRadius: '24px',
+            background: 'rgba(255,255,255,0.95)',
+            boxShadow: '0 12px 28px rgba(15, 23, 42, 0.08)',
+            border: '1px solid rgba(148, 163, 184, 0.12)'
+          }}>
           <IonCardContent style={{ padding: 0 }}>
             <IonItem lines="none" style={{ '--background': 'transparent', '--padding-start': '20px', '--padding-end': '20px' }}>
               <IonIcon icon={chatbubbleOutline} slot="start" style={{ color: '#bbb', fontSize: '20px', marginRight: '8px' }} />
@@ -361,130 +362,148 @@ export const TimeEntryForm: React.FC = () => {
         </IonCard>
 
         {/* 类别选择 */}
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '20px',
-          padding: '14px 18px',
-          border: '1px solid #f0f0f0',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
-        }}>
-          <div style={{
-            marginBottom: '10px',
-            fontWeight: '600',
-            fontSize: '12px',
-            color: '#999',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}>
-            <IonIcon icon={pricetagOutline} style={{ fontSize: '14px' }} />
-            类别
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-            {categories.map((c, index) => (
-              <React.Fragment key={c.id}>
-                {index > 0 && <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>}
-                <span
-                  onClick={() => setSelectedCategoryId(c.id === selectedCategoryId ? '' : c.id)}
-                  style={{
-                    fontSize: '15px',
-                    fontWeight: c.id === selectedCategoryId ? '600' : '400',
-                    color: c.id === selectedCategoryId ? '#3b82f6' : '#666',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    userSelect: 'none'
-                  }}
-                >
-                  {c.name}
-                </span>
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
+        <IonCard
+          className="mb-2"
+          style={{
+            margin: 0,
+            borderRadius: '24px',
+            background: 'rgba(255,255,255,0.95)',
+            boxShadow: '0 12px 28px rgba(15, 23, 42, 0.08)',
+            border: '1px solid rgba(148, 163, 184, 0.12)'
+          }}
+        >
+          <IonCardContent style={{ padding: '14px 20px' }}>
+            <div style={{
+              marginBottom: '10px',
+              fontWeight: '600',
+              fontSize: '12px',
+              color: '#999',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <IonIcon icon={pricetagOutline} style={{ fontSize: '14px' }} />
+              类别
+            </div>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '8px', alignItems: 'center', whiteSpace: 'nowrap', paddingRight: '8px' }}>
+                {categories.map((c, index) => (
+                  <React.Fragment key={c.id}>
+                    {index > 0 && <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px', flex: '0 0 auto' }}>•</span>}
+                    <span
+                      onClick={() => setSelectedCategoryId(c.id === selectedCategoryId ? '' : c.id)}
+                      style={{
+                        fontSize: '15px',
+                        fontWeight: c.id === selectedCategoryId ? '600' : '400',
+                        color: c.id === selectedCategoryId ? '#3b82f6' : '#666',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        userSelect: 'none',
+                        flex: '0 0 auto'
+                      }}
+                    >
+                      {c.name}
+                    </span>
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          </IonCardContent>
+        </IonCard>
 
         {/* 目标选择 */}
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '20px',
-          padding: '14px 18px',
-          border: '1px solid #f0f0f0',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
-        }}>
-          <div style={{
-            marginBottom: '10px',
-            fontWeight: '600',
-            fontSize: '12px',
-            color: '#999',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}>
-            <IonIcon icon={flagOutline} style={{ fontSize: '14px' }} />
-            关联目标
-          </div>
-          {availableGoals.length > 0 ? (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-              {currentGoals.map((g, index) => (
-                <React.Fragment key={g.id}>
-                  {index > 0 && <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>}
-                  <span
-                    onClick={() => setSelectedGoalId(g.id === selectedGoalId ? null : g.id!)}
-                    style={{
-                      fontSize: '15px',
-                      fontWeight: g.id === selectedGoalId ? '600' : '400',
-                      color: g.id === selectedGoalId ? '#f59e0b' : '#666',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      userSelect: 'none'
-                    }}
-                  >
-                    {g.name}
-                  </span>
-                </React.Fragment>
-              ))}
-              {currentGoals.length > 0 && filteredPrevGoals.length > 0 &&
-                <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>
-              }
-              {filteredPrevGoals.map((g, index) => (
-                <React.Fragment key={g.id}>
-                  {index > 0 && <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>}
-                  <span
-                    onClick={() => setSelectedGoalId(g.id === selectedGoalId ? null : g.id!)}
-                    style={{
-                      fontSize: '15px',
-                      fontWeight: g.id === selectedGoalId ? '600' : '400',
-                      color: g.id === selectedGoalId ? '#f59e0b' : '#999',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      userSelect: 'none'
-                    }}
-                  >
-                    {g.name}*
-                  </span>
-                </React.Fragment>
-              ))}
+        <IonCard
+          className="mb-2"
+          style={{
+            margin: 0,
+            borderRadius: '24px',
+            background: 'rgba(255,255,255,0.95)',
+            boxShadow: '0 12px 28px rgba(15, 23, 42, 0.08)',
+            border: '1px solid rgba(148, 163, 184, 0.12)'
+          }}
+        >
+          <IonCardContent style={{ padding: '14px 20px' }}>
+            <div style={{
+              marginBottom: '10px',
+              fontWeight: '600',
+              fontSize: '12px',
+              color: '#999',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <IonIcon icon={flagOutline} style={{ fontSize: '14px' }} />
+              关联目标
             </div>
-          ) : (
-            <div style={{ color: '#bbb', fontSize: '14px' }}>
-              该日期暂无目标
+            <div style={{ height: '56px', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              {availableGoals.length > 0 ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', paddingRight: '8px' }}>
+                  {currentGoals.map((g, index) => (
+                    <React.Fragment key={g.id}>
+                      {index > 0 && <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>}
+                      <span
+                        onClick={() => setSelectedGoalId(g.id === selectedGoalId ? null : g.id!)}
+                        style={{
+                          fontSize: '15px',
+                          fontWeight: g.id === selectedGoalId ? '600' : '400',
+                          color: g.id === selectedGoalId ? '#f59e0b' : '#666',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          userSelect: 'none'
+                        }}
+                      >
+                        {g.name}
+                      </span>
+                    </React.Fragment>
+                  ))}
+                  {currentGoals.length > 0 && filteredPrevGoals.length > 0 &&
+                    <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>
+                  }
+                  {filteredPrevGoals.map((g, index) => (
+                    <React.Fragment key={g.id}>
+                      {index > 0 && <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>}
+                      <span
+                        onClick={() => setSelectedGoalId(g.id === selectedGoalId ? null : g.id!)}
+                        style={{
+                          fontSize: '15px',
+                          fontWeight: g.id === selectedGoalId ? '600' : '400',
+                          color: g.id === selectedGoalId ? '#f59e0b' : '#999',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          userSelect: 'none'
+                        }}
+                      >
+                        {g.name}*
+                      </span>
+                    </React.Fragment>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ color: '#bbb', fontSize: '14px', height: '100%', display: 'flex', alignItems: 'center' }}>
+                  该日期暂无目标
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </IonCardContent>
+        </IonCard>
 
         {/* 时间选择卡片 */}
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '20px',
-          padding: '16px 18px',
-          border: '1px solid #f0f0f0',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-          transition: 'all 0.2s'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
+        <IonCard
+          className="mb-2"
+          style={{
+            margin: 0,
+            borderRadius: '24px',
+            background: 'rgba(255,255,255,0.95)',
+            boxShadow: '0 12px 28px rgba(15, 23, 42, 0.08)',
+            border: '1px solid rgba(148, 163, 184, 0.12)'
+          }}
+        >
+          <IonCardContent style={{ padding: '16px 20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
             {/* 开始时间 */}
             <div style={{ flex: '0 0 auto', cursor: 'pointer', minWidth: '80px' }} onClick={() => setStartPickerVisible(true)}>
               <div style={{ fontSize: '28px', fontWeight: '700', color: '#333', lineHeight: 1.2, fontFamily: 'Monaco, Menlo, monospace', marginBottom: '10px' }}>
@@ -549,51 +568,51 @@ export const TimeEntryForm: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+          </IonCardContent>
+        </IonCard>
 
         {/* 操作按钮 */}
-        <div style={{ marginTop: '4px' }}>
-          {endTime === null ? (
-            <IonButton
-              expand="block"
-              color="primary"
-              onClick={handleStartTracking}
-              disabled={!activity.trim()}
-              style={{
-                height: '52px',
-                fontSize: '17px',
-                fontWeight: '600',
-                '--border-radius': '26px',
-                '--background': 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                '--box-shadow': '0 4px 12px rgba(59, 130, 246, 0.3)',
-                transition: 'all 0.2s'
-              }}
-            >
-              开始计时
-              <IonIcon slot="end" icon={playOutline} style={{ fontSize: '20px' }} />
-            </IonButton>
-          ) : (
-            <IonButton
-              expand="block"
-              color="primary"
-              onClick={handleSaveManualEntry}
-              disabled={!activity.trim()}
-              style={{
-                height: '52px',
-                fontSize: '17px',
-                fontWeight: '600',
-                '--border-radius': '26px',
-                '--background': 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                '--box-shadow': '0 4px 12px rgba(59, 130, 246, 0.3)',
-                transition: 'all 0.2s'
-              }}
-            >
-              保存记录
-              <IonIcon slot="end" icon={saveOutline} style={{ fontSize: '20px' }} />
-            </IonButton>
-          )}
-        </div>
-      </div>
+        {endTime === null ? (
+          <IonButton
+            expand="block"
+            color="primary"
+            onClick={handleStartTracking}
+            disabled={!activity.trim()}
+            style={{
+              height: '52px',
+              fontSize: '17px',
+              fontWeight: '600',
+              '--border-radius': '26px',
+              '--background': 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              '--box-shadow': '0 4px 12px rgba(59, 130, 246, 0.3)',
+              transition: 'all 0.2s',
+              margin: 0
+            }}
+          >
+            开始计时
+            <IonIcon slot="end" icon={playOutline} style={{ fontSize: '20px' }} />
+          </IonButton>
+        ) : (
+          <IonButton
+            expand="block"
+            color="primary"
+            onClick={handleSaveManualEntry}
+            disabled={!activity.trim()}
+            style={{
+              height: '52px',
+              fontSize: '17px',
+              fontWeight: '600',
+              '--border-radius': '26px',
+              '--background': 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              '--box-shadow': '0 4px 12px rgba(59, 130, 246, 0.3)',
+              transition: 'all 0.2s',
+              margin: 0
+            }}
+          >
+            保存记录
+            <IonIcon slot="end" icon={saveOutline} style={{ fontSize: '20px' }} />
+          </IonButton>
+        )}
 
       <DatePicker
         visible={startPickerVisible}
