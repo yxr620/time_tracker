@@ -4,8 +4,7 @@ import { useCategoryStore } from '../../stores/categoryStore';
 import { useGoalStore } from '../../stores/goalStore';
 import type { TimeEntry } from '../../services/db';
 import dayjs from 'dayjs';
-import { Popover } from 'antd-mobile';
-import { IonDatetime, IonModal, IonContent } from '@ionic/react';
+import { IonDatetime, IonModal, IonContent, IonPopover } from '@ionic/react';
 import './TimelineView.css';
 
 interface TimeBlock {
@@ -37,6 +36,11 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const [gapBlocks, setGapBlocks] = useState<GapBlock[]>([]);
   const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [popoverState, setPopoverState] = useState<{ isOpen: boolean; event: Event | undefined; block: TimeBlock | null }>({
+    isOpen: false,
+    event: undefined,
+    block: null
+  });
   const datetimeRef = useRef<HTMLIonDatetimeElement>(null);
 
   useEffect(() => {
@@ -244,8 +248,8 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
       <IonModal 
         isOpen={datePickerVisible} 
         onDidDismiss={() => setDatePickerVisible(false)}
-        initialBreakpoint={0.65}
-        breakpoints={[0, 0.65, 0.8]}
+        initialBreakpoint={0.55}
+        breakpoints={[0, 0.55, 0.7]}
       >
         <IonContent className="ion-padding">
           <IonDatetime
@@ -255,9 +259,6 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
             max={dayjs().format('YYYY-MM-DD')}
             locale="zh-CN"
             firstDayOfWeek={1}
-            showDefaultButtons={true}
-            doneText="确定"
-            cancelText="取消"
             onIonChange={(e) => {
               const value = e.detail.value;
               if (value) {
@@ -266,7 +267,6 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
               }
               setDatePickerVisible(false);
             }}
-            onIonCancel={() => setDatePickerVisible(false)}
             style={{ width: '100%', margin: '0 auto' }}
           />
         </IonContent>
@@ -307,35 +307,43 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
           
           {/* 活动时间段（彩色） */}
           {timeBlocks.map((block, index) => (
-            <Popover
+            <div
               key={block.id}
-              content={
-                <div className="timeline-popover">
-                  <div className="popover-activity">{block.entry.activity}</div>
-                  <div className="popover-time">
-                    {dayjs(block.entry.startTime).format('HH:mm')} - {dayjs(block.entry.endTime).format('HH:mm')} ({formatDuration(block.entry.startTime, block.entry.endTime)})
-                  </div>
-                </div>
-              }
-              trigger="click"
-              placement="top"
-            >
-              <div
-                className={`timeline-block ${index === 0 ? 'timeline-block-first' : ''} ${index === timeBlocks.length - 1 ? 'timeline-block-last' : ''}`}
-                style={{
-                  left: `${block.startPercent}%`,
-                  width: `${block.widthPercent}%`,
-                  backgroundColor: block.color
-                }}
-                title={block.label}
-                onClick={() => {
-                  if (block.entry.endTime) {
-                    setNextStartTime(block.entry.endTime);
-                  }
-                }}
-              />
-            </Popover>
+              className={`timeline-block ${index === 0 ? 'timeline-block-first' : ''} ${index === timeBlocks.length - 1 ? 'timeline-block-last' : ''}`}
+              style={{
+                left: `${block.startPercent}%`,
+                width: `${block.widthPercent}%`,
+                backgroundColor: block.color
+              }}
+              title={block.label}
+              onClick={(e) => {
+                setPopoverState({ isOpen: true, event: e.nativeEvent, block });
+                if (block.entry.endTime) {
+                  setNextStartTime(block.entry.endTime);
+                }
+              }}
+            />
           ))}
+          
+          {/* Popover 弹出框 */}
+          <IonPopover
+            isOpen={popoverState.isOpen}
+            event={popoverState.event}
+            onDidDismiss={() => setPopoverState({ isOpen: false, event: undefined, block: null })}
+            side="top"
+            alignment="center"
+            showBackdrop={false}
+            className="timeline-popover-container"
+          >
+            {popoverState.block && (
+              <div className="timeline-popover">
+                <div className="popover-activity">{popoverState.block.entry.activity}</div>
+                <div className="popover-time">
+                  {dayjs(popoverState.block.entry.startTime).format('HH:mm')} - {dayjs(popoverState.block.entry.endTime).format('HH:mm')} ({formatDuration(popoverState.block.entry.startTime, popoverState.block.entry.endTime)})
+                </div>
+              </div>
+            )}
+          </IonPopover>
         </div>
 
         {/* 当前时间指示线（只在今天显示） */}

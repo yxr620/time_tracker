@@ -202,25 +202,47 @@
 
 /* Popover 内容 */
 .timeline-popover {
-  padding: 4px;
-  min-width: 120px;
+  padding: 8px 12px;
+  min-width: 100px;
+  max-width: 200px;
 }
 
 .popover-activity {
-  font-weight: bold;
+  font-weight: 600;
+  font-size: 13px;
   margin-bottom: 4px;
   color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .popover-time {
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
-  margin-bottom: 2px;
+  margin-bottom: 0;
+  white-space: nowrap;
 }
 
 .popover-duration {
   font-size: 12px;
   color: #999;
+}
+
+/* IonPopover 轻量级样式 */
+.timeline-popover-container {
+  --width: auto;
+  --max-width: 220px;
+  --box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.timeline-popover-container::part(content) {
+  border-radius: 8px;
+  padding: 0;
+}
+
+.timeline-popover-container::part(arrow) {
+  display: block;
 }
 
 /* 移动端优化 */

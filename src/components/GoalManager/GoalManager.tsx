@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { DatePicker } from 'antd-mobile';
 import { 
   IonModal, 
   IonContent, 
   IonButton, 
   IonInput, 
+  IonDatetime,
   useIonToast,
   useIonAlert,
   IonCard,
@@ -110,12 +110,6 @@ export const GoalManager: React.FC = () => {
     
     setNewGoalName('');
     setShowAddGoal(false);
-    present({
-      message: '目标已添加',
-      duration: 1500,
-      position: 'top',
-      color: 'success'
-    });
   };
 
   // 删除目标
@@ -311,18 +305,30 @@ export const GoalManager: React.FC = () => {
       </IonCard>
 
       {/* 日期选择弹窗 */}
-      <DatePicker
-        visible={showDatePicker}
-        onClose={() => setShowDatePicker(false)}
-        precision="day"
-        value={new Date(currentDate)}
-        onConfirm={(val) => {
-          if (val) {
-            setSelectedDate(dayjs(val).format('YYYY-MM-DD'));
-          }
-          setShowDatePicker(false);
-        }}
-      />
+      <IonModal 
+        isOpen={showDatePicker} 
+        onDidDismiss={() => setShowDatePicker(false)}
+        initialBreakpoint={0.55}
+        breakpoints={[0, 0.55, 0.7]}
+      >
+        <IonContent className="ion-padding">
+          <IonDatetime
+            presentation="date"
+            value={currentDate}
+            locale="zh-CN"
+            firstDayOfWeek={1}
+            onIonChange={(e) => {
+              const value = e.detail.value;
+              if (value) {
+                const dateStr = typeof value === 'string' ? value : value[0];
+                setSelectedDate(dateStr);
+              }
+              setShowDatePicker(false);
+            }}
+            style={{ width: '100%', margin: '0 auto' }}
+          />
+        </IonContent>
+      </IonModal>
 
       {/* 统计信息 */}
       {todayGoals.length > 0 && (

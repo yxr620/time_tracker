@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
+import dayjs from 'dayjs';
 import { db, type TimeEntry } from '../services/db';
 import { syncDb } from '../services/syncDb';
 
@@ -19,6 +20,7 @@ interface EntryStore {
   setNextStartTime: (time: Date | null) => void;
   setTimeRange: (startTime: Date, endTime: Date) => void;
   getLastEntryEndTime: () => Date | null;
+  getLastEntryEndTimeForDate: (date: string) => Date | null;
 }
 
 export const useEntryStore = create<EntryStore>((set, get) => ({
@@ -118,6 +120,29 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
     
     // 按结束时间排序，取最新的
     const sortedByEndTime = completedEntries.sort((a, b) => 
+      new Date(b.endTime!).getTime() - new Date(a.endTime!).getTime()
+    );
+    
+    return sortedByEndTime[0].endTime;
+  },
+
+  getLastEntryEndTimeForDate: (date: string) => {
+    const { entries } = get();
+    const dayStart = dayjs(date).startOf('day');
+    const dayEnd = dayjs(date).endOf('day');
+    
+    // 筛选该日期内的已完成记录
+    const dateEntries = entries.filter(e => {
+      if (!e.endTime) return false;
+      const entryStart = dayjs(e.startTime);
+      // 记录的开始时间在当天范围内
+      return entryStart.isAfter(dayStart) && entryStart.isBefore(dayEnd);
+    });
+    
+    if (dateEntries.length === 0) return null;
+    
+    // 按结束时间排序，取最新的
+    const sortedByEndTime = dateEntries.sort((a, b) => 
       new Date(b.endTime!).getTime() - new Date(a.endTime!).getTime()
     );
     
