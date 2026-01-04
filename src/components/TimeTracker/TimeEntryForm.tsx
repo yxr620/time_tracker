@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { DatePicker } from 'antd-mobile';
 import {
   IonButton,
   IonInput,
@@ -7,7 +6,9 @@ import {
   IonIcon,
   useIonToast,
   IonCard,
-  IonCardContent
+  IonCardContent,
+  IonDatetime,
+  IonModal
 } from '@ionic/react';
 import { playOutline, stopOutline, saveOutline, chatbubbleOutline, pricetagOutline, flagOutline, refreshOutline } from 'ionicons/icons';
 import { useEntryStore } from '../../stores/entryStore';
@@ -29,6 +30,10 @@ const alignDateWithTime = (time: Date, dateStr: string) => {
     .toDate();
 };
 
+const toIonDatetimeValue = (date: Date) => dayjs(date).format('YYYY-MM-DDTHH:mm');
+
+const fromIonDatetimeValue = (value: string) => dayjs(value).toDate();
+
 export const TimeEntryForm: React.FC = () => {
   const { currentEntry, startTracking, stopTracking, addEntry, nextStartTime, nextEndTime, setTimeRange, getLastEntryEndTimeForDate, loadEntries } = useEntryStore();
   const { goals, loadGoals } = useGoalStore();
@@ -43,6 +48,8 @@ export const TimeEntryForm: React.FC = () => {
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [startPickerVisible, setStartPickerVisible] = useState(false);
   const [endPickerVisible, setEndPickerVisible] = useState(false);
+  const [startDraftValue, setStartDraftValue] = useState(() => toIonDatetimeValue(new Date()));
+  const [endDraftValue, setEndDraftValue] = useState(() => toIonDatetimeValue(new Date()));
   const [elapsed, setElapsed] = useState('00:00:00');
   const [present] = useIonToast();
 
@@ -97,6 +104,19 @@ export const TimeEntryForm: React.FC = () => {
       setEndTime(null);
     }
   }, [alignDateWithTime, ensureDate, getLastEntryEndTimeForDate, selectedDate, startTime]);
+
+  useEffect(() => {
+    if (startPickerVisible) {
+      setStartDraftValue(toIonDatetimeValue(startTime));
+    }
+  }, [startPickerVisible, startTime]);
+
+  useEffect(() => {
+    if (endPickerVisible) {
+      setEndDraftValue(toIonDatetimeValue(endTime ?? new Date()));
+    }
+  }, [endPickerVisible, endTime]);
+
 
   // 更新计时器显示
   useEffect(() => {
@@ -616,62 +636,78 @@ export const TimeEntryForm: React.FC = () => {
           </IonButton>
         )}
 
-      <DatePicker
-        visible={startPickerVisible}
-        onClose={() => setStartPickerVisible(false)}
-        value={startTime}
-        onConfirm={val => {
-          setStartTime(val);
-          setSelectedDate(dayjs(val).format('YYYY-MM-DD'));
-        }}
-        precision="minute"
-        renderLabel={(type, data) => {
-          switch (type) {
-            case 'year':
-              return data + '年';
-            case 'month':
-              return data + '月';
-            case 'day':
-              return data + '日';
-            case 'hour':
-              return data + '时';
-            case 'minute':
-              return data + '分';
-            default:
-              return data;
-          }
-        }}
+      <IonModal
+        isOpen={startPickerVisible}
+        onDidDismiss={() => setStartPickerVisible(false)}
+        initialBreakpoint={0.4}
+        breakpoints={[0, 0.4]}
       >
-        {() => null}
-      </DatePicker>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '16px' }}>
+          <IonDatetime
+            value={startDraftValue}
+            presentation="date-time"
+            preferWheel
+            locale="zh-CN"
+            onIonChange={e => {
+              const next = e.detail.value;
+              if (typeof next !== 'string') return;
+              setStartDraftValue(next);
+            }}
+            style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', padding: '16px 0' }}>
+            <IonButton fill="clear" onClick={() => setStartPickerVisible(false)}>
+              取消
+            </IonButton>
+            <IonButton
+              onClick={() => {
+                const nextDate = fromIonDatetimeValue(startDraftValue);
+                setStartTime(nextDate);
+                setSelectedDate(dayjs(nextDate).format('YYYY-MM-DD'));
+                setStartPickerVisible(false);
+              }}
+            >
+              确定
+            </IonButton>
+          </div>
+        </div>
+      </IonModal>
 
-      <DatePicker
-        visible={endPickerVisible}
-        onClose={() => setEndPickerVisible(false)}
-        value={endTime || new Date()}
-        onConfirm={val => {
-          setEndTime(val);
-        }}
-        precision="minute"
-        renderLabel={(type, data) => {
-          switch (type) {
-            case 'year':
-              return data + '年';
-            case 'month':
-              return data + '月';
-            case 'day':
-              return data + '日';
-            case 'hour':
-              return data + '时';
-            case 'minute':
-              return data + '分';
-            default:
-              return data;
-          }
-        }}
+      <IonModal
+        isOpen={endPickerVisible}
+        onDidDismiss={() => setEndPickerVisible(false)}
+        initialBreakpoint={0.4}
+        breakpoints={[0, 0.4]}
       >
-        {() => null}
-      </DatePicker>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '16px' }}>
+          <IonDatetime
+            value={endDraftValue}
+            presentation="date-time"
+            preferWheel
+            locale="zh-CN"
+            onIonChange={e => {
+              const next = e.detail.value;
+              if (typeof next !== 'string') return;
+              setEndDraftValue(next);
+            }}
+            style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', padding: '16px 0' }}>
+            <IonButton fill="clear" onClick={() => setEndPickerVisible(false)}>
+              取消
+            </IonButton>
+            <IonButton
+              onClick={() => {
+                const nextDate = fromIonDatetimeValue(endDraftValue);
+                setEndTime(nextDate);
+                setEndPickerVisible(false);
+              }}
+            >
+              确定
+            </IonButton>
+          </div>
+        </div>
+      </IonModal>
     </div>
   );
 };

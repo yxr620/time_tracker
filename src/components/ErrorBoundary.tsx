@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from 'antd-mobile';
+import { IonButton } from '@ionic/react';
 
 interface Props {
   children: React.ReactNode;
@@ -49,13 +49,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
           <p style={{ color: '#666', marginBottom: '24px', fontSize: '14px' }}>
             {this.state.error?.message || '未知错误'}
           </p>
-          <Button
+          <IonButton
             color="primary"
             size="large"
             onClick={this.handleReset}
           >
             重新加载应用
-          </Button>
+          </IonButton>
           {import.meta.env.DEV && (
             <details style={{ marginTop: '24px', textAlign: 'left', maxWidth: '500px' }}>
               <summary style={{ cursor: 'pointer', color: '#666' }}>
