@@ -16,10 +16,11 @@ import type {
   AnalysisFilters,
 } from '../../types/analysis';
 
-/** 默认时间范围：最近30天 */
+/** 默认时间范围：最近30天（不含今天） */
 export function getDefaultDateRange(): DateRange {
-  const end = endOfDay(new Date());
-  const start = startOfDay(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+  const today = new Date();
+  const end = endOfDay(new Date(today.getTime() - 24 * 60 * 60 * 1000)); // 昨天
+  const start = startOfDay(new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)); // 30天前
   return { start, end };
 }
 

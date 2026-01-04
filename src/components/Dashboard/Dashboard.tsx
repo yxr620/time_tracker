@@ -92,12 +92,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend, onOpenGoalAna
     fetchData();
   }, [fetchData]);
 
-  // 处理时间范围变更
+  // 处理时间范围变更（不含今天）
   const handleRangeChange = (days: number) => {
     setSelectedRange(days);
     if (days > 0) {
-      const end = new Date();
-      const start = subDays(end, days);
+      const today = new Date();
+      const end = subDays(today, 1); // 昨天
+      const start = subDays(today, days); // N天前
       const range = { start, end };
       setDateRange(range);
       onDateRangeChange?.(range, days);

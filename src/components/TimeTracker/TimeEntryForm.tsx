@@ -586,7 +586,8 @@ export const TimeEntryForm: React.FC = () => {
               '--background': 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
               '--box-shadow': '0 4px 12px rgba(59, 130, 246, 0.3)',
               transition: 'all 0.2s',
-              margin: 0
+              margin: 0,
+              marginTop: '2px'
             }}
           >
             开始计时
@@ -606,7 +607,8 @@ export const TimeEntryForm: React.FC = () => {
               '--background': 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
               '--box-shadow': '0 4px 12px rgba(59, 130, 246, 0.3)',
               transition: 'all 0.2s',
-              margin: 0
+              margin: 0,
+              marginTop: '2px'
             }}
           >
             保存记录

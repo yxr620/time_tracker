@@ -43,7 +43,6 @@ import './GoalAnalysisPage.css';
 const DATE_RANGES = [
   { label: '最近7天', days: 7 },
   { label: '最近30天', days: 30 },
-  { label: '最近90天', days: 90 },
   { label: '自定义', days: -1 },
 ];
 
@@ -125,12 +124,13 @@ export const GoalAnalysisPage: React.FC<GoalAnalysisPageProps> = ({
     }
   };
 
-  // 处理时间范围变更
+  // 处理时间范围变更（不含今天）
   const handleRangeChange = (days: number) => {
     setSelectedRange(days);
     if (days > 0) {
-      const end = new Date();
-      const start = subDays(end, days);
+      const today = new Date();
+      const end = subDays(today, 1); // 昨天
+      const start = subDays(today, days); // N天前
       const range = { start, end };
       setDateRange(range);
       onDateRangeChange?.(range, days);

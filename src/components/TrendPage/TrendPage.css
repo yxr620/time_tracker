@@ -220,6 +220,39 @@
   min-width: 0;
 }
 
+/* 摘要卡片固定高度 */
+.trend-summary-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 摘要滚动容器 */
+.trend-summary-scroll {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 252px; /* 与周度对比图表高度一致: 300px - header高度 */
+  padding-right: 4px;
+}
+
+.trend-summary-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.trend-summary-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.trend-summary-scroll::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 2px;
+}
+
+.trend-summary-scroll::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
 /* 摘要列表样式 */
 .trend-summary-list {
   display: flex;

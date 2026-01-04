@@ -364,11 +364,12 @@ export async function analyzeGoals(
 }
 
 /**
- * 获取默认的分析日期范围（最近30天）
+ * 获取默认的分析日期范围（最近30天，不含今天）
  */
 export function getDefaultGoalAnalysisDateRange(): DateRange {
-  const end = endOfDay(new Date());
-  const start = startOfDay(subDays(end, 30));
+  const today = new Date();
+  const end = endOfDay(subDays(today, 1)); // 昨天
+  const start = startOfDay(subDays(today, 30)); // 30天前
   return { start, end };
 }
 

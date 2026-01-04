@@ -89,12 +89,18 @@ export const TrendPage: React.FC<TrendPageProps> = ({ onBack, dateRange: dateRan
       setCategoryTrendData(groupByDayAndCategory(processed, dateRange));
 
       // 2. 加载周度对比数据 (最近3个完整周)
-      // 计算基准周（包含结束日期的那一周）
-      const currentWeekStart = startOfWeek(dateRange.end, { weekStartsOn: 0 }); // 周日开始
+      // 基于今天计算，找到上一个完整周（不包含今天所在的不完整周）
+      const today = new Date();
+      const todayWeekStart = startOfWeek(today, { weekStartsOn: 0 }); // 今天所在周的周日
+      // 如果今天是周六，则今天所在周是完整的；否则取上一周作为最近完整周
+      const todayDayOfWeek = today.getDay(); // 0=周日, 6=周六
+      const lastCompleteWeekStart = todayDayOfWeek === 6 
+        ? todayWeekStart // 今天是周六，本周完整
+        : subWeeks(todayWeekStart, 1); // 否则取上一周
       
-      // 计算前3周的时间段
-      const weeks = [3, 2, 1].map(weeksAgo => {
-        const start = subWeeks(currentWeekStart, weeksAgo);
+      // 计算前3周的时间段（从最近完整周往前推）
+      const weeks = [2, 1, 0].map(weeksAgo => {
+        const start = subWeeks(lastCompleteWeekStart, weeksAgo);
         const end = endOfWeek(start, { weekStartsOn: 0 });
         return {
           start,
@@ -126,12 +132,13 @@ export const TrendPage: React.FC<TrendPageProps> = ({ onBack, dateRange: dateRan
     fetchData();
   }, [fetchData]);
 
-  // 处理时间范围变更
+  // 处理时间范围变更（不含今天）
   const handleRangeChange = (days: number) => {
     setSelectedRange(days);
     if (days > 0) {
-      const end = new Date();
-      const start = subDays(end, days);
+      const today = new Date();
+      const end = subDays(today, 1); // 昨天
+      const start = subDays(today, days); // N天前
       const range = { start, end };
       setDateRange(range);
       onDateRangeChange?.(range, days);
@@ -704,7 +711,10 @@ const WeeklySummary: React.FC<{
   const currentWeek = data[data.length - 1];
   const prevWeek = data[data.length - 2];
 
-  // 计算变化
+  // 固定的类别显示顺序
+  const categoryOrder = ['学习', '工作', '娱乐', '日常', '运动', '未分类'];
+
+  // 计算所有类别的变化，按固定顺序排序
   const changes = categories.map(cat => {
     const currentVal = (currentWeek[cat.id] as number) || 0;
     const prevVal = (prevWeek[cat.id] as number) || 0;
@@ -716,7 +726,14 @@ const WeeklySummary: React.FC<{
       diff,
       absDiff: Math.abs(diff)
     };
-  }).sort((a, b) => b.absDiff - a.absDiff).slice(0, 3);
+  }).sort((a, b) => {
+    const indexA = categoryOrder.indexOf(a.name);
+    const indexB = categoryOrder.indexOf(b.name);
+    // 如果类别不在预定义列表中，放到最后
+    const orderA = indexA === -1 ? categoryOrder.length : indexA;
+    const orderB = indexB === -1 ? categoryOrder.length : indexB;
+    return orderA - orderB;
+  });
 
   const getDiffClass = (diff: number) => {
     if (diff > 0) return 'positive';
@@ -725,13 +742,14 @@ const WeeklySummary: React.FC<{
   };
 
   return (
-    <div className="trend-chart-card">
+    <div className="trend-chart-card trend-summary-card">
       <div className="trend-chart-header">
         <div className="trend-chart-title">本周变化摘要 (vs 上周)</div>
       </div>
-      <div className="trend-summary-list">
-        {changes.map(item => (
-          <div key={item.id} className="trend-summary-item">
+      <div className="trend-summary-scroll">
+        <div className="trend-summary-list">
+          {changes.map(item => (
+            <div key={item.id} className="trend-summary-item">
             <div 
               className="trend-summary-bar" 
               style={{ backgroundColor: item.color }}
@@ -749,6 +767,7 @@ const WeeklySummary: React.FC<{
             </div>
           </div>
         ))}
+        </div>
       </div>
     </div>
   );
