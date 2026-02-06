@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
-import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonSpinner, IonText } from '@ionic/react';
-import { Dialog, Toast } from 'antd-mobile';
+import {
+  IonButton,
+  IonSpinner,
+  IonText,
+  useIonAlert,
+  useIonToast
+} from '@ionic/react';
 import { syncEngine, type SyncStats, type SyncResult } from '../../services/syncEngine';
 import { isOSSConfigured } from '../../services/oss';
 import './SyncManagementPage.css';
@@ -10,6 +15,8 @@ export const SyncManagementPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [lastResult, setLastResult] = useState<SyncResult | null>(null);
   const [isConfigured, setIsConfigured] = useState(false);
+  const [presentAlert] = useIonAlert();
+  const [presentToast] = useIonToast();
 
   useEffect(() => {
     loadStats();
@@ -25,30 +32,30 @@ export const SyncManagementPage: React.FC = () => {
     }
   };
 
+  const showToast = (message: string, color: 'success' | 'danger') => {
+    presentToast({
+      message,
+      duration: 2000,
+      position: 'top',
+      color
+    });
+  };
+
   const handleSync = async (syncFn: () => Promise<SyncResult>, actionName: string) => {
     setLoading(true);
     try {
       const result = await syncFn();
       setLastResult(result);
       await loadStats();
-      
+
       if (result.status === 'success') {
-        Toast.show({
-          icon: 'success',
-          content: result.message
-        });
+        showToast(result.message, 'success');
       } else {
-        Toast.show({
-          icon: 'fail',
-          content: result.message
-        });
+        showToast(result.message, 'danger');
       }
     } catch (error) {
       console.error(`${actionName} 失败:`, error);
-      Toast.show({
-        icon: 'fail',
-        content: `${actionName} 失败`
-      });
+      showToast(`${actionName} 失败`, 'danger');
     } finally {
       setLoading(false);
     }
@@ -66,229 +73,311 @@ export const SyncManagementPage: React.FC = () => {
     handleSync(() => syncEngine.incrementalPull(), '增量 Pull');
   };
 
-  const handleForceFullSync = async () => {
-    const confirmed = await Dialog.confirm({
-      title: '强制全量同步',
-      content: '这将重新上传所有本地数据，并拉取所有远程数据。确定继续？',
+  const handleForceFullSync = () => {
+    presentAlert({
+      header: '强制全量同步',
+      message: '这将重新上传所有本地数据，并拉取所有远程数据。确定继续？',
+      buttons: [
+        { text: '取消', role: 'cancel' },
+        {
+          text: '确定',
+          handler: () => {
+            handleSync(() => syncEngine.forceFullSync(), '强制全量同步');
+          }
+        }
+      ]
     });
-    
-    if (!confirmed) return;
-    
-    handleSync(() => syncEngine.forceFullSync(), '强制全量同步');
   };
 
-  const handleForceFullPush = async () => {
-    const confirmed = await Dialog.confirm({
-      title: '强制全量 Push',
-      content: '⚠️ 这将重新上传所有本地数据到云端。适用于 OSS 被清空的恢复场景。确定继续？',
+  const handleForceFullPush = () => {
+    presentAlert({
+      header: '强制全量 Push',
+      message: '⚠️ 这将重新上传所有本地数据到云端。适用于 OSS 被清空的恢复场景。确定继续？',
+      buttons: [
+        { text: '取消', role: 'cancel' },
+        {
+          text: '确定',
+          handler: () => {
+            handleSync(() => syncEngine.forceFullPush(), '强制全量 Push');
+          }
+        }
+      ]
     });
-    
-    if (!confirmed) return;
-    
-    handleSync(() => syncEngine.forceFullPush(), '强制全量 Push');
   };
 
-  const handleForceFullPull = async () => {
-    const confirmed = await Dialog.confirm({
-      title: '强制全量 Pull',
-      content: '⚠️ 这将拉取并合并所有远程数据。可能会覆盖本地未同步的修改。确定继续？',
+  const handleForceFullPull = () => {
+    presentAlert({
+      header: '强制全量 Pull',
+      message: '⚠️ 这将拉取并合并所有远程数据。可能会覆盖本地未同步的修改。确定继续？',
+      buttons: [
+        { text: '取消', role: 'cancel' },
+        {
+          text: '确定',
+          handler: () => {
+            handleSync(() => syncEngine.forceFullPull(), '强制全量 Pull');
+          }
+        }
+      ]
     });
-    
-    if (!confirmed) return;
-    
-    handleSync(() => syncEngine.forceFullPull(), '强制全量 Pull');
   };
 
-  const handleResetSyncState = async () => {
-    const confirmed = await Dialog.confirm({
-      title: '重置同步状态',
-      content: '这将清空最后处理的时间戳，下次 Pull 会重新拉取所有文件。确定继续？',
+  const handleResetSyncState = () => {
+    presentAlert({
+      header: '重置同步状态',
+      message: '这将清空最后处理的时间戳，下次 Pull 会重新拉取所有文件。确定继续？',
+      buttons: [
+        { text: '取消', role: 'cancel' },
+        {
+          text: '确定',
+          handler: async () => {
+            try {
+              await syncEngine.resetSyncState();
+              await loadStats();
+              showToast('同步状态已重置', 'success');
+            } catch (error) {
+              console.error('重置同步状态失败:', error);
+              showToast('重置失败', 'danger');
+            }
+          }
+        }
+      ]
     });
-    
-    if (!confirmed) return;
-
-    try {
-      await syncEngine.resetSyncState();
-      await loadStats();
-      Toast.show({
-        icon: 'success',
-        content: '同步状态已重置'
-      });
-    } catch (error) {
-      console.error('重置同步状态失败:', error);
-      Toast.show({
-        icon: 'fail',
-        content: '重置失败'
-      });
-    }
   };
 
-  const handleCleanupLogs = async () => {
-    const confirmed = await Dialog.confirm({
-      title: '清理操作日志',
-      content: '这将删除 7 天前的已同步操作日志。确定继续？',
+  const handleCleanupLogs = () => {
+    presentAlert({
+      header: '清理操作日志',
+      message: '这将删除 7 天前的已同步操作日志。确定继续？',
+      buttons: [
+        { text: '取消', role: 'cancel' },
+        {
+          text: '确定',
+          handler: async () => {
+            try {
+              const count = await syncEngine.cleanupSyncedOperations(7);
+              await loadStats();
+              showToast(`已清理 ${count} 条操作日志`, 'success');
+            } catch (error) {
+              console.error('清理操作日志失败:', error);
+              showToast('清理失败', 'danger');
+            }
+          }
+        }
+      ]
     });
-    
-    if (!confirmed) return;
-
-    try {
-      const count = await syncEngine.cleanupSyncedOperations(7);
-      await loadStats();
-      Toast.show({
-        icon: 'success',
-        content: `已清理 ${count} 条操作日志`
-      });
-    } catch (error) {
-      console.error('清理操作日志失败:', error);
-      Toast.show({
-        icon: 'fail',
-        content: '清理失败'
-      });
-    }
   };
 
   if (!isConfigured) {
     return (
-      <div className="sync-management-page">
-        <IonCard>
-          <IonCardContent>
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <IonText color="medium">
-                <p>OSS 未配置，无法使用同步功能</p>
-                <p style={{ fontSize: '14px', marginTop: '10px' }}>
-                  请在 .env 文件中配置 OSS 相关环境变量
-                </p>
-              </IonText>
-            </div>
-          </IonCardContent>
-        </IonCard>
+      <div style={{ padding: '16px' }}>
+        <div style={{ textAlign: 'center', padding: '20px', backgroundColor: '#f9f9f9', borderRadius: '12px' }}>
+          <IonText color="medium">
+            <p style={{ fontSize: '16px', marginBottom: '10px' }}>OSS 未配置，无法使用同步功能</p>
+            <p style={{ fontSize: '14px', marginTop: '10px', color: '#999' }}>
+              请在 .env 文件中配置 OSS 相关环境变量
+            </p>
+          </IonText>
+        </div>
       </div>
     );
   }
 
+
+
   return (
-    <div className="sync-management-page">
-      {/* 状态显示 */}
-      <IonCard>
-        <IonCardHeader>
-          <IonCardTitle>同步状态</IonCardTitle>
-        </IonCardHeader>
-        <IonCardContent>
-          {stats ? (
-            <div className="sync-stats">
-              <div className="stat-item">
-                <span className="stat-label">OSS 配置:</span>
-                <span className="stat-value">✅ 已配置</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">设备 ID:</span>
-                <span className="stat-value">{stats.deviceId.substring(0, 8)}...</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">未同步操作:</span>
-                <span className="stat-value">{stats.pendingOps} 条</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">已同步操作:</span>
-                <span className="stat-value">{stats.syncedOps} 条</span>
-              </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {/* 同步状态 */}
+      <div>
+        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px' }}>
+          同步状态
+        </div>
+        {stats ? (
+          <div className="sync-stats" style={{ fontSize: '13px', color: '#666', lineHeight: '1.4' }}>
+            <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
+              <span className="stat-label" style={{ color: '#666', fontSize: '13px' }}>OSS 配置:</span>
+              <span className="stat-value" style={{ fontWeight: '500' }}>✅ 已配置</span>
             </div>
-          ) : (
+            <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
+              <span className="stat-label" style={{ color: '#666', fontSize: '13px' }}>设备 ID:</span>
+              <span className="stat-value" style={{ fontWeight: '500', fontFamily: 'monospace', fontSize: '12px' }}>{stats.deviceId.substring(0, 8)}...</span>
+            </div>
+            <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
+              <span className="stat-label" style={{ color: '#666', fontSize: '13px' }}>未同步操作:</span>
+              <span className="stat-value" style={{ fontWeight: '500', color: stats.pendingOps > 0 ? '#f59e0b' : '#10b981' }}>{stats.pendingOps} 条</span>
+            </div>
+            <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+              <span className="stat-label" style={{ color: '#666', fontSize: '13px' }}>已同步操作:</span>
+              <span className="stat-value" style={{ fontWeight: '500' }}>{stats.syncedOps} 条</span>
+            </div>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '12px' }}>
             <IonSpinner />
-          )}
-        </IonCardContent>
-      </IonCard>
+          </div>
+        )}
+      </div>
 
       {/* 增量同步 */}
-      <IonCard>
-        <IonCardHeader>
-          <IonCardTitle>增量同步（推荐）</IonCardTitle>
-        </IonCardHeader>
-        <IonCardContent>
-          <div className="button-group">
-            <IonButton expand="block" onClick={handleIncrementalSync} disabled={loading}>
-              {loading ? <IonSpinner name="dots" /> : '增量同步 (Push + Pull)'}
-            </IonButton>
-            <IonButton expand="block" fill="outline" onClick={handleIncrementalPush} disabled={loading}>
-              增量 Push
-            </IonButton>
-            <IonButton expand="block" fill="outline" onClick={handleIncrementalPull} disabled={loading}>
-              增量 Pull
-            </IonButton>
+      <div>
+        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px' }}>
+          增量同步（推荐）
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <IonButton
+            expand="block"
+            onClick={handleIncrementalSync}
+            disabled={loading}
+            style={{ '--border-radius': '10px', height: '42px', margin: '0' }}
+          >
+            {loading ? <IonSpinner name="dots" /> : '🔄 增量同步 (Push + Pull)'}
+          </IonButton>
+          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px', marginBottom: '2px' }}>
+            同步本地和云端的增量数据
           </div>
-        </IonCardContent>
-      </IonCard>
+          <IonButton
+            expand="block"
+            fill="outline"
+            onClick={handleIncrementalPush}
+            disabled={loading}
+            style={{ '--border-radius': '10px', height: '42px', margin: '0' }}
+          >
+            ⬆️ 增量 Push
+          </IonButton>
+          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px', marginBottom: '2px' }}>
+            上传本地未同步的数据到云端
+          </div>
+          <IonButton
+            expand="block"
+            fill="outline"
+            onClick={handleIncrementalPull}
+            disabled={loading}
+            style={{ '--border-radius': '10px', height: '42px', margin: '0' }}
+          >
+            ⬇️ 增量 Pull
+          </IonButton>
+          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px' }}>
+            下载云端的增量数据到本地
+          </div>
+        </div>
+      </div>
 
       {/* 强制全量同步 */}
-      <IonCard>
-        <IonCardHeader>
-          <IonCardTitle>强制全量同步（数据恢复）</IonCardTitle>
-        </IonCardHeader>
-        <IonCardContent>
-          <div className="button-group">
-            <IonButton expand="block" color="warning" onClick={handleForceFullSync} disabled={loading}>
-              强制全量同步 (Push + Pull)
-            </IonButton>
-            <IonButton expand="block" fill="outline" color="warning" onClick={handleForceFullPush} disabled={loading}>
-              强制全量 Push ⚠️
-            </IonButton>
-            <IonButton expand="block" fill="outline" color="warning" onClick={handleForceFullPull} disabled={loading}>
-              强制全量 Pull ⚠️
-            </IonButton>
+      <div style={{ marginTop: '8px', borderTop: '1px solid #e5e5e5', paddingTop: '10px' }}>
+        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '4px' }}>
+          强制全量同步（数据恢复）
+        </div>
+        <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px', lineHeight: '1.3' }}>
+          ⚠️ 适用于数据恢复或重建同步状态的场景
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <IonButton
+            expand="block"
+            color="warning"
+            onClick={handleForceFullSync}
+            disabled={loading}
+            style={{ '--border-radius': '10px', height: '42px', margin: '0' }}
+          >
+            ⚠️ 强制全量同步 (Push + Pull)
+          </IonButton>
+          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px', marginBottom: '2px' }}>
+            重新上传并拉取所有数据
           </div>
-        </IonCardContent>
-      </IonCard>
+          <IonButton
+            expand="block"
+            fill="outline"
+            color="warning"
+            onClick={handleForceFullPush}
+            disabled={loading}
+            style={{ '--border-radius': '10px', height: '42px', margin: '0' }}
+          >
+            强制全量 Push ⚠️
+          </IonButton>
+          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px', marginBottom: '2px' }}>
+            重新上传所有本地数据到云端
+          </div>
+          <IonButton
+            expand="block"
+            fill="outline"
+            color="warning"
+            onClick={handleForceFullPull}
+            disabled={loading}
+            style={{ '--border-radius': '10px', height: '42px', margin: '0' }}
+          >
+            强制全量 Pull ⚠️
+          </IonButton>
+          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px' }}>
+            拉取并合并所有远程数据
+          </div>
+        </div>
+      </div>
 
       {/* 高级操作 */}
-      <IonCard>
-        <IonCardHeader>
-          <IonCardTitle>高级操作</IonCardTitle>
-        </IonCardHeader>
-        <IonCardContent>
-          <div className="button-group">
-            <IonButton expand="block" fill="outline" onClick={handleResetSyncState} disabled={loading}>
-              重置同步状态
-            </IonButton>
-            <IonButton expand="block" fill="outline" onClick={handleCleanupLogs} disabled={loading}>
-              清理操作日志
-            </IonButton>
+      <div style={{ marginTop: '8px', borderTop: '1px solid #e5e5e5', paddingTop: '10px' }}>
+        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px' }}>
+          高级操作
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <IonButton
+            expand="block"
+            fill="outline"
+            onClick={handleResetSyncState}
+            disabled={loading}
+            style={{ '--border-radius': '10px', height: '42px', margin: '0' }}
+          >
+            🔄 重置同步状态
+          </IonButton>
+          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px', marginBottom: '2px' }}>
+            清空时间戳，下次 Pull 会重新拉取所有文件
           </div>
-        </IonCardContent>
-      </IonCard>
+          <IonButton
+            expand="block"
+            fill="outline"
+            onClick={handleCleanupLogs}
+            disabled={loading}
+            style={{ '--border-radius': '10px', height: '42px', margin: '0' }}
+          >
+            🗑️ 清理操作日志
+          </IonButton>
+          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px' }}>
+            删除 7 天前的已同步操作日志
+          </div>
+        </div>
+      </div>
 
       {/* 同步结果 */}
       {lastResult && (
-        <IonCard>
-          <IonCardHeader>
-            <IonCardTitle>最近同步结果</IonCardTitle>
-          </IonCardHeader>
-          <IonCardContent>
-            <div className="sync-result">
-              <div className="result-item">
-                <span className="result-label">状态:</span>
-                <span className={`result-value ${lastResult.status}`}>
-                  {lastResult.status === 'success' ? '✅ 成功' : '❌ 失败'}
-                </span>
-              </div>
-              <div className="result-item">
-                <span className="result-label">消息:</span>
-                <span className="result-value">{lastResult.message}</span>
-              </div>
-              {lastResult.pushedCount !== undefined && (
-                <div className="result-item">
-                  <span className="result-label">上传:</span>
-                  <span className="result-value">↑ {lastResult.pushedCount} 条</span>
-                </div>
-              )}
-              {lastResult.pulledCount !== undefined && (
-                <div className="result-item">
-                  <span className="result-label">下载:</span>
-                  <span className="result-value">↓ {lastResult.pulledCount} 条</span>
-                </div>
-              )}
+        <div style={{ marginTop: '8px', borderTop: '1px solid #e5e5e5', paddingTop: '10px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px' }}>
+            最近同步结果
+          </div>
+          <div className="sync-result" style={{ fontSize: '13px', color: '#666', lineHeight: '1.4' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
+              <span style={{ color: '#666', fontSize: '13px' }}>状态:</span>
+              <span style={{
+                fontWeight: '500',
+                color: lastResult.status === 'success' ? '#10b981' : '#ef4444'
+              }}>
+                {lastResult.status === 'success' ? '✅ 成功' : '❌ 失败'}
+              </span>
             </div>
-          </IonCardContent>
-        </IonCard>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
+              <span style={{ color: '#666', fontSize: '13px' }}>消息:</span>
+              <span style={{ fontWeight: '500', fontSize: '13px' }}>{lastResult.message}</span>
+            </div>
+            {lastResult.pushedCount !== undefined && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
+                <span style={{ color: '#666', fontSize: '13px' }}>上传:</span>
+                <span style={{ fontWeight: '500' }}>↑ {lastResult.pushedCount} 条</span>
+              </div>
+            )}
+            {lastResult.pulledCount !== undefined && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+                <span style={{ color: '#666', fontSize: '13px' }}>下载:</span>
+                <span style={{ fontWeight: '500' }}>↓ {lastResult.pulledCount} 条</span>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

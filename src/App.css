@@ -93,7 +93,7 @@ body {
   }
 
   /* 桌面端内容区域限制最大宽度 */
-  .desktop-content > * {
+  .desktop-content>* {
     width: 100%;
     max-width: 800px;
   }
@@ -137,6 +137,7 @@ body {
 
 /* 桌面端交互优化 */
 @media (min-width: 1024px) {
+
   /* 按钮 hover 效果 */
   button:hover {
     opacity: 0.9;

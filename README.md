@@ -146,7 +146,7 @@ npm install
 
 这会安装所有必需的依赖，包括：
 - React 相关：`react`, `react-dom`
-- UI 组件：`@ionic/react`, `ionicons`, `antd-mobile`
+- UI 组件：`@ionic/react`, `ionicons`
 - 样式工具：`tailwindcss`
 - 状态管理：`zustand`
 - 数据库：`dexie`

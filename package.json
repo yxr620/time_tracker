@@ -21,7 +21,6 @@
     "@capacitor/status-bar": "^7.0.3",
     "@ionic/react": "^8.7.10",
     "ali-oss": "^6.23.0",
-    "antd-mobile": "^5.41.1",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.19",
     "dexie": "^4.2.1",
