@@ -3,7 +3,7 @@
  * 负责加载数据、聚类、计算统计指标等
  */
 
-import { format, eachDayOfInterval, differenceInDays, startOfDay, endOfDay, subDays } from 'date-fns';
+import { format, differenceInDays, startOfDay, endOfDay, subDays } from 'date-fns';
 import { db } from '../db';
 import type { TimeEntry, Goal } from '../db';
 import {
@@ -15,13 +15,12 @@ import {
 import type {
   GoalCluster,
   ClusterStats,
-  ClusterDailyData,
-  ClusterTrendData,
   UnlinkedEventSuggestion,
   GoalAnalysisResult,
-  GoalHealthStatus,
   SubGoalDetail,
   ClusterSettings,
+  OverviewStats,
+  GoalDistributionItem,
 } from '../../types/goalAnalysis';
 import type { DateRange } from '../../types/analysis';
 
@@ -72,7 +71,6 @@ export function calculateClusterStats(
       lastActiveDate: null,
       firstActiveDate: null,
       longestStreak: 0,
-      healthStatus: 'stalled',
       entryCount: 0,
     };
   }
@@ -107,9 +105,6 @@ export function calculateClusterStats(
   // 计算最长连续天数
   const longestStreak = calculateLongestStreak(activeDates);
 
-  // 计算健康状态
-  const healthStatus = calculateHealthStatus(lastActiveDate);
-
   return {
     clusterId: cluster.id,
     clusterName: cluster.name,
@@ -119,7 +114,6 @@ export function calculateClusterStats(
     lastActiveDate,
     firstActiveDate,
     longestStreak,
-    healthStatus,
     entryCount: clusterEntries.length,
   };
 }
@@ -148,90 +142,6 @@ function calculateLongestStreak(activeDates: Set<string>): number {
   }
 
   return maxStreak;
-}
-
-/**
- * 计算健康状态
- */
-function calculateHealthStatus(lastActiveDate: Date | null): GoalHealthStatus {
-  if (!lastActiveDate) return 'stalled';
-
-  const now = new Date();
-  const daysSinceActive = differenceInDays(now, lastActiveDate);
-
-  if (daysSinceActive <= 7) {
-    return 'active';
-  } else if (daysSinceActive <= 14) {
-    return 'slowing';
-  } else {
-    return 'stalled';
-  }
-}
-
-/**
- * 生成每日聚类时长趋势数据
- */
-export function generateClusterTrendData(
-  clusters: GoalCluster[],
-  entries: TimeEntry[],
-  dateRange: DateRange
-): ClusterTrendData {
-  const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
-  
-  // 初始化数据结构
-  const data: ClusterDailyData[] = days.map(day => {
-    const point: ClusterDailyData = {
-      date: format(day, 'yyyy-MM-dd'),
-      label: format(day, 'MM/dd'),
-    };
-    // 初始化所有聚类为0
-    clusters.forEach(c => {
-      point[c.id] = 0;
-    });
-    return point;
-  });
-
-  // 构建日期索引
-  const dateIndexMap = new Map(data.map((d, i) => [d.date, i]));
-
-  // 聚合数据
-  for (const entry of entries) {
-    if (!entry.goalId || !entry.endTime) continue;
-
-    // 找到该目标所属的聚类
-    const cluster = clusters.find(c => c.goalIds.includes(entry.goalId!));
-    if (!cluster) continue;
-
-    const dateStr = format(new Date(entry.startTime), 'yyyy-MM-dd');
-    const idx = dateIndexMap.get(dateStr);
-    if (idx === undefined) continue;
-
-    const startTime = new Date(entry.startTime);
-    const endTime = new Date(entry.endTime);
-    const duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60); // 小时
-
-    const current = data[idx][cluster.id];
-    data[idx][cluster.id] = (typeof current === 'number' ? current : 0) + duration;
-  }
-
-  // 四舍五入
-  data.forEach(d => {
-    clusters.forEach(c => {
-      const val = d[c.id];
-      if (typeof val === 'number') {
-        d[c.id] = Math.round(val * 10) / 10;
-      }
-    });
-  });
-
-  // 生成聚类颜色
-  const clusterKeys = clusters.map((c, index) => ({
-    id: c.id,
-    name: c.name,
-    color: getClusterColor(c.id, index),
-  }));
-
-  return { data, clusterKeys };
 }
 
 /**
@@ -341,26 +251,87 @@ export async function analyzeGoals(
   const sortedStats = sortedIndices.map(i => stats[i]);
   const sortedClusters = sortedIndices.map(i => clusters[i]);
 
-  // 5. 生成趋势数据（使用排序后的聚类）
-  const trendData = generateClusterTrendData(sortedClusters, entries, dateRange);
-
-  // 6. 查找未关联事件建议
+  // 5. 查找未关联事件建议
   const unlinkedSuggestions = findUnlinkedEventSuggestions(entries, sortedClusters);
 
-  // 7. 计算健康度统计
-  const healthSummary = {
-    active: sortedStats.filter(s => s.healthStatus === 'active').length,
-    slowing: sortedStats.filter(s => s.healthStatus === 'slowing').length,
-    stalled: sortedStats.filter(s => s.healthStatus === 'stalled').length,
-  };
+  // 6. 计算时间投入概览
+  const overviewStats = calculateOverviewStats(entries, sortedStats, dateRange);
+
+  // 7. 计算目标时间分布
+  const distribution = calculateGoalDistribution(sortedStats, sortedClusters);
 
   return {
     clusters: sortedClusters,
     stats: sortedStats,
-    trendData,
     unlinkedSuggestions,
-    healthSummary,
+    overviewStats,
+    distribution,
   };
+}
+
+/**
+ * 计算时间投入概览统计
+ */
+function calculateOverviewStats(
+  entries: TimeEntry[],
+  stats: ClusterStats[],
+  dateRange: DateRange
+): OverviewStats {
+  // 总投入时长（只计算有 goalId 的记录）
+  let goalLinkedDuration = 0;
+  let allDuration = 0;
+
+  for (const entry of entries) {
+    if (!entry.endTime) continue;
+    const startTime = new Date(entry.startTime);
+    const endTime = new Date(entry.endTime);
+    const duration = Math.max(0, (endTime.getTime() - startTime.getTime()) / (1000 * 60));
+    allDuration += duration;
+    if (entry.goalId) {
+      goalLinkedDuration += duration;
+    }
+  }
+
+  // 日期范围天数
+  const daysInRange = Math.max(1, differenceInDays(dateRange.end, dateRange.start) + 1);
+
+  // 活跃聚类数（有时间记录的）
+  const activeClusters = stats.filter(s => s.totalDuration > 0).length;
+
+  // 目标覆盖率
+  const goalCoverageRate = allDuration > 0 ? goalLinkedDuration / allDuration : 0;
+
+  return {
+    totalDuration: Math.round(goalLinkedDuration),
+    dailyAvgDuration: Math.round(goalLinkedDuration / daysInRange),
+    goalCoverageRate,
+    activeClusters,
+    totalEntries: entries.length,
+    daysInRange,
+  };
+}
+
+/**
+ * 计算目标时间分布
+ */
+function calculateGoalDistribution(
+  stats: ClusterStats[],
+  clusters: GoalCluster[]
+): GoalDistributionItem[] {
+  const totalDuration = stats.reduce((sum, s) => sum + s.totalDuration, 0);
+
+  return stats
+    .filter(s => s.totalDuration > 0)
+    .map((s, index) => {
+      const cluster = clusters.find(c => c.id === s.clusterId);
+      return {
+        clusterId: s.clusterId,
+        clusterName: cluster?.name || s.clusterName,
+        totalDuration: s.totalDuration,
+        percentage: totalDuration > 0 ? s.totalDuration / totalDuration : 0,
+        color: getClusterColor(s.clusterId, index),
+      };
+    });
 }
 
 /**
@@ -391,24 +362,6 @@ export function formatGoalDuration(minutes: number): string {
 export function formatGoalHours(minutes: number): string {
   const hours = Math.round(minutes / 60 * 10) / 10;
   return `${hours}h`;
-}
-
-/**
- * 获取健康状态的显示信息
- */
-export function getHealthStatusInfo(status: GoalHealthStatus): {
-  label: string;
-  color: string;
-  emoji: string;
-} {
-  switch (status) {
-    case 'active':
-      return { label: '活跃中', color: '#10b981', emoji: '🟢' };
-    case 'slowing':
-      return { label: '放缓', color: '#f59e0b', emoji: '🟡' };
-    case 'stalled':
-      return { label: '停滞', color: '#ef4444', emoji: '🔴' };
-  }
 }
 
 /**

@@ -224,14 +224,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend, onOpenGoalAna
                       </div>
                     </div>
                     <div className="trend-entry-preview" style={{ marginTop: 4 }}>
+                      <span className="trend-preview-tag" style={{ backgroundColor: '#3b82f620', color: '#3b82f6', borderColor: '#3b82f6' }}>
+                        📋 投入概览
+                      </span>
                       <span className="trend-preview-tag" style={{ backgroundColor: '#10b98120', color: '#10b981', borderColor: '#10b981' }}>
-                        🟢 活跃
+                        📊 时间分布
                       </span>
                       <span className="trend-preview-tag" style={{ backgroundColor: '#f59e0b20', color: '#f59e0b', borderColor: '#f59e0b' }}>
-                        🟡 放缓
-                      </span>
-                      <span className="trend-preview-tag" style={{ backgroundColor: '#ef444420', color: '#ef4444', borderColor: '#ef4444' }}>
-                        🔴 停滞
+                        📦 聚类分析
                       </span>
                     </div>
                   </div>

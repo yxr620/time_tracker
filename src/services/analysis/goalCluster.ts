@@ -25,16 +25,11 @@
  * | standard | 0.35 | 默认       |
  * | strict   | 0.5  | 严格匹配   |
  * 
- * ## 健康状态判定（在 goalAnalysisProcessor.ts 中）
- * - 活跃 (active):   最后活动 ≤ 7 天
- * - 放缓 (slowing):  最后活动 7-14 天
- * - 停滞 (stalled):  最后活动 > 14 天
- * 
  * ## 已知限制
  * 1. 短词匹配问题：极短的目标名（如 "vldb"）可能无法与较长的相关目标正确聚类
  * 2. 未关联事件的「关联」功能为 TODO 占位
  * 
- * @see goalAnalysisProcessor.ts - 数据处理与健康状态计算
+ * @see goalAnalysisProcessor.ts - 数据处理与统计指标计算
  * @see GoalAnalysisPage.tsx - UI 展示组件
  */
 

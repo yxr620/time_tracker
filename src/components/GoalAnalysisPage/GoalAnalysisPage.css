@@ -123,8 +123,8 @@
   color: #666;
 }
 
-/* 健康度总览卡片 */
-.health-summary-card {
+/* 时间投入概览卡片 */
+.overview-stats-card {
   background: white;
   border-radius: 12px;
   padding: 16px;
@@ -132,82 +132,55 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.health-summary-card h3 {
+.overview-stats-card h3 {
   margin: 0 0 16px 0;
   font-size: 16px;
   font-weight: 600;
 }
 
-.health-stats-row {
+.overview-stats-row {
   display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
 }
 
-.health-stat {
+.overview-stat {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 8px;
+  padding: 14px 8px;
   background: #f8fafc;
-  border-radius: 8px;
+  border-radius: 10px;
+  transition: background 0.2s;
 }
 
-.health-emoji {
-  font-size: 24px;
-  margin-bottom: 4px;
+.overview-stat:hover {
+  background: #f1f5f9;
 }
 
-.health-count {
-  font-size: 28px;
+.overview-icon {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+
+.overview-value {
+  font-size: 26px;
   font-weight: 700;
+  color: #1e293b;
   line-height: 1.2;
 }
 
-.health-stat.active .health-count {
-  color: #10b981;
-}
-
-.health-stat.slowing .health-count {
-  color: #f59e0b;
-}
-
-.health-stat.stalled .health-count {
-  color: #ef4444;
-}
-
-.health-label {
+.overview-label {
   font-size: 14px;
   font-weight: 500;
-  color: #333;
-  margin-top: 2px;
+  color: #475569;
+  margin-top: 4px;
 }
 
-.health-desc {
+.overview-desc {
   font-size: 11px;
-  color: #999;
+  color: #94a3b8;
   margin-top: 2px;
-}
-
-.health-bar {
-  display: flex;
-  height: 8px;
-  border-radius: 4px;
-  overflow: hidden;
-  background: #f0f0f0;
-}
-
-.health-bar-active {
-  background: #10b981;
-}
-
-.health-bar-slowing {
-  background: #f59e0b;
-}
-
-.health-bar-stalled {
-  background: #ef4444;
 }
 
 /* 图表卡片 */
@@ -390,10 +363,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.cluster-health {
-  font-size: 12px;
 }
 
 .cluster-stats {
@@ -596,24 +565,27 @@
     width: 100%;
     justify-content: flex-start;
   }
-  
-  .health-stats-row {
+
+  .overview-stats-row {
+    flex-wrap: wrap;
     gap: 8px;
   }
-  
-  .health-stat {
+
+  .overview-stat {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
     padding: 10px 4px;
   }
-  
-  .health-count {
-    font-size: 24px;
+
+  .overview-value {
+    font-size: 22px;
   }
-  
-  .health-label {
+
+  .overview-label {
     font-size: 12px;
   }
-  
-  .health-desc {
+
+  .overview-desc {
     font-size: 10px;
   }
   

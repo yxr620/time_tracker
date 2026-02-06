@@ -24,24 +24,7 @@ export interface ClusterStats {
   lastActiveDate: Date | null;   // 最后活动日期
   firstActiveDate: Date | null;  // 首次活动日期
   longestStreak: number;         // 最长连续天数
-  healthStatus: GoalHealthStatus; // 健康状态
   entryCount: number;            // 记录数
-}
-
-/** 目标健康状态 */
-export type GoalHealthStatus = 'active' | 'slowing' | 'stalled';
-
-/** 每日聚类时长数据点 */
-export interface ClusterDailyData {
-  date: string;                  // YYYY-MM-DD
-  label: string;                 // 显示标签 MM/DD
-  [clusterId: string]: number | string;  // 各聚类的时长（小时）
-}
-
-/** 聚类趋势数据 */
-export interface ClusterTrendData {
-  data: ClusterDailyData[];
-  clusterKeys: { id: string; name: string; color: string }[];
 }
 
 /** 未关联事件推荐 */
@@ -81,17 +64,32 @@ export interface GoalAnalysisFilters {
   clusterIds?: string[];         // 可选：只看特定聚类
 }
 
+/** 时间投入概览统计 */
+export interface OverviewStats {
+  totalDuration: number;         // 总投入时长（分钟）
+  dailyAvgDuration: number;      // 日均投入时长（分钟）
+  goalCoverageRate: number;      // 目标覆盖率（0-1）
+  activeClusters: number;        // 活跃聚类数（有时间记录的）
+  totalEntries: number;          // 总记录数
+  daysInRange: number;           // 日期范围天数
+}
+
+/** 目标时间分布项 */
+export interface GoalDistributionItem {
+  clusterId: string;
+  clusterName: string;
+  totalDuration: number;         // 总时长（分钟）
+  percentage: number;            // 占比（0-1）
+  color: string;                 // 展示颜色
+}
+
 /** 目标分析整体结果 */
 export interface GoalAnalysisResult {
   clusters: GoalCluster[];
   stats: ClusterStats[];
-  trendData: ClusterTrendData;
   unlinkedSuggestions: UnlinkedEventSuggestion[];
-  healthSummary: {
-    active: number;
-    slowing: number;
-    stalled: number;
-  };
+  overviewStats: OverviewStats;
+  distribution: GoalDistributionItem[];
 }
 
 /** 子目标详情（展开聚类时显示） */

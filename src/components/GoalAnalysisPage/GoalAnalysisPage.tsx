@@ -12,8 +12,8 @@ import {
   closeOutline,
 } from 'ionicons/icons';
 import {
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-  AreaChart, Area,
+  ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
 } from 'recharts';
 import { subDays, differenceInDays } from 'date-fns';
 import {
@@ -21,7 +21,6 @@ import {
   getDefaultGoalAnalysisDateRange,
   formatGoalDuration,
   formatGoalHours,
-  getHealthStatusInfo,
   getRelativeTimeDesc,
   getSubGoalDetails,
 } from '../../services/analysis/goalAnalysisProcessor';
@@ -33,6 +32,8 @@ import type {
   UnlinkedEventSuggestion,
   SubGoalDetail,
   ClusterSettings,
+  OverviewStats,
+  GoalDistributionItem,
 } from '../../types/goalAnalysis';
 import type { DateRange } from '../../types/analysis';
 import { db } from '../../services/db';
@@ -184,7 +185,7 @@ export const GoalAnalysisPage: React.FC<GoalAnalysisPageProps> = ({
     );
   }
 
-  const { clusters, stats, trendData, unlinkedSuggestions, healthSummary } = analysisResult;
+  const { clusters, stats, unlinkedSuggestions, overviewStats, distribution } = analysisResult;
 
   return (
     <div className="goal-analysis-container">
@@ -204,15 +205,11 @@ export const GoalAnalysisPage: React.FC<GoalAnalysisPageProps> = ({
         />
       </div>
 
-      {/* 健康度总览 */}
-      <HealthSummaryCard summary={healthSummary} />
+      {/* 时间投入概览 */}
+      <OverviewStatsCard stats={overviewStats} />
 
-      {/* 目标趋势图 */}
-      <ClusterTrendChart 
-        data={trendData.data} 
-        clusters={trendData.clusterKeys}
-        stats={stats}
-      />
+      {/* 目标时间分布 */}
+      <GoalDistributionChart distribution={distribution} />
 
       {/* 聚类列表 */}
       <div className="goal-cluster-section">
@@ -322,181 +319,159 @@ const DateRangeSelector: React.FC<{
   );
 };
 
-/** 健康度总览卡片 */
-const HealthSummaryCard: React.FC<{
-  summary: { active: number; slowing: number; stalled: number };
-}> = ({ summary }) => {
-  const total = summary.active + summary.slowing + summary.stalled;
-  
+/** 时间投入概览卡片 */
+const OverviewStatsCard: React.FC<{
+  stats: OverviewStats;
+}> = ({ stats }) => {
+  const formatHours = (minutes: number): string => {
+    const hours = Math.round(minutes / 60 * 10) / 10;
+    return `${hours}h`;
+  };
+
+  const items = [
+    {
+      icon: '⏱️',
+      value: formatHours(stats.totalDuration),
+      label: '总投入',
+      desc: `${stats.totalEntries} 条记录`,
+    },
+    {
+      icon: '📅',
+      value: formatHours(stats.dailyAvgDuration),
+      label: '日均投入',
+      desc: `${stats.daysInRange} 天内`,
+    },
+    {
+      icon: '🎯',
+      value: `${Math.round(stats.goalCoverageRate * 100)}%`,
+      label: '目标覆盖率',
+      desc: '有目标的时间占比',
+    },
+    {
+      icon: '📦',
+      value: `${stats.activeClusters}`,
+      label: '活跃聚类',
+      desc: '有时间记录的',
+    },
+  ];
+
   return (
-    <div className="health-summary-card">
-      <h3>🏥 目标健康度</h3>
-      <div className="health-stats-row">
-        <div className="health-stat active">
-          <span className="health-emoji">🟢</span>
-          <span className="health-count">{summary.active}</span>
-          <span className="health-label">活跃中</span>
-          <span className="health-desc">7天内有投入</span>
-        </div>
-        <div className="health-stat slowing">
-          <span className="health-emoji">🟡</span>
-          <span className="health-count">{summary.slowing}</span>
-          <span className="health-label">放缓</span>
-          <span className="health-desc">7-14天未投入</span>
-        </div>
-        <div className="health-stat stalled">
-          <span className="health-emoji">🔴</span>
-          <span className="health-count">{summary.stalled}</span>
-          <span className="health-label">停滞</span>
-          <span className="health-desc">14天以上未投入</span>
-        </div>
+    <div className="overview-stats-card">
+      <h3>📋 时间投入概览</h3>
+      <div className="overview-stats-row">
+        {items.map((item, i) => (
+          <div className="overview-stat" key={i}>
+            <span className="overview-icon">{item.icon}</span>
+            <span className="overview-value">{item.value}</span>
+            <span className="overview-label">{item.label}</span>
+            <span className="overview-desc">{item.desc}</span>
+          </div>
+        ))}
       </div>
-      {total > 0 && (
-        <div className="health-bar">
-          <div 
-            className="health-bar-active" 
-            style={{ width: `${(summary.active / total) * 100}%` }} 
-          />
-          <div 
-            className="health-bar-slowing" 
-            style={{ width: `${(summary.slowing / total) * 100}%` }} 
-          />
-          <div 
-            className="health-bar-stalled" 
-            style={{ width: `${(summary.stalled / total) * 100}%` }} 
-          />
-        </div>
-      )}
     </div>
   );
 };
 
-/** 聚类趋势图 */
-const ClusterTrendChart: React.FC<{
-  data: any[];
-  clusters: { id: string; name: string; color: string }[];
-  stats: ClusterStats[];
-}> = ({ data, clusters, stats }) => {
-  if (data.length === 0 || clusters.length === 0) return null;
+/** 目标时间分布图 */
+const GoalDistributionChart: React.FC<{
+  distribution: GoalDistributionItem[];
+}> = ({ distribution }) => {
+  if (distribution.length === 0) return null;
 
-  // 只显示前 TOP_N 个最重要的聚类（按总时长排序），其余合并为"其他"
-  const TOP_N = 8;
-  
-  // 按总时长排序
-  const sortedStats = [...stats].sort((a, b) => b.totalDuration - a.totalDuration);
-  const topClusterIds = new Set(sortedStats.slice(0, TOP_N).map(s => s.clusterId));
-  
-  // 分离出 top 聚类和其他聚类
-  const topClusters = clusters.filter(c => topClusterIds.has(c.id));
-  const otherClusterIds = clusters.filter(c => !topClusterIds.has(c.id)).map(c => c.id);
-  
-  // 重新计算数据，将其他聚类合并
-  const processedData = data.map(day => {
-    const newDay: any = { date: day.date, label: day.label };
-    
-    // 保留 top 聚类的数据
-    topClusters.forEach(c => {
-      newDay[c.id] = day[c.id] || 0;
+  const TOP_N = 10;
+  const topItems = distribution.slice(0, TOP_N);
+  const otherItems = distribution.slice(TOP_N);
+
+  // Build chart data
+  const chartData: { name: string; hours: number; percentage: number; color: string }[] = [];
+
+  for (const item of topItems) {
+    chartData.push({
+      name: item.clusterName.length > 8 ? item.clusterName.slice(0, 8) + '…' : item.clusterName,
+      hours: Math.round(item.totalDuration / 60 * 10) / 10,
+      percentage: item.percentage,
+      color: item.color,
     });
-    
-    // 合并其他聚类为 "其他"
-    let otherTotal = 0;
-    otherClusterIds.forEach(id => {
-      otherTotal += (day[id] as number) || 0;
-    });
-    if (otherClusterIds.length > 0) {
-      newDay['__other__'] = Math.round(otherTotal * 10) / 10;
-    }
-    
-    return newDay;
-  });
-  
-  // 构建显示用的聚类列表
-  const displayClusters = [...topClusters];
-  if (otherClusterIds.length > 0) {
-    displayClusters.push({
-      id: '__other__',
-      name: `其他 (${otherClusterIds.length}个)`,
+  }
+
+  if (otherItems.length > 0) {
+    const otherDuration = otherItems.reduce((sum, i) => sum + i.totalDuration, 0);
+    const otherPercentage = otherItems.reduce((sum, i) => sum + i.percentage, 0);
+    chartData.push({
+      name: `其他 (${otherItems.length}个)`,
+      hours: Math.round(otherDuration / 60 * 10) / 10,
+      percentage: otherPercentage,
       color: '#9ca3af',
     });
   }
 
+  // Reversed for horizontal bar (top item on top)
+  const reversedData = [...chartData].reverse();
+
   return (
     <div className="goal-chart-card">
       <div className="goal-chart-header">
-        <div className="goal-chart-title">📈 目标时间投入趋势</div>
-        <span className="goal-chart-subtitle">显示前{TOP_N}个主要目标</span>
+        <div className="goal-chart-title">📊 目标时间分布</div>
+        <span className="goal-chart-subtitle">显示前{TOP_N}个聚类</span>
       </div>
-      <div className="goal-chart-wrapper" style={{ height: 280 }}>
+      <div className="goal-chart-wrapper" style={{ height: Math.max(200, reversedData.length * 40 + 40) }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={processedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+          <BarChart
+            data={reversedData}
+            layout="vertical"
+            margin={{ top: 5, right: 60, left: 0, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
             <XAxis
-              dataKey="label"
-              tick={{ fontSize: 10 }}
-              stroke="#999"
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              tick={{ fontSize: 10 }}
+              type="number"
+              tick={{ fontSize: 11 }}
               stroke="#999"
               tickFormatter={(val) => `${val}h`}
             />
+            <YAxis
+              type="category"
+              dataKey="name"
+              tick={{ fontSize: 12 }}
+              stroke="#999"
+              width={90}
+            />
             <Tooltip
               content={(props) => {
-                const { active, payload, label } = props;
+                const { active, payload } = props;
                 if (!active || !payload || payload.length === 0) return null;
-
-                const total = payload.reduce((sum, item) => sum + ((item.value as number) || 0), 0);
-                
-                // 过滤掉值为0的项目，并按值排序
-                const sortedPayload = [...payload]
-                  .filter(item => (item.value as number) > 0)
-                  .sort((a, b) => (b.value as number) - (a.value as number));
-
+                const d = payload[0].payload as typeof chartData[0];
                 return (
                   <div className="goal-tooltip">
-                    <div className="tooltip-header">{label}</div>
-                    {sortedPayload.slice(0, 10).map((item) => (
-                      <div key={item.dataKey} className="tooltip-row">
-                        <span 
-                          className="tooltip-dot" 
-                          style={{ backgroundColor: item.color }}
-                        />
-                        <span className="tooltip-name">{item.name}</span>
-                        <span className="tooltip-value">{(item.value as number).toFixed(1)}h</span>
-                      </div>
-                    ))}
-                    {sortedPayload.length > 10 && (
-                      <div className="tooltip-row" style={{ color: '#999', fontSize: 11 }}>
-                        ... 还有 {sortedPayload.length - 10} 项
-                      </div>
-                    )}
-                    <div className="tooltip-total">
-                      合计: {total.toFixed(1)}h
+                    <div className="tooltip-header">{d.name}</div>
+                    <div className="tooltip-row">
+                      <span className="tooltip-dot" style={{ backgroundColor: d.color }} />
+                      <span className="tooltip-name">时长</span>
+                      <span className="tooltip-value">{d.hours}h</span>
+                    </div>
+                    <div className="tooltip-row">
+                      <span className="tooltip-dot" style={{ backgroundColor: 'transparent' }} />
+                      <span className="tooltip-name">占比</span>
+                      <span className="tooltip-value">{(d.percentage * 100).toFixed(1)}%</span>
                     </div>
                   </div>
                 );
               }}
             />
-            <Legend 
-              wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
-              iconType="circle"
-            />
-            {displayClusters.map((cluster) => (
-              <Area
-                key={cluster.id}
-                type="monotone"
-                dataKey={cluster.id}
-                name={cluster.name}
-                stackId="1"
-                stroke={cluster.color}
-                fill={cluster.color}
-                fillOpacity={0.6}
-                strokeWidth={1.5}
-              />
-            ))}
-          </AreaChart>
+            <Bar dataKey="hours" radius={[0, 4, 4, 0]} barSize={24}
+              label={({ x, y, width, value, index }: any) => {
+                const item = reversedData[index];
+                return (
+                  <text x={x + width + 6} y={y + 16} fontSize={11} fill="#666">
+                    {value}h ({(item.percentage * 100).toFixed(1)}%)
+                  </text>
+                );
+              }}
+            >
+              {reversedData.map((entry, index) => (
+                <Cell key={index} fill={entry.color} />
+              ))}
+            </Bar>
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </div>
@@ -512,7 +487,6 @@ const ClusterCard: React.FC<{
   subGoalDetails: SubGoalDetail[];
   onClick: () => void;
 }> = ({ cluster, stat, index, isExpanded, subGoalDetails, onClick }) => {
-  const healthInfo = getHealthStatusInfo(stat.healthStatus);
   const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
   const color = colors[index % colors.length];
 
@@ -523,9 +497,6 @@ const ClusterCard: React.FC<{
         <div className="cluster-info">
           <div className="cluster-name-row">
             <span className="cluster-name">{cluster.name}</span>
-            <span className={`cluster-health ${stat.healthStatus}`}>
-              {healthInfo.emoji}
-            </span>
           </div>
           <div className="cluster-stats">
             <span className="cluster-stat">
