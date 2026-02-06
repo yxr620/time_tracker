@@ -16,7 +16,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid var(--ion-color-light);
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .stat-item:last-child,
@@ -27,13 +27,13 @@
 .stat-label,
 .result-label {
   font-weight: 500;
-  color: var(--ion-color-medium);
+  color: hsl(var(--muted-foreground));
 }
 
 .stat-value,
 .result-value {
   font-weight: 600;
-  color: var(--ion-color-dark);
+  color: hsl(var(--foreground));
 }
 
 .result-value.success {

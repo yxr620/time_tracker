@@ -20,6 +20,28 @@ import {
 import type { ProcessedEntry, AnalysisMetrics, ChartDataPoint, CategoryTrendDataPoint, DateRange } from '../../types/analysis';
 import './Dashboard.css';
 
+// 图表样式常量
+const CHART_STYLES = {
+  tooltip: {
+    contentStyle: { 
+      background: 'hsl(var(--card))', 
+      border: '1px solid hsl(var(--border))', 
+      borderRadius: 8, 
+      color: 'hsl(var(--foreground))' 
+    },
+    labelStyle: { color: 'hsl(var(--foreground))' },
+    itemStyle: { color: 'hsl(var(--foreground))' }
+  },
+  axis: {
+    tick: { fill: 'hsl(var(--muted-foreground))' },
+    stroke: 'hsl(var(--border))'
+  },
+  grid: {
+    stroke: 'hsl(var(--border))',
+    strokeDasharray: '3 3'
+  }
+} as const;
+
 // 预设时间范围选项
 const DATE_RANGES = [
   { label: '最近7天', days: 7 },
@@ -180,7 +202,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend, onOpenGoalAna
                 <div 
                   className="trend-entry-card"
                   onClick={onOpenTrend}
-                  style={{ flex: 1, background: 'white', borderRadius: 12, padding: 16, cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', minHeight: 96 }}
+                  style={{ flex: 1, background: 'hsl(var(--card))', borderRadius: 12, padding: 16, cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', minHeight: 96 }}
                 >
                   <div className="trend-entry-content" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
                     <div className="trend-entry-left">
@@ -213,7 +235,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend, onOpenGoalAna
                 <div 
                   className="trend-entry-card goal-entry-card"
                   onClick={onOpenGoalAnalysis}
-                  style={{ flex: 1, background: 'white', borderRadius: 12, padding: 16, cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', minHeight: 96 }}
+                  style={{ flex: 1, background: 'hsl(var(--card))', borderRadius: 12, padding: 16, cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', minHeight: 96 }}
                 >
                   <div className="trend-entry-content" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
                     <div className="trend-entry-left">
@@ -251,10 +273,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend, onOpenGoalAna
                   marginLeft: 8,
                   padding: '2px 8px',
                   borderRadius: 999,
-                  background: '#f5f5f5',
-                  color: '#666',
+                  background: 'hsl(var(--muted))',
+                  color: 'hsl(var(--muted-foreground))',
                   fontSize: 12,
-                  border: '1px solid #e5e5e5',
+                  border: '1px solid hsl(var(--border))',
                 }}
               >
                 无目标 {Math.round((noGoalStat.value / 60) * 10) / 10}h
@@ -308,22 +330,12 @@ const DateRangeSelector: React.FC<{
 
   return (
     <div className="dashboard-filters">
-      <IonIcon icon={calendarOutline} style={{ fontSize: 18, color: '#666' }} />
+      <IonIcon icon={calendarOutline} style={{ fontSize: 18, color: 'hsl(var(--muted-foreground))' }} />
       {DATE_RANGES.map(range => (
         <button
           key={range.days}
-          className={`date-range-btn ${selected === range.days ? 'active' : ''}`}
+          className={`range-button ${selected === range.days ? 'active' : ''}`}
           onClick={() => onChange(range.days)}
-          style={{
-            padding: '6px 12px',
-            borderRadius: 6,
-            border: 'none',
-            background: selected === range.days ? '#1890ff' : '#f5f5f5',
-            color: selected === range.days ? 'white' : '#666',
-            cursor: 'pointer',
-            fontSize: 13,
-            fontWeight: selected === range.days ? 500 : 400,
-          }}
         >
           {range.label}
         </button>
@@ -332,6 +344,7 @@ const DateRangeSelector: React.FC<{
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 8 }}>
           <input
             type="date"
+            className="date-input"
             value={formatDateForInput(customRange.start)}
             onChange={(e) => {
               const newStart = new Date(e.target.value);
@@ -339,28 +352,17 @@ const DateRangeSelector: React.FC<{
                 onCustomRangeChange({ ...customRange, start: newStart });
               }
             }}
-            style={{
-              padding: '4px 8px',
-              borderRadius: 4,
-              border: '1px solid #d9d9d9',
-              fontSize: 13,
-            }}
           />
-          <span style={{ color: '#666' }}>至</span>
+          <span style={{ color: 'hsl(var(--muted-foreground))' }}>至</span>
           <input
             type="date"
+            className="date-input"
             value={formatDateForInput(customRange.end)}
             onChange={(e) => {
               const newEnd = new Date(e.target.value);
               if (!isNaN(newEnd.getTime()) && newEnd >= customRange.start) {
                 onCustomRangeChange({ ...customRange, end: newEnd });
               }
-            }}
-            style={{
-              padding: '4px 8px',
-              borderRadius: 4,
-              border: '1px solid #d9d9d9',
-              fontSize: 13,
             }}
           />
         </div>
@@ -400,11 +402,12 @@ const GoalBarChart: React.FC<{ data: ChartDataPoint[] }> = ({ data }) => {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, left: 60, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-        <XAxis type="number" tick={{ fontSize: 12 }} stroke="#999" unit="h" />
-        <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} stroke="#999" width={55} />
+        <CartesianGrid {...CHART_STYLES.grid} />
+        <XAxis type="number" tick={{ fontSize: 12, ...CHART_STYLES.axis.tick }} stroke={CHART_STYLES.axis.stroke} unit="h" />
+        <YAxis dataKey="name" type="category" tick={{ fontSize: 12, ...CHART_STYLES.axis.tick }} stroke={CHART_STYLES.axis.stroke} width={55} />
         <Tooltip
           formatter={(value: number, _name, props) => [`${value} 小时`, props.payload.fullName]}
+          {...CHART_STYLES.tooltip}
         />
         <Bar dataKey="value" fill="#1890ff" radius={[0, 4, 4, 0]} />
       </BarChart>
@@ -432,15 +435,18 @@ const CategoryPieChart: React.FC<{ data: ChartDataPoint[] }> = ({ data }) => {
           paddingAngle={2}
           dataKey="value"
           label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-          labelLine={{ stroke: '#999', strokeWidth: 1 }}
+          labelLine={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1 }}
         >
           {chartData.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.color} />
           ))}
         </Pie>
-        <Tooltip formatter={(value: number) => [`${value} 小时`, '时长']} />
+        <Tooltip
+          formatter={(value: number) => [`${value} 小时`, '时长']}
+          {...CHART_STYLES.tooltip}
+        />
         <Legend
-          formatter={(value) => <span style={{ color: '#666', fontSize: 12 }}>{value}</span>}
+          formatter={(value) => <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: 12 }}>{value}</span>}
         />
       </PieChart>
     </ResponsiveContainer>
@@ -451,10 +457,13 @@ const CategoryPieChart: React.FC<{ data: ChartDataPoint[] }> = ({ data }) => {
 const HourDistributionChart: React.FC<{ data: ChartDataPoint[] }> = ({ data }) => (
   <ResponsiveContainer width="100%" height="100%">
     <BarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-      <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="#999" interval={1} />
-      <YAxis tick={{ fontSize: 12 }} stroke="#999" unit="h" />
-      <Tooltip formatter={(value: number) => [`${value} 小时`, '时长']} />
+      <CartesianGrid {...CHART_STYLES.grid} />
+      <XAxis dataKey="name" tick={{ fontSize: 11, ...CHART_STYLES.axis.tick }} stroke={CHART_STYLES.axis.stroke} interval={1} />
+      <YAxis tick={{ fontSize: 12, ...CHART_STYLES.axis.tick }} stroke={CHART_STYLES.axis.stroke} unit="h" />
+      <Tooltip
+        formatter={(value: number) => [`${value} 小时`, '时长']}
+        {...CHART_STYLES.tooltip}
+      />
       <Bar dataKey="value" fill="#52c41a" radius={[4, 4, 0, 0]} />
     </BarChart>
   </ResponsiveContainer>

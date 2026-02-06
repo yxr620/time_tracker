@@ -102,7 +102,7 @@ export const SyncButton: React.FC = () => {
       {lastSyncTime && (
         <div style={{
           fontSize: '11px',
-          color: '#999',
+          color: 'hsl(var(--muted-foreground))',
           marginTop: '6px',
           textAlign: 'center'
         }}>

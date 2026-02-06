@@ -36,11 +36,20 @@ if (viewport) {
   );
 }
 
-// 初始化状态栏
+// 初始化状态栏（会被 useDarkMode hook 更新）
 if (Capacitor.isNativePlatform()) {
   try {
-    StatusBar.setStyle({ style: Style.Light });
-    StatusBar.setBackgroundColor({ color: '#ffffff' });
+    // 检查用户偏好或系统偏好
+    const savedDarkMode = localStorage.getItem('darkMode');
+    const prefersDark = savedDarkMode === 'true' || 
+      (savedDarkMode === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    StatusBar.setStyle({ 
+      style: prefersDark ? Style.Dark : Style.Light 
+    });
+    StatusBar.setBackgroundColor({ 
+      color: prefersDark ? '#0a0f1a' : '#ffffff' 
+    });
     StatusBar.setOverlaysWebView({ overlay: false });
   } catch (error) {
     console.error('[Init] 状态栏初始化失败:', error);

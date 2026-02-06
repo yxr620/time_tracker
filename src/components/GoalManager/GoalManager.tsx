@@ -26,10 +26,12 @@ import {
 import { useGoalStore } from '../../stores/goalStore';
 import { useEntryStore } from '../../stores/entryStore';
 import { useDateStore } from '../../stores/dateStore';
+import { useDarkMode } from '../../hooks/useDarkMode';
 import dayjs from 'dayjs';
 import type { Goal } from '../../services/db';
 
 export const GoalManager: React.FC = () => {
+  const { isDark } = useDarkMode();
   const currentDate = useDateStore(state => state.selectedDate);
   const setSelectedDate = useDateStore(state => state.setSelectedDate);
   const [showAddGoal, setShowAddGoal] = useState(false);
@@ -211,9 +213,9 @@ export const GoalManager: React.FC = () => {
           margin: 0,
           borderRadius: '24px',
           backdropFilter: 'blur(8px)',
-          background: 'rgba(255,255,255,0.92)',
-          boxShadow: '0 12px 28px rgba(15, 23, 42, 0.08)',
-          border: '1px solid rgba(148, 163, 184, 0.12)'
+          background: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255,255,255,0.92)',
+          boxShadow: isDark ? '0 12px 28px rgba(0, 0, 0, 0.3)' : '0 12px 28px rgba(15, 23, 42, 0.08)',
+          border: isDark ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(148, 163, 184, 0.12)'
         }}
       >
         <IonCardContent className="pt-4 pb-4">
@@ -257,7 +259,7 @@ export const GoalManager: React.FC = () => {
                   gap: '6px',
                   fontSize: '20px',
                   fontWeight: 700,
-                  color: '#0f172a'
+                  color: isDark ? '#f1f5f9' : '#0f172a'
                 }}
               >
                 <IonIcon
@@ -337,9 +339,9 @@ export const GoalManager: React.FC = () => {
           style={{
             margin: 0,
             borderRadius: '24px',
-            background: 'rgba(255,255,255,0.95)',
-            boxShadow: '0 12px 28px rgba(15, 23, 42, 0.08)',
-            border: '1px solid rgba(148, 163, 184, 0.12)'
+            background: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255,255,255,0.95)',
+            boxShadow: isDark ? '0 12px 28px rgba(0, 0, 0, 0.3)' : '0 12px 28px rgba(15, 23, 42, 0.08)',
+            border: isDark ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(148, 163, 184, 0.12)'
           }}
         >
           <IonCardContent className="pt-6 pb-6">
@@ -348,7 +350,7 @@ export const GoalManager: React.FC = () => {
                 textAlign: 'center',
                 fontSize: '34px',
                 fontWeight: 700,
-                color: '#0f172a'
+                color: isDark ? '#f1f5f9' : '#0f172a'
               }}
             >
               {formatDuration(totalDuration)}
@@ -362,9 +364,9 @@ export const GoalManager: React.FC = () => {
         style={{
           margin: 0,
           borderRadius: '24px',
-          background: 'rgba(255,255,255,0.95)',
-          boxShadow: '0 12px 28px rgba(15, 23, 42, 0.08)',
-          border: '1px solid rgba(148, 163, 184, 0.12)'
+          background: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255,255,255,0.95)',
+          boxShadow: isDark ? '0 12px 28px rgba(0, 0, 0, 0.3)' : '0 12px 28px rgba(15, 23, 42, 0.08)',
+          border: isDark ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(148, 163, 184, 0.12)'
         }}
       >
         <IonCardContent className="pb-0">
@@ -406,7 +408,7 @@ export const GoalManager: React.FC = () => {
               style={{
                 padding: '48px 16px',
                 textAlign: 'center',
-                color: '#9ca3af'
+                color: isDark ? '#94a3b8' : '#9ca3af'
               }}
             >
               暂无目标，点击上方按钮添加
@@ -430,7 +432,8 @@ export const GoalManager: React.FC = () => {
                       '--padding-end': '12px',
                       '--inner-padding-end': '0px',
                       '--min-height': '68px',
-                      '--border-color': 'rgba(226, 232, 240, 0.8)'
+                      '--border-color': isDark ? 'rgba(71, 85, 105, 0.4)' : 'rgba(226, 232, 240, 0.8)',
+                      '--background': 'transparent'
                     }}
                   >
                     <IonLabel>
@@ -517,7 +520,8 @@ export const GoalManager: React.FC = () => {
                 clearInput
                 className="text-lg"
                 style={{ 
-                  '--background': '#f8fafc',
+                  '--background': isDark ? '#1e293b' : '#f8fafc',
+                  '--color': isDark ? '#f1f5f9' : '#0f172a',
                   '--border-radius': '16px',
                   '--padding-start': '20px', 
                   '--padding-end': '20px', 
@@ -581,7 +585,8 @@ export const GoalManager: React.FC = () => {
                 clearInput
                 className="text-lg"
                 style={{ 
-                  '--background': '#f8fafc',
+                  '--background': isDark ? '#1e293b' : '#f8fafc',
+                  '--color': isDark ? '#f1f5f9' : '#0f172a',
                   '--border-radius': '16px',
                   '--padding-start': '20px', 
                   '--padding-end': '20px', 

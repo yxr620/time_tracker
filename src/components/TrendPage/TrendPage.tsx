@@ -27,6 +27,33 @@ import {
 import type { ProcessedEntry, CategoryTrendDataPoint, DateRange } from '../../types/analysis';
 import './TrendPage.css';
 
+// 图表样式常量
+const CHART_STYLES = {
+  tooltip: {
+    contentStyle: {
+      backgroundColor: 'hsl(var(--card))',
+      border: '1px solid hsl(var(--border))',
+      borderRadius: 6,
+      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+      fontSize: 12,
+      padding: 10,
+      color: 'hsl(var(--foreground))',
+    }
+  },
+  axis: {
+    tick: { fill: 'hsl(var(--muted-foreground))' },
+    stroke: 'hsl(var(--border))'
+  },
+  grid: {
+    stroke: 'hsl(var(--border))',
+    strokeDasharray: '3 3',
+    vertical: false as const
+  },
+  cursor: {
+    fill: 'hsl(var(--muted) / 0.3)'
+  }
+} as const;
+
 // 预设时间范围选项
 const DATE_RANGES = [
   { label: '最近7天', days: 7 },
@@ -275,7 +302,7 @@ const DateRangeSelector: React.FC<{
 
   return (
     <div className="trend-filters">
-      <IonIcon icon={calendarOutline} style={{ fontSize: 18, color: '#666' }} />
+      <IonIcon icon={calendarOutline} style={{ fontSize: 18, color: 'hsl(var(--muted-foreground))' }} />
       {DATE_RANGES.map(range => (
         <button
           key={range.days}
@@ -326,11 +353,11 @@ const StackedAreaOverview: React.FC<StackedAreaOverviewProps> = ({ data, categor
       <div className="trend-chart-wrapper" style={{ height: 260 }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+            <CartesianGrid {...CHART_STYLES.grid} />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 10 }}
-              stroke="#999"
+              tick={{ fontSize: 10, ...CHART_STYLES.axis.tick }}
+              stroke={CHART_STYLES.axis.stroke}
               interval="preserveStartEnd"
               tickFormatter={(val) => {
                 const parts = (val as string).split('/');
@@ -338,8 +365,8 @@ const StackedAreaOverview: React.FC<StackedAreaOverviewProps> = ({ data, categor
               }}
             />
             <YAxis
-              tick={{ fontSize: 10 }}
-              stroke="#999"
+              tick={{ fontSize: 10, ...CHART_STYLES.axis.tick }}
+              stroke={CHART_STYLES.axis.stroke}
               domain={[0, 24]}
               tickFormatter={(val) => `${val}`}
             />
@@ -351,20 +378,10 @@ const StackedAreaOverview: React.FC<StackedAreaOverviewProps> = ({ data, categor
                 const total = payload.reduce((sum, item) => sum + ((item.value as number) || 0), 0);
 
                 return (
-                  <div
-                    style={{
-                      backgroundColor: 'rgba(255,255,255,0.96)',
-                      border: '1px solid #e8e8e8',
-                      borderRadius: 6,
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                      fontSize: 12,
-                      padding: 10,
-                      minWidth: 180,
-                    }}
-                  >
+                  <div style={CHART_STYLES.tooltip.contentStyle}>
                     <div style={{ marginBottom: 6 }}>日期: {label}</div>
                     {payload.map((item) => (
-                      <div key={item.dataKey} style={{ color: '#333', marginBottom: 4 }}>
+                      <div key={item.dataKey} style={{ marginBottom: 4 }}>
                         <span
                           style={{
                             display: 'inline-block',
@@ -378,7 +395,7 @@ const StackedAreaOverview: React.FC<StackedAreaOverviewProps> = ({ data, categor
                         {item.name}: {(item.value as number).toFixed(1)}h
                       </div>
                     ))}
-                    <div style={{ marginTop: 6, color: '#111', fontWeight: 600 }}>
+                    <div style={{ marginTop: 6, fontWeight: 600 }}>
                       总计: {total.toFixed(1)}h
                     </div>
                   </div>
@@ -396,8 +413,8 @@ const StackedAreaOverview: React.FC<StackedAreaOverviewProps> = ({ data, categor
                 fill={cat.color}
                 fillOpacity={0.55}
                 strokeWidth={1.5}
-                dot={{ r: 2, stroke: '#fff', strokeWidth: 1 }}
-                activeDot={{ r: 4, strokeWidth: 2, stroke: '#fff' }}
+                dot={{ r: 2, stroke: 'hsl(var(--card))', strokeWidth: 1 }}
+                activeDot={{ r: 4, strokeWidth: 2, stroke: 'hsl(var(--card))' }}
                 isAnimationActive={false}
               />
             ))}
@@ -452,11 +469,11 @@ const SingleCategoryChart: React.FC<{
       <div className="trend-chart-wrapper">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+            <CartesianGrid {...CHART_STYLES.grid} />
             <XAxis 
               dataKey="label" 
-              tick={{ fontSize: 10 }} 
-              stroke="#999"
+              tick={{ fontSize: 10, ...CHART_STYLES.axis.tick }} 
+              stroke={CHART_STYLES.axis.stroke}
               interval="preserveStartEnd"
               tickFormatter={(val) => {
                 // 只显示月/日
@@ -465,8 +482,8 @@ const SingleCategoryChart: React.FC<{
               }}
             />
             <YAxis 
-              tick={{ fontSize: 10 }} 
-              stroke="#999" 
+              tick={{ fontSize: 10, ...CHART_STYLES.axis.tick }} 
+              stroke={CHART_STYLES.axis.stroke} 
               domain={[0, 24]}
               tickFormatter={(val) => `${val}`}
             />
@@ -477,18 +494,9 @@ const SingleCategoryChart: React.FC<{
                 const point = payload[0].payload as { value: number; percentageOfDay?: number };
                 const percent = point.percentageOfDay ?? 0;
                 return (
-                  <div
-                    style={{
-                      backgroundColor: 'rgba(255,255,255,0.96)',
-                      border: '1px solid #e8e8e8',
-                      borderRadius: 6,
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                      fontSize: 12,
-                      padding: 10,
-                    }}
-                  >
+                  <div style={{ ...CHART_STYLES.tooltip.contentStyle, minWidth: undefined }}>
                     <div style={{ marginBottom: 6 }}>日期: {label}</div>
-                    <div style={{ color: '#333' }}>
+                    <div>
                       {categoryName}: {point.value.toFixed(1)} 小时 ({percent.toFixed(1)}%)
                     </div>
                   </div>
@@ -508,7 +516,7 @@ const SingleCategoryChart: React.FC<{
               stroke={categoryColor}
               strokeWidth={2}
               dot={{ r: 2, fill: categoryColor, strokeWidth: 0 }}
-              activeDot={{ r: 4, strokeWidth: 2, stroke: '#fff' }}
+              activeDot={{ r: 4, strokeWidth: 2, stroke: 'hsl(var(--card))' }}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -530,11 +538,11 @@ const WeeklyComparisonChart: React.FC<{
       <div className="trend-chart-wrapper" style={{ height: 300 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 20, right: 30, left: -20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-            <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="#999" />
-            <YAxis tick={{ fontSize: 12 }} stroke="#999" />
+            <CartesianGrid {...CHART_STYLES.grid} />
+            <XAxis dataKey="label" tick={{ fontSize: 12, ...CHART_STYLES.axis.tick }} stroke={CHART_STYLES.axis.stroke} />
+            <YAxis tick={{ fontSize: 12, ...CHART_STYLES.axis.tick }} stroke={CHART_STYLES.axis.stroke} />
             <Tooltip
-              cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+              cursor={CHART_STYLES.cursor}
               content={(props) => {
                 const { active, payload, label } = props;
                 if (!active || !payload || payload.length === 0) return null;
@@ -542,20 +550,10 @@ const WeeklyComparisonChart: React.FC<{
                 const total = payload.reduce((sum, item) => sum + ((item.value as number) || 0), 0);
 
                 return (
-                  <div
-                    style={{
-                      backgroundColor: 'rgba(255,255,255,0.96)',
-                      border: '1px solid #e8e8e8',
-                      borderRadius: 6,
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                      fontSize: 12,
-                      padding: 10,
-                      minWidth: 150,
-                    }}
-                  >
+                  <div style={{ ...CHART_STYLES.tooltip.contentStyle, minWidth: 150 }}>
                     <div style={{ marginBottom: 6, fontWeight: 600 }}>{label}</div>
                     {payload.map((item) => (
-                      <div key={item.dataKey} style={{ color: '#333', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+                      <div key={item.dataKey} style={{ marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
                         <span>
                           <span
                             style={{
@@ -572,7 +570,7 @@ const WeeklyComparisonChart: React.FC<{
                         <span>{(item.value as number).toFixed(1)}h</span>
                       </div>
                     ))}
-                    <div style={{ marginTop: 6, borderTop: '1px solid #eee', paddingTop: 6, fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ marginTop: 6, borderTop: '1px solid hsl(var(--border))', paddingTop: 6, fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
                       <span>总计</span>
                       <span>{total.toFixed(1)}h</span>
                     </div>
@@ -638,30 +636,20 @@ const WeeklyCategoryGroupedChart: React.FC<{
       <div className="trend-chart-wrapper" style={{ height: 300 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData.transformedData} margin={{ top: 20, right: 30, left: -20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-            <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="#666" />
-            <YAxis tick={{ fontSize: 12 }} stroke="#999" />
+            <CartesianGrid {...CHART_STYLES.grid} />
+            <XAxis dataKey="name" tick={{ fontSize: 12, ...CHART_STYLES.axis.tick }} stroke={CHART_STYLES.axis.stroke} />
+            <YAxis tick={{ fontSize: 12, ...CHART_STYLES.axis.tick }} stroke={CHART_STYLES.axis.stroke} />
             <Tooltip
-              cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+              cursor={CHART_STYLES.cursor}
               content={(props) => {
                 const { active, payload, label } = props;
                 if (!active || !payload || payload.length === 0) return null;
 
                 return (
-                  <div
-                    style={{
-                      backgroundColor: 'rgba(255,255,255,0.96)',
-                      border: '1px solid #e8e8e8',
-                      borderRadius: 6,
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                      fontSize: 12,
-                      padding: 10,
-                      minWidth: 150,
-                    }}
-                  >
+                  <div style={{ ...CHART_STYLES.tooltip.contentStyle, minWidth: 150 }}>
                     <div style={{ marginBottom: 6, fontWeight: 600, color: payload[0]?.payload.color }}>{label}</div>
                     {payload.map((item, index) => (
-                      <div key={item.dataKey} style={{ color: '#333', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+                      <div key={item.dataKey} style={{ marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
                         <span>
                           <span
                             style={{

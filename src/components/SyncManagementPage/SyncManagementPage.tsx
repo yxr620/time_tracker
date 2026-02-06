@@ -170,10 +170,10 @@ export const SyncManagementPage: React.FC = () => {
   if (!isConfigured) {
     return (
       <div style={{ padding: '16px' }}>
-        <div style={{ textAlign: 'center', padding: '20px', backgroundColor: '#f9f9f9', borderRadius: '12px' }}>
+        <div style={{ textAlign: 'center', padding: '20px', backgroundColor: 'hsl(var(--muted))', borderRadius: '12px' }}>
           <IonText color="medium">
-            <p style={{ fontSize: '16px', marginBottom: '10px' }}>OSS 未配置，无法使用同步功能</p>
-            <p style={{ fontSize: '14px', marginTop: '10px', color: '#999' }}>
+            <p style={{ fontSize: '16px', marginBottom: '10px', color: 'hsl(var(--foreground))' }}>OSS 未配置，无法使用同步功能</p>
+            <p style={{ fontSize: '14px', marginTop: '10px', color: 'hsl(var(--muted-foreground))' }}>
               请在 .env 文件中配置 OSS 相关环境变量
             </p>
           </IonText>
@@ -188,26 +188,26 @@ export const SyncManagementPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       {/* 同步状态 */}
       <div>
-        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px' }}>
+        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px', color: 'hsl(var(--foreground))' }}>
           同步状态
         </div>
         {stats ? (
-          <div className="sync-stats" style={{ fontSize: '13px', color: '#666', lineHeight: '1.4' }}>
-            <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
-              <span className="stat-label" style={{ color: '#666', fontSize: '13px' }}>OSS 配置:</span>
-              <span className="stat-value" style={{ fontWeight: '500' }}>✅ 已配置</span>
+          <div className="sync-stats" style={{ fontSize: '13px', color: 'hsl(var(--muted-foreground))', lineHeight: '1.4' }}>
+            <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
+              <span className="stat-label" style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>OSS 配置:</span>
+              <span className="stat-value" style={{ fontWeight: '500', color: 'hsl(var(--foreground))' }}>✅ 已配置</span>
             </div>
-            <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
-              <span className="stat-label" style={{ color: '#666', fontSize: '13px' }}>设备 ID:</span>
-              <span className="stat-value" style={{ fontWeight: '500', fontFamily: 'monospace', fontSize: '12px' }}>{stats.deviceId.substring(0, 8)}...</span>
+            <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
+              <span className="stat-label" style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>设备 ID:</span>
+              <span className="stat-value" style={{ fontWeight: '500', fontFamily: 'monospace', fontSize: '12px', color: 'hsl(var(--foreground))' }}>{stats.deviceId.substring(0, 8)}...</span>
             </div>
-            <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
-              <span className="stat-label" style={{ color: '#666', fontSize: '13px' }}>未同步操作:</span>
-              <span className="stat-value" style={{ fontWeight: '500', color: stats.pendingOps > 0 ? '#f59e0b' : '#10b981' }}>{stats.pendingOps} 条</span>
+            <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
+              <span className="stat-label" style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>未同步操作:</span>
+              <span className="stat-value" style={{ fontWeight: '500', color: stats.pendingOps > 0 ? 'hsl(var(--destructive))' : 'hsl(34 89% 52%)' }}>{stats.pendingOps} 条</span>
             </div>
             <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
-              <span className="stat-label" style={{ color: '#666', fontSize: '13px' }}>已同步操作:</span>
-              <span className="stat-value" style={{ fontWeight: '500' }}>{stats.syncedOps} 条</span>
+              <span className="stat-label" style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>已同步操作:</span>
+              <span className="stat-value" style={{ fontWeight: '500', color: 'hsl(var(--foreground))' }}>{stats.syncedOps} 条</span>
             </div>
           </div>
         ) : (
@@ -219,7 +219,7 @@ export const SyncManagementPage: React.FC = () => {
 
       {/* 增量同步 */}
       <div>
-        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px' }}>
+        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px', color: 'hsl(var(--foreground))' }}>
           增量同步（推荐）
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -231,7 +231,7 @@ export const SyncManagementPage: React.FC = () => {
           >
             {loading ? <IonSpinner name="dots" /> : '🔄 增量同步 (Push + Pull)'}
           </IonButton>
-          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px', marginBottom: '2px' }}>
+          <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px', marginBottom: '2px' }}>
             同步本地和云端的增量数据
           </div>
           <IonButton
@@ -243,7 +243,7 @@ export const SyncManagementPage: React.FC = () => {
           >
             ⬆️ 增量 Push
           </IonButton>
-          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px', marginBottom: '2px' }}>
+          <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px', marginBottom: '2px' }}>
             上传本地未同步的数据到云端
           </div>
           <IonButton
@@ -255,18 +255,18 @@ export const SyncManagementPage: React.FC = () => {
           >
             ⬇️ 增量 Pull
           </IonButton>
-          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px' }}>
+          <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px' }}>
             下载云端的增量数据到本地
           </div>
         </div>
       </div>
 
       {/* 强制全量同步 */}
-      <div style={{ marginTop: '8px', borderTop: '1px solid #e5e5e5', paddingTop: '10px' }}>
-        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '4px' }}>
+      <div style={{ marginTop: '8px', borderTop: '1px solid hsl(var(--border))', paddingTop: '10px' }}>
+        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '4px', color: 'hsl(var(--foreground))' }}>
           强制全量同步（数据恢复）
         </div>
-        <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px', lineHeight: '1.3' }}>
+        <div style={{ fontSize: '12px', color: 'hsl(var(--muted-foreground))', marginBottom: '8px', lineHeight: '1.3' }}>
           ⚠️ 适用于数据恢复或重建同步状态的场景
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -279,7 +279,7 @@ export const SyncManagementPage: React.FC = () => {
           >
             ⚠️ 强制全量同步 (Push + Pull)
           </IonButton>
-          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px', marginBottom: '2px' }}>
+          <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px', marginBottom: '2px' }}>
             重新上传并拉取所有数据
           </div>
           <IonButton
@@ -292,7 +292,7 @@ export const SyncManagementPage: React.FC = () => {
           >
             强制全量 Push ⚠️
           </IonButton>
-          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px', marginBottom: '2px' }}>
+          <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px', marginBottom: '2px' }}>
             重新上传所有本地数据到云端
           </div>
           <IonButton
@@ -305,15 +305,15 @@ export const SyncManagementPage: React.FC = () => {
           >
             强制全量 Pull ⚠️
           </IonButton>
-          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px' }}>
+          <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px' }}>
             拉取并合并所有远程数据
           </div>
         </div>
       </div>
 
       {/* 高级操作 */}
-      <div style={{ marginTop: '8px', borderTop: '1px solid #e5e5e5', paddingTop: '10px' }}>
-        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px' }}>
+      <div style={{ marginTop: '8px', borderTop: '1px solid hsl(var(--border))', paddingTop: '10px' }}>
+        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px', color: 'hsl(var(--foreground))' }}>
           高级操作
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -326,7 +326,7 @@ export const SyncManagementPage: React.FC = () => {
           >
             🔄 重置同步状态
           </IonButton>
-          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px', marginBottom: '2px' }}>
+          <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px', marginBottom: '2px' }}>
             清空时间戳，下次 Pull 会重新拉取所有文件
           </div>
           <IonButton
@@ -338,7 +338,7 @@ export const SyncManagementPage: React.FC = () => {
           >
             🗑️ 清理操作日志
           </IonButton>
-          <div style={{ fontSize: '11px', color: '#999', paddingLeft: '6px' }}>
+          <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px' }}>
             删除 7 天前的已同步操作日志
           </div>
         </div>
@@ -346,34 +346,34 @@ export const SyncManagementPage: React.FC = () => {
 
       {/* 同步结果 */}
       {lastResult && (
-        <div style={{ marginTop: '8px', borderTop: '1px solid #e5e5e5', paddingTop: '10px' }}>
-          <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px' }}>
+        <div style={{ marginTop: '8px', borderTop: '1px solid hsl(var(--border))', paddingTop: '10px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px', color: 'hsl(var(--foreground))' }}>
             最近同步结果
           </div>
-          <div className="sync-result" style={{ fontSize: '13px', color: '#666', lineHeight: '1.4' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
-              <span style={{ color: '#666', fontSize: '13px' }}>状态:</span>
+          <div className="sync-result" style={{ fontSize: '13px', color: 'hsl(var(--muted-foreground))', lineHeight: '1.4' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
+              <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>状态:</span>
               <span style={{
                 fontWeight: '500',
-                color: lastResult.status === 'success' ? '#10b981' : '#ef4444'
+                color: lastResult.status === 'success' ? 'hsl(142 76% 36%)' : 'hsl(var(--destructive))'
               }}>
                 {lastResult.status === 'success' ? '✅ 成功' : '❌ 失败'}
               </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
-              <span style={{ color: '#666', fontSize: '13px' }}>消息:</span>
-              <span style={{ fontWeight: '500', fontSize: '13px' }}>{lastResult.message}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
+              <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>消息:</span>
+              <span style={{ fontWeight: '500', fontSize: '13px', color: 'hsl(var(--foreground))' }}>{lastResult.message}</span>
             </div>
             {lastResult.pushedCount !== undefined && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span style={{ color: '#666', fontSize: '13px' }}>上传:</span>
-                <span style={{ fontWeight: '500' }}>↑ {lastResult.pushedCount} 条</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
+                <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>上传:</span>
+                <span style={{ fontWeight: '500', color: 'hsl(var(--foreground))' }}>↑ {lastResult.pushedCount} 条</span>
               </div>
             )}
             {lastResult.pulledCount !== undefined && (
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
-                <span style={{ color: '#666', fontSize: '13px' }}>下载:</span>
-                <span style={{ fontWeight: '500' }}>↓ {lastResult.pulledCount} 条</span>
+                <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>下载:</span>
+                <span style={{ fontWeight: '500', color: 'hsl(var(--foreground))' }}>↓ {lastResult.pulledCount} 条</span>
               </div>
             )}
           </div>

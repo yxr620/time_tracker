@@ -32,10 +32,11 @@ body {
   padding: 4px 16px 4px 16px;
   padding-top: max(8px, env(safe-area-inset-top));
   background: transparent;
-  color: #333;
+  color: hsl(var(--foreground));
   text-align: left;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
 }
 
@@ -57,9 +58,9 @@ body {
 
 .app-footer {
   flex-shrink: 0;
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid hsl(var(--border));
   padding-bottom: env(safe-area-inset-bottom);
-  background-color: white;
+  background-color: hsl(var(--background));
   z-index: 100;
 }
 
@@ -72,7 +73,7 @@ body {
 @media (min-width: 1024px) {
   .desktop-layout {
     flex-direction: row;
-    background-color: #f5f7fa;
+    background-color: hsl(var(--background));
   }
 
   .desktop-main {
@@ -81,6 +82,23 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+  }
+
+  .desktop-header {
+    flex-shrink: 0;
+    padding: 16px 24px;
+    border-bottom: 1px solid hsl(var(--border));
+    background-color: hsl(var(--background));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .desktop-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: hsl(var(--foreground));
   }
 
   .desktop-content {
@@ -100,7 +118,7 @@ body {
 
   /* 桌面端页面内容样式 */
   .desktop-layout .page-content-wrapper {
-    background: white;
+    background: hsl(var(--card));
     border-radius: 12px;
     padding: 24px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -109,7 +127,7 @@ body {
   /* 桌面端 RecordsPage 样式 */
   .desktop-layout .timeline-view,
   .desktop-layout .entry-list-container {
-    background: white;
+    background: hsl(var(--card));
     border-radius: 12px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     margin-bottom: 16px;
@@ -161,7 +179,7 @@ body {
 
   /* 列表项 hover 效果 */
   .entry-item:hover {
-    background-color: #f9f9f9;
+    background-color: hsl(var(--accent));
   }
 
   /* 滚动条样式 */
@@ -181,5 +199,19 @@ body {
 
   ::-webkit-scrollbar-thumb:hover {
     background: #b0b0b0;
+  }
+
+  /* 深色模式下的滚动条样式 */
+  .dark ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: #4a4a4a;
+    border-radius: 4px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #5a5a5a;
   }
 }

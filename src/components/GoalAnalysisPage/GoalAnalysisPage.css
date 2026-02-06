@@ -14,7 +14,7 @@
   align-items: center;
   justify-content: center;
   height: 300px;
-  color: #666;
+  color: hsl(var(--muted-foreground));
   font-size: 15px;
 }
 
@@ -29,12 +29,12 @@
 
 .goal-analysis-empty-icon {
   font-size: 64px;
-  color: #d9d9d9;
+  color: hsl(var(--muted-foreground));
   margin-bottom: 16px;
 }
 
 .goal-analysis-empty-text {
-  color: #999;
+  color: hsl(var(--muted-foreground));
   font-size: 15px;
   line-height: 1.6;
 }
@@ -63,16 +63,16 @@
   width: 36px;
   height: 36px;
   border: none;
-  background: #f5f5f5;
+  background: hsl(var(--secondary));
   border-radius: 8px;
   cursor: pointer;
   font-size: 20px;
-  color: #666;
+  color: hsl(var(--muted-foreground));
   transition: background 0.2s;
 }
 
 .goal-back-btn:hover {
-  background: #e8e8e8;
+  background: hsl(var(--accent));
 }
 
 /* 时间范围选择器 */
@@ -87,8 +87,8 @@
   padding: 6px 12px;
   border-radius: 6px;
   border: none;
-  background: #f5f5f5;
-  color: #666;
+  background: hsl(var(--secondary));
+  color: hsl(var(--muted-foreground));
   cursor: pointer;
   font-size: 13px;
   font-weight: 400;
@@ -96,12 +96,12 @@
 }
 
 .goal-range-btn:hover {
-  background: #e8e8e8;
+  background: hsl(var(--accent));
 }
 
 .goal-range-btn.active {
-  background: #3b82f6;
-  color: white;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
   font-weight: 500;
 }
 
@@ -115,17 +115,20 @@
 .goal-custom-range input {
   padding: 4px 8px;
   border-radius: 4px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid hsl(var(--border));
   font-size: 13px;
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  color-scheme: dark light;
 }
 
 .goal-custom-range span {
-  color: #666;
+  color: hsl(var(--muted-foreground));
 }
 
 /* 时间投入概览卡片 */
 .overview-stats-card {
-  background: white;
+  background: hsl(var(--card));
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
@@ -149,13 +152,13 @@
   flex-direction: column;
   align-items: center;
   padding: 14px 8px;
-  background: #f8fafc;
+  background: hsl(var(--secondary));
   border-radius: 10px;
   transition: background 0.2s;
 }
 
 .overview-stat:hover {
-  background: #f1f5f9;
+  background: hsl(var(--accent));
 }
 
 .overview-icon {
@@ -166,26 +169,26 @@
 .overview-value {
   font-size: 26px;
   font-weight: 700;
-  color: #1e293b;
+  color: hsl(var(--foreground));
   line-height: 1.2;
 }
 
 .overview-label {
   font-size: 14px;
   font-weight: 500;
-  color: #475569;
+  color: hsl(var(--foreground));
   margin-top: 4px;
 }
 
 .overview-desc {
   font-size: 11px;
-  color: #94a3b8;
+  color: hsl(var(--muted-foreground));
   margin-top: 2px;
 }
 
 /* 图表卡片 */
 .goal-chart-card {
-  background: white;
+  background: hsl(var(--card));
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
@@ -206,7 +209,7 @@
 
 .goal-chart-subtitle {
   font-size: 12px;
-  color: #999;
+  color: hsl(var(--muted-foreground));
   margin-left: 8px;
 }
 
@@ -216,8 +219,8 @@
 
 /* Tooltip 样式 */
 .goal-tooltip {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid #e8e8e8;
+  background: hsl(var(--popover));
+  border: 1px solid hsl(var(--border));
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   padding: 12px;
@@ -228,7 +231,7 @@
   font-weight: 600;
   margin-bottom: 8px;
   padding-bottom: 6px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .tooltip-row {
@@ -247,7 +250,7 @@
 
 .tooltip-name {
   flex: 1;
-  color: #666;
+  color: hsl(var(--muted-foreground));
 }
 
 .tooltip-value {
@@ -257,7 +260,7 @@
 .tooltip-total {
   margin-top: 8px;
   padding-top: 6px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid hsl(var(--border));
   font-weight: 600;
   text-align: right;
 }
@@ -282,7 +285,7 @@
 
 .section-subtitle {
   font-size: 13px;
-  color: #999;
+  color: hsl(var(--muted-foreground));
 }
 
 .cluster-list {
@@ -297,24 +300,24 @@
   width: 100%;
   padding: 12px;
   margin-top: 12px;
-  background: #f8fafc;
-  border: 1px dashed #e2e8f0;
+  background: hsl(var(--secondary));
+  border: 1px dashed hsl(var(--border));
   border-radius: 8px;
-  color: #64748b;
+  color: hsl(var(--muted-foreground));
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .show-more-btn:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  color: #475569;
+  background: hsl(var(--accent));
+  border-color: hsl(var(--border));
+  color: hsl(var(--foreground));
 }
 
 /* 聚类卡片 */
 .cluster-card {
-  background: white;
+  background: hsl(var(--card));
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -359,7 +362,7 @@
 .cluster-name {
   font-size: 16px;
   font-weight: 600;
-  color: #333;
+  color: hsl(var(--foreground));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -370,27 +373,27 @@
   align-items: center;
   gap: 4px;
   font-size: 14px;
-  color: #666;
+  color: hsl(var(--muted-foreground));
   margin-bottom: 2px;
 }
 
 .cluster-stat strong {
-  color: #3b82f6;
+  color: hsl(var(--primary));
   font-weight: 600;
 }
 
 .cluster-stat-divider {
-  color: #d9d9d9;
+  color: hsl(var(--border));
 }
 
 .cluster-meta {
   font-size: 12px;
-  color: #999;
+  color: hsl(var(--muted-foreground));
 }
 
 .cluster-arrow {
   font-size: 18px;
-  color: #999;
+  color: hsl(var(--muted-foreground));
   transition: transform 0.2s;
 }
 
@@ -400,9 +403,9 @@
 
 /* 聚类详情展开区域 */
 .cluster-details {
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid hsl(var(--border));
   padding: 16px;
-  background: #fafafa;
+  background: hsl(var(--secondary));
 }
 
 .subgoal-list {
@@ -414,7 +417,7 @@
 .subgoal-header {
   font-size: 13px;
   font-weight: 600;
-  color: #666;
+  color: hsl(var(--muted-foreground));
   margin-bottom: 4px;
 }
 
@@ -423,26 +426,26 @@
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  background: white;
+  background: hsl(var(--card));
   border-radius: 8px;
   font-size: 13px;
 }
 
 .subgoal-name {
   flex: 1;
-  color: #333;
+  color: hsl(var(--foreground));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .subgoal-date {
-  color: #999;
+  color: hsl(var(--muted-foreground));
   font-size: 12px;
 }
 
 .subgoal-duration {
-  color: #3b82f6;
+  color: hsl(var(--primary));
   font-weight: 500;
 }
 
@@ -462,7 +465,7 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  background: white;
+  background: hsl(var(--card));
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
@@ -475,7 +478,7 @@
 .unlinked-activity {
   font-size: 15px;
   font-weight: 500;
-  color: #333;
+  color: hsl(var(--foreground));
   margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -484,30 +487,30 @@
 
 .unlinked-meta {
   font-size: 12px;
-  color: #999;
+  color: hsl(var(--muted-foreground));
   margin-bottom: 6px;
 }
 
 .unlinked-divider {
   margin: 0 4px;
-  color: #d9d9d9;
+  color: hsl(var(--border));
 }
 
 .unlinked-suggestion {
   font-size: 13px;
-  color: #666;
+  color: hsl(var(--muted-foreground));
 }
 
 .unlinked-suggestion strong {
-  color: #3b82f6;
+  color: hsl(var(--primary));
 }
 
 .confidence-badge {
   display: inline-block;
   margin-left: 8px;
   padding: 2px 6px;
-  background: #e0f2fe;
-  color: #0369a1;
+  background: hsl(var(--primary) / 0.15);
+  color: hsl(var(--primary));
   border-radius: 4px;
   font-size: 11px;
   font-weight: 500;
@@ -541,13 +544,13 @@
 }
 
 .unlinked-btn.dismiss {
-  background: #f5f5f5;
-  color: #999;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
 }
 
 .unlinked-btn.dismiss:hover {
-  background: #e8e8e8;
-  color: #666;
+  background: hsl(var(--accent));
+  color: hsl(var(--foreground));
 }
 
 /* 响应式适配 */

@@ -40,6 +40,19 @@ import { db } from '../../services/db';
 import { syncDb } from '../../services/syncDb';
 import './GoalAnalysisPage.css';
 
+// 图表样式常量
+const CHART_STYLES = {
+  axis: {
+    tick: { fill: 'hsl(var(--muted-foreground))' },
+    stroke: 'hsl(var(--border))'
+  },
+  grid: {
+    stroke: 'hsl(var(--border))',
+    strokeDasharray: '3 3',
+    vertical: false as const
+  }
+} as const;
+
 // 预设时间范围选项
 const DATE_RANGES = [
   { label: '最近7天', days: 7 },
@@ -280,7 +293,7 @@ const DateRangeSelector: React.FC<{
 
   return (
     <div className="goal-filters">
-      <IonIcon icon={calendarOutline} style={{ fontSize: 18, color: '#666' }} />
+      <IonIcon icon={calendarOutline} style={{ fontSize: 18, color: 'hsl(var(--muted-foreground))' }} />
       {DATE_RANGES.map(range => (
         <button
           key={range.days}
@@ -379,8 +392,9 @@ const GoalDistributionChart: React.FC<{
   if (distribution.length === 0) return null;
 
   const TOP_N = 10;
-  const topItems = distribution.slice(0, TOP_N);
-  const otherItems = distribution.slice(TOP_N);
+  const sortedItems = [...distribution].sort((a, b) => b.totalDuration - a.totalDuration);
+  const topItems = sortedItems.slice(0, TOP_N);
+  const otherItems = sortedItems.slice(TOP_N);
 
   // Build chart data
   const chartData: { name: string; hours: number; percentage: number; color: string }[] = [];
@@ -405,35 +419,32 @@ const GoalDistributionChart: React.FC<{
     });
   }
 
-  // Reversed for horizontal bar (top item on top)
-  const reversedData = [...chartData].reverse();
-
   return (
     <div className="goal-chart-card">
       <div className="goal-chart-header">
         <div className="goal-chart-title">📊 目标时间分布</div>
         <span className="goal-chart-subtitle">显示前{TOP_N}个聚类</span>
       </div>
-      <div className="goal-chart-wrapper" style={{ height: Math.max(200, reversedData.length * 40 + 40) }}>
+      <div className="goal-chart-wrapper" style={{ height: 280 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={reversedData}
-            layout="vertical"
-            margin={{ top: 5, right: 60, left: 0, bottom: 5 }}
+            data={chartData}
+            margin={{ top: 40, right: 16, left: 6, bottom: 40 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+            <CartesianGrid {...CHART_STYLES.grid} />
             <XAxis
-              type="number"
-              tick={{ fontSize: 11 }}
-              stroke="#999"
-              tickFormatter={(val) => `${val}h`}
+              dataKey="name"
+              tick={{ fontSize: 11, ...CHART_STYLES.axis.tick }}
+              stroke={CHART_STYLES.axis.stroke}
+              interval={0}
+              angle={-20}
+              textAnchor="end"
+              height={50}
             />
             <YAxis
-              type="category"
-              dataKey="name"
-              tick={{ fontSize: 12 }}
-              stroke="#999"
-              width={90}
+              tick={{ fontSize: 11, ...CHART_STYLES.axis.tick }}
+              stroke={CHART_STYLES.axis.stroke}
+              tickFormatter={(val) => `${val}h`}
             />
             <Tooltip
               content={(props) => {
@@ -457,17 +468,25 @@ const GoalDistributionChart: React.FC<{
                 );
               }}
             />
-            <Bar dataKey="hours" radius={[0, 4, 4, 0]} barSize={24}
+            <Bar
+              dataKey="hours"
+              radius={[4, 4, 0, 0]}
+              barSize={28}
               label={({ x, y, width, value, index }: any) => {
-                const item = reversedData[index];
+                const item = chartData[index];
                 return (
-                  <text x={x + width + 6} y={y + 16} fontSize={11} fill="#666">
-                    {value}h ({(item.percentage * 100).toFixed(1)}%)
+                  <text x={x + width / 2} y={y - 12} fontSize={11} fill="hsl(var(--muted-foreground))" textAnchor="middle">
+                    <tspan x={x + width / 2} dy="0">
+                      {value}h
+                    </tspan>
+                    <tspan x={x + width / 2} dy="12">
+                      {(item.percentage * 100).toFixed(1)}%
+                    </tspan>
                   </text>
                 );
               }}
             >
-              {reversedData.map((entry, index) => (
+              {chartData.map((entry, index) => (
                 <Cell key={index} fill={entry.color} />
               ))}
             </Bar>

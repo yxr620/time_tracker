@@ -1,0 +1,75 @@
+.entry-list-container {
+  margin-top: 16px;
+}
+
+.entry-list-header {
+  padding: 0 16px 8px;
+  font-weight: bold;
+  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: hsl(var(--foreground));
+}
+
+.entry-list-empty {
+  padding: 40px 16px;
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Override Ionic list/item backgrounds */
+.entry-list-container ion-list {
+  background: transparent;
+  --ion-item-background: transparent;
+}
+
+.entry-list-container ion-item {
+  --background: transparent;
+  --color: hsl(var(--foreground));
+  --border-color: hsl(var(--border));
+}
+
+.entry-list-container ion-item-sliding {
+  --background: transparent;
+}
+
+.entry-list-container ion-label {
+  --color: hsl(var(--foreground));
+}
+
+.entry-list-container ion-label h2 {
+  color: hsl(var(--foreground)) !important;
+}
+
+.entry-item-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: hsl(var(--foreground));
+}
+
+.entry-item-details {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: hsl(var(--muted-foreground));
+}
+
+.entry-category-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background-color: hsl(var(--secondary));
+  border-radius: 4px;
+  color: hsl(var(--foreground));
+}
+
+.entry-goal-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background-color: hsl(var(--primary) / 0.1);
+  border-radius: 4px;
+  color: hsl(var(--primary));
+}

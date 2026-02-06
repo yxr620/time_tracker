@@ -1,0 +1,114 @@
+/* EditEntryDialog - dark mode compatible styles */
+
+.edit-dialog-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  color: hsl(var(--foreground));
+}
+
+.edit-dialog-title {
+  margin-bottom: 16px;
+  margin-top: 8px;
+  color: hsl(var(--foreground));
+}
+
+.edit-dialog-card {
+  margin: 0;
+  border-radius: 24px;
+  background: hsl(var(--card));
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  border: 1px solid hsl(var(--border));
+  --background: hsl(var(--card));
+  --color: hsl(var(--foreground));
+}
+
+.edit-dialog-card ion-item {
+  --background: transparent;
+  --color: hsl(var(--foreground));
+}
+
+.edit-dialog-card ion-card-content {
+  --color: hsl(var(--foreground));
+}
+
+.edit-dialog-input {
+  font-size: 17px;
+  font-weight: 500;
+  --placeholder-color: hsl(var(--muted-foreground));
+  --color: hsl(var(--foreground));
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.edit-dialog-section-label {
+  margin-bottom: 10px;
+  font-weight: 600;
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.edit-dialog-dot {
+  color: hsl(var(--muted-foreground) / 0.5);
+  font-size: 14px;
+  margin: 0 2px;
+  flex: 0 0 auto;
+}
+
+.edit-dialog-option {
+  font-size: 15px;
+  font-weight: 400;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  flex: 0 0 auto;
+}
+
+.edit-dialog-option.selected {
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+.edit-dialog-option.goal.selected {
+  color: #f59e0b;
+}
+
+.edit-dialog-option.goal.yesterday {
+  color: hsl(var(--muted-foreground) / 0.7);
+}
+
+.edit-dialog-option.goal.yesterday.selected {
+  color: #f59e0b;
+}
+
+.edit-dialog-empty-hint {
+  color: hsl(var(--muted-foreground));
+  font-size: 14px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.edit-dialog-footer {
+  padding-top: 16px;
+  border-top: 1px solid hsl(var(--border));
+  margin-top: 16px;
+}
+
+/* Override Ionic modal backgrounds for dark mode */
+.dark ion-modal {
+  --ion-background-color: hsl(var(--card));
+  --background: hsl(var(--card));
+}
+
+.dark ion-modal ion-datetime {
+  --background: hsl(var(--card));
+  color: hsl(var(--foreground));
+}

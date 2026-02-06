@@ -14,6 +14,7 @@ import { useCategoryStore } from '../../stores/categoryStore';
 import type { TimeEntry } from '../../services/db';
 import { EditEntryDialog } from './EditEntryDialog';
 import dayjs from 'dayjs';
+import './EntryList.css';
 
 interface EntryListProps {
   selectedDate?: Date;
@@ -88,15 +89,8 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
   };
 
   return (
-    <div style={{ marginTop: '16px' }}>
-      <div style={{
-        padding: '0 16px 8px',
-        fontWeight: 'bold',
-        fontSize: '16px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
+    <div className="entry-list-container">
+      <div className="entry-list-header">
         <span>{getDateLabel()}</span>
         {selectedDate && !showAll && entries.length > displayEntries.length && (
           <IonButton
@@ -121,13 +115,13 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
       </div>
 
       {displayEntries.length === 0 ? (
-        <div style={{ padding: '40px 16px', textAlign: 'center', color: '#999' }}>
+        <div className="entry-list-empty">
           {selectedDate && !showAll ? '当日还没有记录' : '暂无记录'}
         </div>
       ) : (
         <IonList>
           {displayEntries.map(entry => (
-            <IonItemSliding key={`${entry.id} -${dayjs(entry.updatedAt).valueOf()} `}>
+            <IonItemSliding key={`${entry.id}-${dayjs(entry.updatedAt).valueOf()}`}>
               <IonItem
                 lines="none"
                 button
@@ -138,31 +132,19 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
                 }}
               >
                 <IonLabel>
-                  <h2 style={{ fontSize: '14px', fontWeight: '500', marginBottom: '6px' }}>
+                  <h2 className="entry-item-title">
                     {entry.activity}
                   </h2>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', fontSize: '11px', color: '#666' }}>
+                  <div className="entry-item-details">
                     <span>{dayjs(entry.startTime).format('HH:mm')}-{entry.endTime ? dayjs(entry.endTime).format('HH:mm') : '进行中'}</span>
                     <span>·</span>
                     <span>{formatDuration(entry.startTime, entry.endTime)}</span>
                     <span>·</span>
-                    <span style={{
-                      fontSize: '10px',
-                      padding: '2px 6px',
-                      backgroundColor: '#f0f0f0',
-                      borderRadius: '4px',
-                      color: '#666'
-                    }}>
+                    <span className="entry-category-badge">
                       {getCategoryName(entry.categoryId) || '未分类'}
                     </span>
                     {getGoalName(entry.goalId) && (
-                      <span style={{
-                        fontSize: '10px',
-                        padding: '2px 6px',
-                        backgroundColor: '#e6f7ff',
-                        borderRadius: '4px',
-                        color: '#1890ff'
-                      }}>
+                      <span className="entry-goal-badge">
                         {getGoalName(entry.goalId)}
                       </span>
                     )}

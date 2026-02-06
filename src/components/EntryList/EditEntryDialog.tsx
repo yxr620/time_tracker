@@ -16,6 +16,7 @@ import { useCategoryStore } from '../../stores/categoryStore';
 import { useEntryStore } from '../../stores/entryStore';
 import type { TimeEntry } from '../../services/db';
 import dayjs from 'dayjs';
+import './EditEntryDialog.css';
 
 // ============ 工具函数 ============
 
@@ -27,13 +28,7 @@ const fromIonDatetimeValue = (value: string): Date =>
 
 // ============ 样式常量 ============
 
-const CARD_STYLE: React.CSSProperties = {
-  margin: 0,
-  borderRadius: '24px',
-  background: 'rgba(255, 255, 255, 0.95)',
-  boxShadow: '0 12px 28px rgba(15, 23, 42, 0.08)',
-  border: '1px solid rgba(148, 163, 184, 0.12)'
-};
+// CARD_STYLE moved to EditEntryDialog.css via .edit-dialog-card class
 
 interface EditEntryDialogProps {
   entry: TimeEntry | null;
@@ -175,12 +170,12 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
         initialBreakpoint={0.9}
         breakpoints={[0, 0.9]}
       >
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '16px' }}>
-          <h3 style={{ marginBottom: '16px', marginTop: '8px' }}>编辑记录</h3>
+        <div className="edit-dialog-content">
+          <h3 className="edit-dialog-title">编辑记录</h3>
 
           <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {/* 活动名称输入 */}
-            <IonCard style={CARD_STYLE}>
+            <IonCard className="edit-dialog-card">
               <IonCardContent style={{ padding: 0 }}>
                 <IonItem lines="none" style={{ '--background': 'transparent', '--padding-start': '20px', '--padding-end': '20px' }}>
                   <IonIcon icon={chatbubbleOutline} slot="start" style={{ color: '#bbb', fontSize: '20px', marginRight: '8px' }} />
@@ -189,33 +184,16 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
                     value={activity}
                     onIonInput={e => setActivity(e.detail.value!)}
                     clearInput
-                    style={{
-                      fontSize: '17px',
-                      fontWeight: '500',
-                      '--placeholder-color': '#bbb',
-                      '--color': '#333',
-                      paddingTop: '16px',
-                      paddingBottom: '16px'
-                    }}
+                    className="edit-dialog-input"
                   />
                 </IonItem>
               </IonCardContent>
             </IonCard>
 
             {/* 类别选择 */}
-            <IonCard style={CARD_STYLE}>
+            <IonCard className="edit-dialog-card">
               <IonCardContent style={{ padding: '14px 20px' }}>
-                <div style={{
-                  marginBottom: '10px',
-                  fontWeight: '600',
-                  fontSize: '12px',
-                  color: '#999',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
+                <div className="edit-dialog-section-label">
                   <IonIcon icon={pricetagOutline} style={{ fontSize: '14px' }} />
                   类别
                 </div>
@@ -223,18 +201,10 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
                   <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '8px', alignItems: 'center', whiteSpace: 'nowrap', paddingRight: '8px' }}>
                     {categories.map((c, index) => (
                       <React.Fragment key={c.id}>
-                        {index > 0 && <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px', flex: '0 0 auto' }}>•</span>}
+                        {index > 0 && <span className="edit-dialog-dot">•</span>}
                         <span
                           onClick={() => setSelectedCategoryId(c.id === selectedCategoryId ? '' : c.id)}
-                          style={{
-                            fontSize: '15px',
-                            fontWeight: c.id === selectedCategoryId ? '600' : '400',
-                            color: c.id === selectedCategoryId ? '#3b82f6' : '#666',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            userSelect: 'none',
-                            flex: '0 0 auto'
-                          }}
+                          className={`edit-dialog-option ${c.id === selectedCategoryId ? 'selected' : ''}`}
                         >
                           {c.name}
                         </span>
@@ -246,19 +216,9 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
             </IonCard>
 
             {/* 目标选择 */}
-            <IonCard style={CARD_STYLE}>
+            <IonCard className="edit-dialog-card">
               <IonCardContent style={{ padding: '14px 20px' }}>
-                <div style={{
-                  marginBottom: '10px',
-                  fontWeight: '600',
-                  fontSize: '12px',
-                  color: '#999',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
+                <div className="edit-dialog-section-label">
                   <IonIcon icon={flagOutline} style={{ fontSize: '14px' }} />
                   关联目标
                 </div>
@@ -267,38 +227,24 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', paddingRight: '8px' }}>
                       {todayGoals.map((g, index) => (
                         <React.Fragment key={g.id}>
-                          {index > 0 && <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>}
+                          {index > 0 && <span className="edit-dialog-dot">•</span>}
                           <span
                             onClick={() => setSelectedGoalId(g.id === selectedGoalId ? null : g.id!)}
-                            style={{
-                              fontSize: '15px',
-                              fontWeight: g.id === selectedGoalId ? '600' : '400',
-                              color: g.id === selectedGoalId ? '#f59e0b' : '#666',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s',
-                              userSelect: 'none'
-                            }}
+                            className={`edit-dialog-option goal ${g.id === selectedGoalId ? 'selected' : ''}`}
                           >
                             {g.name}
                           </span>
                         </React.Fragment>
                       ))}
                       {todayGoals.length > 0 && yesterdayGoals.length > 0 &&
-                        <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>
+                        <span className="edit-dialog-dot">•</span>
                       }
                       {yesterdayGoals.map((g, index) => (
                         <React.Fragment key={g.id}>
-                          {index > 0 && <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>}
+                          {index > 0 && <span className="edit-dialog-dot">•</span>}
                           <span
                             onClick={() => setSelectedGoalId(g.id === selectedGoalId ? null : g.id!)}
-                            style={{
-                              fontSize: '15px',
-                              fontWeight: g.id === selectedGoalId ? '600' : '400',
-                              color: g.id === selectedGoalId ? '#f59e0b' : '#999',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s',
-                              userSelect: 'none'
-                            }}
+                            className={`edit-dialog-option goal yesterday ${g.id === selectedGoalId ? 'selected' : ''}`}
                           >
                             {g.name}*
                           </span>
@@ -306,7 +252,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
                       ))}
                     </div>
                   ) : (
-                    <div style={{ color: '#bbb', fontSize: '14px', height: '100%', display: 'flex', alignItems: 'center' }}>
+                    <div className="edit-dialog-empty-hint">
                       该日期暂无目标
                     </div>
                   )}
@@ -374,11 +320,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
             </div>
           </div>
 
-          <div style={{
-            paddingTop: '16px',
-            borderTop: '1px solid #f0f0f0',
-            marginTop: '16px'
-          }}>
+          <div className="edit-dialog-footer">
             <div style={{ display: 'flex', gap: '12px' }}>
               <IonButton
                 expand="block"

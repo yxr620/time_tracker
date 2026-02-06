@@ -15,6 +15,7 @@ import { useEntryStore } from '../../stores/entryStore';
 import { useGoalStore } from '../../stores/goalStore';
 import { useCategoryStore } from '../../stores/categoryStore';
 import { useDateStore } from '../../stores/dateStore';
+import { useDarkMode } from '../../hooks/useDarkMode';
 import dayjs from 'dayjs';
 
 // ============ 工具函数 ============
@@ -41,25 +42,25 @@ const fromIonDatetimeValue = (value: string): Date =>
 
 // ============ 样式常量 ============
 
-const CARD_STYLE: React.CSSProperties = {
+const getCardStyle = (isDark: boolean): React.CSSProperties => ({
   margin: 0,
   borderRadius: '24px',
-  background: 'rgba(255, 255, 255, 0.95)',
-  boxShadow: '0 12px 28px rgba(15, 23, 42, 0.08)',
-  border: '1px solid rgba(148, 163, 184, 0.12)'
-};
+  background: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.95)',
+  boxShadow: isDark ? '0 12px 28px rgba(0, 0, 0, 0.3)' : '0 12px 28px rgba(15, 23, 42, 0.08)',
+  border: isDark ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(148, 163, 184, 0.12)'
+});
 
-const SECTION_LABEL_STYLE: React.CSSProperties = {
+const getSectionLabelStyle = (isDark: boolean): React.CSSProperties => ({
   marginBottom: '10px',
   fontWeight: '600',
   fontSize: '12px',
-  color: '#999',
+  color: isDark ? '#94a3b8' : '#999',
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
   display: 'flex',
   alignItems: 'center',
   gap: '6px'
-};
+});
 
 const TIME_DISPLAY_STYLE: React.CSSProperties = {
   fontSize: '24px',
@@ -125,6 +126,7 @@ export const TimeEntryForm: React.FC = () => {
   const { categories, loadCategories } = useCategoryStore();
   const selectedDate = useDateStore(state => state.selectedDate);
   const setSelectedDate = useDateStore(state => state.setSelectedDate);
+  const { isDark } = useDarkMode();
 
   // Local state
   const [activity, setActivity] = useState('');
@@ -327,7 +329,7 @@ export const TimeEntryForm: React.FC = () => {
       style={{
         fontSize: '15px',
         fontWeight: isSelected ? '600' : '400',
-        color: isSelected ? activeColor : inactiveColor,
+        color: isSelected ? activeColor : (isDark ? '#94a3b8' : inactiveColor),
         cursor: 'pointer',
         transition: 'all 0.2s',
         userSelect: 'none'
@@ -338,7 +340,7 @@ export const TimeEntryForm: React.FC = () => {
   );
 
   const renderSeparator = () => (
-    <span style={{ color: '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>
+    <span style={{ color: isDark ? '#475569' : '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>
   );
 
   // ============ 渲染 ============
@@ -369,7 +371,7 @@ export const TimeEntryForm: React.FC = () => {
                 正在计时
               </span>
             </div>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333', marginTop: '12px' }}>
+            <div style={{ fontSize: '20px', fontWeight: 'bold', color: isDark ? '#f1f5f9' : '#333', marginTop: '12px' }}>
               {currentEntry.activity}
             </div>
           </div>
@@ -380,7 +382,7 @@ export const TimeEntryForm: React.FC = () => {
             fontWeight: '700',
             textAlign: 'center',
             fontFamily: 'Monaco, Menlo, Consolas, "Courier New", monospace',
-            color: '#333',
+            color: isDark ? '#f1f5f9' : '#333',
             letterSpacing: '-1px',
             margin: '10px 0'
           }}>
@@ -413,7 +415,7 @@ export const TimeEntryForm: React.FC = () => {
   return (
     <div style={{ padding: '16px', minHeight: '100%' }}>
       {/* 活动名称输入 */}
-      <IonCard className="mb-2" style={CARD_STYLE}>
+      <IonCard className="mb-2" style={getCardStyle(isDark)}>
         <IonCardContent style={{ padding: 0 }}>
           <IonItem
             lines="none"
@@ -422,7 +424,7 @@ export const TimeEntryForm: React.FC = () => {
             <IonIcon
               icon={chatbubbleOutline}
               slot="start"
-              style={{ color: '#bbb', fontSize: '20px', marginRight: '8px' }}
+              style={{ color: isDark ? '#64748b' : '#bbb', fontSize: '20px', marginRight: '8px' }}
             />
             <IonInput
               placeholder="准备做什么？"
@@ -432,8 +434,8 @@ export const TimeEntryForm: React.FC = () => {
               style={{
                 fontSize: '17px',
                 fontWeight: '500',
-                '--placeholder-color': '#bbb',
-                '--color': '#333',
+                '--placeholder-color': isDark ? '#64748b' : '#bbb',
+                '--color': isDark ? '#f1f5f9' : '#333',
                 paddingTop: '16px',
                 paddingBottom: '16px'
               }}
@@ -443,9 +445,9 @@ export const TimeEntryForm: React.FC = () => {
       </IonCard>
 
       {/* 类别选择 */}
-      <IonCard className="mb-2" style={CARD_STYLE}>
+      <IonCard className="mb-2" style={getCardStyle(isDark)}>
         <IonCardContent style={{ padding: '14px 20px' }}>
-          <div style={SECTION_LABEL_STYLE}>
+          <div style={getSectionLabelStyle(isDark)}>
             <IonIcon icon={pricetagOutline} style={{ fontSize: '14px' }} />
             类别
           </div>
@@ -477,9 +479,9 @@ export const TimeEntryForm: React.FC = () => {
       </IonCard>
 
       {/* 目标选择 */}
-      <IonCard className="mb-2" style={CARD_STYLE}>
+      <IonCard className="mb-2" style={getCardStyle(isDark)}>
         <IonCardContent style={{ padding: '14px 20px' }}>
-          <div style={SECTION_LABEL_STYLE}>
+          <div style={getSectionLabelStyle(isDark)}>
             <IonIcon icon={flagOutline} style={{ fontSize: '14px' }} />
             关联目标
           </div>
@@ -516,7 +518,7 @@ export const TimeEntryForm: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <div style={{ color: '#bbb', fontSize: '14px', height: '100%', display: 'flex', alignItems: 'center' }}>
+              <div style={{ color: isDark ? '#475569' : '#bbb', fontSize: '14px', height: '100%', display: 'flex', alignItems: 'center' }}>
                 该日期暂无目标
               </div>
             )}
@@ -525,7 +527,7 @@ export const TimeEntryForm: React.FC = () => {
       </IonCard>
 
       {/* 时间选择卡片 */}
-      <IonCard className="mb-2" style={CARD_STYLE}>
+      <IonCard className="mb-2" style={getCardStyle(isDark)}>
         <IonCardContent style={{ padding: '16px 20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
             {/* 开始时间 */}
@@ -533,7 +535,7 @@ export const TimeEntryForm: React.FC = () => {
               style={{ flex: 1, cursor: 'pointer', minWidth: '80px' }}
               onClick={() => setStartPickerVisible(true)}
             >
-              <div style={{ ...TIME_DISPLAY_STYLE, color: '#333' }}>
+              <div style={{ ...TIME_DISPLAY_STYLE, color: isDark ? '#f1f5f9' : '#333' }}>
                 {dayjs(startTime).format('HH:mm')}
               </div>
               <div>
@@ -541,8 +543,8 @@ export const TimeEntryForm: React.FC = () => {
                   onClick={(e) => { e.stopPropagation(); setToNow(true); }}
                   style={{
                     ...TIME_BADGE_STYLE,
-                    color: '#666',
-                    background: '#f7f8fa'
+                    color: isDark ? '#94a3b8' : '#666',
+                    background: isDark ? 'rgba(51, 65, 85, 0.5)' : '#f7f8fa'
                   }}
                 >
                   <IonIcon icon={refreshOutline} style={{ fontSize: '12px' }} />
@@ -552,7 +554,7 @@ export const TimeEntryForm: React.FC = () => {
             </div>
 
             {/* 时间轴箭头 */}
-            <div style={{ color: '#e0e0e0', fontSize: '20px', flexShrink: 0 }}>→</div>
+            <div style={{ color: isDark ? '#475569' : '#e0e0e0', fontSize: '20px', flexShrink: 0 }}>→</div>
 
             {/* 结束时间 */}
             <div
@@ -561,7 +563,7 @@ export const TimeEntryForm: React.FC = () => {
             >
               <div style={{
                 ...TIME_DISPLAY_STYLE,
-                color: endTime ? '#333' : '#10b981',
+                color: endTime ? (isDark ? '#f1f5f9' : '#333') : '#10b981',
                 fontFamily: endTime ? 'Monaco, Menlo, monospace' : 'inherit'
               }}>
                 {endTime ? dayjs(endTime).format('HH:mm') : '进行中'}

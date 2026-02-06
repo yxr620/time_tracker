@@ -4,7 +4,7 @@
   max-width: 1600px;
   margin: 0 auto;
   min-height: 100vh;
-  background: #f5f7fa;
+  background: hsl(var(--background));
 }
 
 .trend-page-header {
@@ -19,7 +19,7 @@
 .trend-page-header h1 {
   font-size: 24px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: hsl(var(--foreground));
   margin: 0;
 }
 
@@ -30,7 +30,7 @@
   width: 36px;
   height: 36px;
   border: none;
-  background: white;
+  background: hsl(var(--card));
   border-radius: 8px;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -39,12 +39,12 @@
 }
 
 .trend-back-btn:hover {
-  background: #f0f0f0;
+  background: hsl(var(--accent));
 }
 
 .trend-back-btn ion-icon {
   font-size: 20px;
-  color: #666;
+  color: hsl(var(--muted-foreground));
 }
 
 /* 筛选器 */
@@ -59,8 +59,8 @@
   padding: 6px 12px;
   border-radius: 6px;
   border: none;
-  background: #fff;
-  color: #666;
+  background: hsl(var(--card));
+  color: hsl(var(--muted-foreground));
   cursor: pointer;
   font-size: 13px;
   font-weight: 400;
@@ -69,12 +69,12 @@
 }
 
 .trend-range-btn:hover {
-  background: #f0f0f0;
+  background: hsl(var(--accent));
 }
 
 .trend-range-btn.active {
-  background: #1890ff;
-  color: white;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
   font-weight: 500;
 }
 
@@ -88,12 +88,15 @@
 .trend-custom-range input {
   padding: 4px 8px;
   border-radius: 4px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid hsl(var(--border));
   font-size: 13px;
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  color-scheme: dark light;
 }
 
 .trend-custom-range span {
-  color: #666;
+  color: hsl(var(--muted-foreground));
 }
 
 /* 图表网格 - 桌面两列、移动一列 */
@@ -111,7 +114,7 @@
 
 /* 单个图表卡片 */
 .trend-chart-card {
-  background: white;
+  background: hsl(var(--card));
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   padding: 16px;
@@ -137,7 +140,7 @@
   align-items: center;
   font-size: 15px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: hsl(var(--foreground));
 }
 
 .trend-chart-color-dot {
@@ -151,11 +154,11 @@
   display: flex;
   gap: 16px;
   font-size: 12px;
-  color: #666;
+  color: hsl(var(--muted-foreground));
 }
 
 .trend-stat strong {
-  color: #333;
+  color: hsl(var(--foreground));
   font-weight: 600;
 }
 
@@ -171,7 +174,7 @@
   align-items: center;
   min-height: 400px;
   font-size: 16px;
-  color: #666;
+  color: hsl(var(--muted-foreground));
 }
 
 .trend-page-empty {
@@ -185,13 +188,13 @@
 
 .trend-page-empty-icon {
   font-size: 64px;
-  color: #ccc;
+  color: hsl(var(--muted-foreground));
   margin-bottom: 16px;
 }
 
 .trend-page-empty-text {
   font-size: 16px;
-  color: #999;
+  color: hsl(var(--muted-foreground));
   line-height: 1.6;
 }
 
@@ -240,17 +243,17 @@
 }
 
 .trend-summary-scroll::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: hsl(var(--muted));
   border-radius: 2px;
 }
 
 .trend-summary-scroll::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: hsl(var(--muted-foreground) / 0.4);
   border-radius: 2px;
 }
 
 .trend-summary-scroll::-webkit-scrollbar-thumb:hover {
-  background: #aaa;
+  background: hsl(var(--muted-foreground) / 0.6);
 }
 
 /* 摘要列表样式 */
@@ -266,12 +269,12 @@
   align-items: center;
   padding: 12px;
   border-radius: 8px;
-  background-color: #f9fafb;
+  background-color: hsl(var(--secondary));
   transition: background-color 0.2s;
 }
 
 .trend-summary-item:hover {
-  background-color: #f0f2f5;
+  background-color: hsl(var(--accent));
 }
 
 .trend-summary-bar {
@@ -289,19 +292,19 @@
 
 .trend-summary-name {
   font-weight: 600;
-  color: #333;
+  color: hsl(var(--foreground));
   font-size: 14px;
   margin-bottom: 2px;
 }
 
 .trend-summary-details {
   font-size: 12px;
-  color: #666;
+  color: hsl(var(--muted-foreground));
 }
 
 .trend-summary-divider {
   margin: 0 6px;
-  color: #ddd;
+  color: hsl(var(--border));
 }
 
 .trend-summary-diff {
@@ -319,7 +322,7 @@
 }
 
 .trend-summary-diff.neutral {
-  color: #666;
+  color: hsl(var(--muted-foreground));
 }
 
 /* 响应式调整 */
