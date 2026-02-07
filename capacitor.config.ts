@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.example.timetracker',
+  appId: 'com.yxr.timetracker',
   appName: '时间追踪工具',
   webDir: 'dist',
   android: {
