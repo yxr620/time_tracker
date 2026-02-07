@@ -4,8 +4,8 @@
     android:height="108dp"
     android:viewportHeight="108"
     android:viewportWidth="108">
-    <!-- 浅色模式：白色背景 -->
+    <!-- 深色模式：深灰色/黑色背景 -->
     <path
-        android:fillColor="#FFFFFF"
+        android:fillColor="#1A1A1A"
         android:pathData="M0,0h108v108h-108z" />
 </vector>
