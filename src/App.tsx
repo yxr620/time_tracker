@@ -21,6 +21,7 @@ import { SyncManagementPage } from './components/SyncManagementPage/SyncManageme
 import { exportFullJSON, exportIncrementalJSON, importFromJSON, ImportStrategy } from './services/export';
 import { useSyncStore } from './stores/syncStore';
 import { isOSSConfigured } from './services/oss';
+import { syncEngine } from './services/syncEngine';
 import { DesktopSidebar } from './components/Desktop/DesktopSidebar';
 import { getDefaultDateRange } from './services/analysis/processor';
 import type { DateRange } from './types/analysis';
@@ -57,6 +58,33 @@ function App() {
       console.error('[App] 检查配置失败:', error);
     }
   }, [checkConfig]);
+
+  // 应用启动时自动 Pull（方案 2：应用启动时仅 Pull）
+  useEffect(() => {
+    const autoPullOnStartup = async () => {
+      // 只在配置了 OSS 时才自动拉取
+      if (!isOSSConfigured()) {
+        console.log('[AutoSync] OSS 未配置，跳过启动时自动 Pull');
+        return;
+      }
+
+      try {
+        console.log('[AutoSync] 应用启动，开始自动 Pull...');
+        const pulledCount = await syncEngine.pull();
+        console.log(`[AutoSync] 启动时 Pull 完成，拉取 ${pulledCount} 条操作`);
+        
+        // 如果拉取了数据，可以静默刷新（不打扰用户）
+        if (pulledCount > 0) {
+          console.log(`[AutoSync] 已同步 ${pulledCount} 条远程操作`);
+        }
+      } catch (error) {
+        // 失败不影响应用启动，只记录日志
+        console.error('[AutoSync] 启动时 Pull 失败:', error);
+      }
+    };
+
+    autoPullOnStartup();
+  }, []); // 只在启动时执行一次
 
   const showToast = (message: string, color: 'success' | 'danger' | 'warning' = 'success', duration = 2000) => {
     presentToast({

@@ -137,3 +137,27 @@ button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
+
+/* Dark mode styles for Ionic components */
+.dark ion-modal {
+  --ion-background-color: hsl(var(--card));
+  --background: hsl(var(--card));
+}
+
+.dark ion-modal ion-datetime {
+  --background: hsl(var(--card));
+  --background-rgb: 28, 37, 54;
+  color: hsl(var(--foreground));
+}
+
+.dark ion-modal ion-datetime::part(wheel-item) {
+  color: hsl(var(--foreground));
+}
+
+.dark ion-modal ion-datetime::part(wheel-item active) {
+  color: hsl(var(--primary));
+}
+
+.dark ion-button {
+  --color: hsl(var(--foreground));
+}

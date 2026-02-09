@@ -26,10 +26,6 @@ const toIonDatetimeValue = (date: Date): string =>
 const fromIonDatetimeValue = (value: string): Date =>
   dayjs(value).toDate();
 
-// ============ 样式常量 ============
-
-// CARD_STYLE moved to EditEntryDialog.css via .edit-dialog-card class
-
 interface EditEntryDialogProps {
   entry: TimeEntry | null;
   visible: boolean;
@@ -167,14 +163,14 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
       <IonModal
         isOpen={visible}
         onDidDismiss={onClose}
-        initialBreakpoint={0.9}
-        breakpoints={[0, 0.9]}
+        initialBreakpoint={0.7}
+        breakpoints={[0, 0.7, 1]}
       >
         <div className="edit-dialog-content">
           <h3 className="edit-dialog-title">编辑记录</h3>
 
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {/* 活动名称输入 */}
+          <div className="edit-dialog-body">
+            {/* 活动名称 */}
             <IonCard className="edit-dialog-card">
               <IonCardContent style={{ padding: 0 }}>
                 <IonItem lines="none" style={{ '--background': 'transparent', '--padding-start': '20px', '--padding-end': '20px' }}>
@@ -190,18 +186,18 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
               </IonCardContent>
             </IonCard>
 
-            {/* 类别选择 */}
+            {/* 类别 */}
             <IonCard className="edit-dialog-card">
-              <IonCardContent style={{ padding: '14px 20px' }}>
+              <IonCardContent className="edit-dialog-card-body">
                 <div className="edit-dialog-section-label">
                   <IonIcon icon={pricetagOutline} style={{ fontSize: '14px' }} />
                   类别
                 </div>
-                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                  <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '8px', alignItems: 'center', whiteSpace: 'nowrap', paddingRight: '8px' }}>
-                    {categories.map((c, index) => (
+                <div className="edit-dialog-options-scroll">
+                  <div className="edit-dialog-options-row">
+                    {categories.map((c, i) => (
                       <React.Fragment key={c.id}>
-                        {index > 0 && <span className="edit-dialog-dot">•</span>}
+                        {i > 0 && <span className="edit-dialog-dot">•</span>}
                         <span
                           onClick={() => setSelectedCategoryId(c.id === selectedCategoryId ? '' : c.id)}
                           className={`edit-dialog-option ${c.id === selectedCategoryId ? 'selected' : ''}`}
@@ -215,19 +211,19 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
               </IonCardContent>
             </IonCard>
 
-            {/* 目标选择 */}
+            {/* 关联目标 */}
             <IonCard className="edit-dialog-card">
-              <IonCardContent style={{ padding: '14px 20px' }}>
+              <IonCardContent className="edit-dialog-card-body">
                 <div className="edit-dialog-section-label">
                   <IonIcon icon={flagOutline} style={{ fontSize: '14px' }} />
                   关联目标
                 </div>
-                <div style={{ height: '56px', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <div className="edit-dialog-goals-box">
                   {entryDateGoals.length > 0 ? (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', paddingRight: '8px' }}>
-                      {todayGoals.map((g, index) => (
+                    <div className="edit-dialog-options-wrap">
+                      {todayGoals.map((g, i) => (
                         <React.Fragment key={g.id}>
-                          {index > 0 && <span className="edit-dialog-dot">•</span>}
+                          {i > 0 && <span className="edit-dialog-dot">•</span>}
                           <span
                             onClick={() => setSelectedGoalId(g.id === selectedGoalId ? null : g.id!)}
                             className={`edit-dialog-option goal ${g.id === selectedGoalId ? 'selected' : ''}`}
@@ -236,12 +232,12 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
                           </span>
                         </React.Fragment>
                       ))}
-                      {todayGoals.length > 0 && yesterdayGoals.length > 0 &&
+                      {todayGoals.length > 0 && yesterdayGoals.length > 0 && (
                         <span className="edit-dialog-dot">•</span>
-                      }
-                      {yesterdayGoals.map((g, index) => (
+                      )}
+                      {yesterdayGoals.map((g, i) => (
                         <React.Fragment key={g.id}>
-                          {index > 0 && <span className="edit-dialog-dot">•</span>}
+                          {i > 0 && <span className="edit-dialog-dot">•</span>}
                           <span
                             onClick={() => setSelectedGoalId(g.id === selectedGoalId ? null : g.id!)}
                             className={`edit-dialog-option goal yesterday ${g.id === selectedGoalId ? 'selected' : ''}`}
@@ -252,171 +248,87 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
                       ))}
                     </div>
                   ) : (
-                    <div className="edit-dialog-empty-hint">
-                      该日期暂无目标
-                    </div>
+                    <div className="edit-dialog-empty-hint">该日期暂无目标</div>
                   )}
                 </div>
               </IonCardContent>
             </IonCard>
 
             {/* 时间选择 */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div>
-                <div style={{ marginBottom: '8px', fontWeight: 'bold', fontSize: '14px' }}>开始时间</div>
-                <IonButton
-                  expand="block"
-                  fill="outline"
-                  onClick={() => setStartPickerVisible(true)}
-                >
-                  {dayjs(startTime).format('YYYY-MM-DD HH:mm')}
+            <div className="edit-dialog-time-row">
+              <div className="edit-dialog-time-col">
+                <div className="edit-dialog-time-label">开始时间</div>
+                <IonButton expand="block" fill="outline" size="small" onClick={() => setStartPickerVisible(true)}>
+                  {dayjs(startTime).format('MM-DD HH:mm')}
                 </IonButton>
-                <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
-                  <IonButton
-                    size="small"
-                    fill="outline"
-                    onClick={() => setToNow(true)}
-                  >
-                    现在
-                  </IonButton>
-                  <IonButton
-                    size="small"
-                    fill="outline"
-                    color="primary"
-                    onClick={setStartTimeToLastEnd}
-                  >
-                    上次结束
-                  </IonButton>
+                <div className="edit-dialog-time-actions">
+                  <IonButton size="small" fill="outline" onClick={() => setToNow(true)}>现在</IonButton>
+                  <IonButton size="small" fill="outline" color="primary" onClick={setStartTimeToLastEnd}>上次结束</IonButton>
                 </div>
               </div>
-
-              <div>
-                <div style={{ marginBottom: '8px', fontWeight: 'bold', fontSize: '14px' }}>结束时间</div>
-                <IonButton
-                  expand="block"
-                  fill="outline"
-                  onClick={() => setEndPickerVisible(true)}
-                >
-                  {endTime ? dayjs(endTime).format('YYYY-MM-DD HH:mm') : '正在进行'}
+              <div className="edit-dialog-time-col">
+                <div className="edit-dialog-time-label">结束时间</div>
+                <IonButton expand="block" fill="outline" size="small" onClick={() => setEndPickerVisible(true)}>
+                  {endTime ? dayjs(endTime).format('MM-DD HH:mm') : '进行中'}
                 </IonButton>
-                <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
-                  <IonButton
-                    size="small"
-                    fill="outline"
-                    onClick={() => setToNow(false)}
-                  >
-                    现在
-                  </IonButton>
-                  <IonButton
-                    size="small"
-                    fill="outline"
-                    color="warning"
-                    onClick={setEndTimeToOngoing}
-                  >
-                    正在进行
-                  </IonButton>
+                <div className="edit-dialog-time-actions">
+                  <IonButton size="small" fill="outline" onClick={() => setToNow(false)}>现在</IonButton>
+                  <IonButton size="small" fill="outline" color="warning" onClick={setEndTimeToOngoing}>进行中</IonButton>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* 底部按钮 */}
           <div className="edit-dialog-footer">
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <IonButton
-                expand="block"
-                fill="outline"
-                onClick={onClose}
-                style={{ flex: 1 }}
-              >
-                取消
-              </IonButton>
-              <IonButton
-                expand="block"
-                onClick={handleSubmit}
-                disabled={!activity.trim()}
-                style={{ flex: 1 }}
-              >
-                保存
-              </IonButton>
+            <div className="edit-dialog-footer-buttons">
+              <IonButton expand="block" fill="outline" onClick={onClose}>取消</IonButton>
+              <IonButton expand="block" onClick={handleSubmit} disabled={!activity.trim()}>保存</IonButton>
             </div>
           </div>
         </div>
       </IonModal>
 
-      {/* 开始时间选择器 Modal */}
+      {/* 开始时间选择器 */}
       <IonModal
         isOpen={startPickerVisible}
         onDidDismiss={() => setStartPickerVisible(false)}
         initialBreakpoint={0.4}
         breakpoints={[0, 0.4]}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '100px', paddingBottom: '16px' }}>
-            <IonButton fill="clear" onClick={() => setStartPickerVisible(false)}>
-              取消
-            </IonButton>
-            <IonButton
-              fill="clear"
-              onClick={() => {
-                const nextDate = fromIonDatetimeValue(startDraftValue);
-                setStartTime(nextDate);
-                setStartPickerVisible(false);
-              }}
-            >
-              确定
-            </IonButton>
+        <div className="edit-dialog-picker">
+          <div className="edit-dialog-picker-header">
+            <IonButton fill="clear" onClick={() => setStartPickerVisible(false)}>取消</IonButton>
+            <IonButton fill="clear" onClick={() => { setStartTime(fromIonDatetimeValue(startDraftValue)); setStartPickerVisible(false); }}>确定</IonButton>
           </div>
           <IonDatetime
             value={startDraftValue}
             presentation="date-time"
             preferWheel
             locale="zh-CN"
-            onIonChange={e => {
-              const next = e.detail.value;
-              if (typeof next === 'string') {
-                setStartDraftValue(next);
-              }
-            }}
-            style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
+            onIonChange={e => { if (typeof e.detail.value === 'string') setStartDraftValue(e.detail.value); }}
           />
         </div>
       </IonModal>
 
-      {/* 结束时间选择器 Modal */}
+      {/* 结束时间选择器 */}
       <IonModal
         isOpen={endPickerVisible}
         onDidDismiss={() => setEndPickerVisible(false)}
         initialBreakpoint={0.4}
         breakpoints={[0, 0.4]}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '100px', paddingBottom: '16px' }}>
-            <IonButton fill="clear" onClick={() => setEndPickerVisible(false)}>
-              取消
-            </IonButton>
-            <IonButton
-              fill="clear"
-              onClick={() => {
-                const nextDate = fromIonDatetimeValue(endDraftValue);
-                setEndTime(nextDate);
-                setEndPickerVisible(false);
-              }}
-            >
-              确定
-            </IonButton>
+        <div className="edit-dialog-picker">
+          <div className="edit-dialog-picker-header">
+            <IonButton fill="clear" onClick={() => setEndPickerVisible(false)}>取消</IonButton>
+            <IonButton fill="clear" onClick={() => { setEndTime(fromIonDatetimeValue(endDraftValue)); setEndPickerVisible(false); }}>确定</IonButton>
           </div>
           <IonDatetime
             value={endDraftValue}
             presentation="date-time"
             preferWheel
             locale="zh-CN"
-            onIonChange={e => {
-              const next = e.detail.value;
-              if (typeof next === 'string') {
-                setEndDraftValue(next);
-              }
-            }}
-            style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
+            onIonChange={e => { if (typeof e.detail.value === 'string') setEndDraftValue(e.detail.value); }}
           />
         </div>
       </IonModal>

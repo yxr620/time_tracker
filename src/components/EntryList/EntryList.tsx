@@ -1,11 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   IonList,
-  IonItem,
-  IonLabel,
-  IonItemSliding,
-  IonItemOptions,
-  IonItemOption,
   IonButton
 } from '@ionic/react';
 import { useEntryStore } from '../../stores/entryStore';
@@ -13,6 +8,7 @@ import { useGoalStore } from '../../stores/goalStore';
 import { useCategoryStore } from '../../stores/categoryStore';
 import type { TimeEntry } from '../../services/db';
 import { EditEntryDialog } from './EditEntryDialog';
+import { SwipeableItem } from './SwipeableItem';
 import dayjs from 'dayjs';
 import './EntryList.css';
 
@@ -121,56 +117,54 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
       ) : (
         <IonList>
           {displayEntries.map(entry => (
-            <IonItemSliding key={`${entry.id}-${dayjs(entry.updatedAt).valueOf()}`}>
-              <IonItem
-                lines="none"
-                button
+            <SwipeableItem
+              key={`${entry.id}-${dayjs(entry.updatedAt).valueOf()}`}
+              actions={[
+                {
+                  text: '编辑',
+                  color: '#fff',
+                  backgroundColor: 'hsl(var(--primary))',
+                  onClick: () => setEditingEntry(entry),
+                },
+                {
+                  text: '删除',
+                  color: '#fff',
+                  backgroundColor: '#ef4444',
+                  onClick: async () => {
+                    if (entry.id && window.confirm('确定要删除这条记录吗？')) {
+                      await deleteEntry(entry.id);
+                    }
+                  },
+                },
+              ]}
+            >
+              <div
+                className="entry-item"
                 onClick={() => {
                   if (entry.endTime) {
                     setNextStartTime(entry.endTime);
                   }
                 }}
               >
-                <IonLabel>
-                  <h2 className="entry-item-title">
-                    {entry.activity}
-                  </h2>
-                  <div className="entry-item-details">
-                    <span>{dayjs(entry.startTime).format('HH:mm')}-{entry.endTime ? dayjs(entry.endTime).format('HH:mm') : '进行中'}</span>
-                    <span>·</span>
-                    <span>{formatDuration(entry.startTime, entry.endTime)}</span>
-                    <span>·</span>
-                    <span className="entry-category-badge">
-                      {getCategoryName(entry.categoryId) || '未分类'}
+                <div className="entry-item-title">
+                  {entry.activity}
+                </div>
+                <div className="entry-item-details">
+                  <span>{dayjs(entry.startTime).format('HH:mm')}-{entry.endTime ? dayjs(entry.endTime).format('HH:mm') : '进行中'}</span>
+                  <span>·</span>
+                  <span>{formatDuration(entry.startTime, entry.endTime)}</span>
+                  <span>·</span>
+                  <span className="entry-category-badge">
+                    {getCategoryName(entry.categoryId) || '未分类'}
+                  </span>
+                  {getGoalName(entry.goalId) && (
+                    <span className="entry-goal-badge">
+                      {getGoalName(entry.goalId)}
                     </span>
-                    {getGoalName(entry.goalId) && (
-                      <span className="entry-goal-badge">
-                        {getGoalName(entry.goalId)}
-                      </span>
-                    )}
-                  </div>
-                </IonLabel>
-              </IonItem>
-
-              <IonItemOptions side="end">
-                <IonItemOption
-                  color="primary"
-                  onClick={() => setEditingEntry(entry)}
-                >
-                  编辑
-                </IonItemOption>
-                <IonItemOption
-                  color="danger"
-                  onClick={async () => {
-                    if (entry.id && window.confirm('确定要删除这条记录吗？')) {
-                      await deleteEntry(entry.id);
-                    }
-                  }}
-                >
-                  删除
-                </IonItemOption>
-              </IonItemOptions>
-            </IonItemSliding>
+                  )}
+                </div>
+              </div>
+            </SwipeableItem>
           ))}
         </IonList>
       )}

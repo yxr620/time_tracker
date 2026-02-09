@@ -93,12 +93,13 @@ const ACTION_BUTTON_STYLE: React.CSSProperties = {
   marginTop: '2px'
 } as React.CSSProperties;
 
-const MODAL_CONTENT_STYLE: React.CSSProperties = {
+const getModalContentStyle = (isDark: boolean): React.CSSProperties => ({
   display: 'flex',
   flexDirection: 'column',
   height: '100%',
-  padding: '16px'
-};
+  padding: '16px',
+  background: isDark ? 'hsl(222.2, 84%, 4.9%)' : '#fff'
+});
 
 const MODAL_BUTTON_ROW_STYLE: React.CSSProperties = {
   display: 'flex',
@@ -609,7 +610,7 @@ export const TimeEntryForm: React.FC = () => {
         initialBreakpoint={0.4}
         breakpoints={[0, 0.4]}
       >
-        <div style={MODAL_CONTENT_STYLE}>
+        <div style={getModalContentStyle(isDark)}>
           <div style={MODAL_BUTTON_ROW_STYLE}>
             <IonButton fill="clear" onClick={() => setStartPickerVisible(false)}>
               取消
@@ -649,7 +650,7 @@ export const TimeEntryForm: React.FC = () => {
         initialBreakpoint={0.4}
         breakpoints={[0, 0.4]}
       >
-        <div style={MODAL_CONTENT_STYLE}>
+        <div style={getModalContentStyle(isDark)}>
           <div style={MODAL_BUTTON_ROW_STYLE}>
             <IonButton fill="clear" onClick={() => setEndPickerVisible(false)}>
               取消

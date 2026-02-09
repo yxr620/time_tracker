@@ -1,19 +1,29 @@
-/* EditEntryDialog - dark mode compatible styles */
+/* EditEntryDialog styles */
 
+/* ── Modal 容器 ── */
 .edit-dialog-content {
-  height: 100%;
   display: flex;
   flex-direction: column;
   padding: 16px;
   color: hsl(var(--foreground));
+  overflow-y: auto;
 }
 
 .edit-dialog-title {
-  margin-bottom: 16px;
-  margin-top: 8px;
+  margin: 4px 0 8px;
+  font-size: 18px;
   color: hsl(var(--foreground));
 }
 
+/* ── 滚动内容区 ── */
+.edit-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+/* ── 卡片 ── */
 .edit-dialog-card {
   margin: 0;
   border-radius: 24px;
@@ -33,17 +43,23 @@
   --color: hsl(var(--foreground));
 }
 
+.edit-dialog-card-body {
+  padding: 12px 20px;
+}
+
+/* ── 活动名称输入 ── */
 .edit-dialog-input {
   font-size: 17px;
   font-weight: 500;
   --placeholder-color: hsl(var(--muted-foreground));
   --color: hsl(var(--foreground));
-  padding-top: 16px;
-  padding-bottom: 16px;
+  padding-top: 14px;
+  padding-bottom: 14px;
 }
 
+/* ── 区块标签 ── */
 .edit-dialog-section-label {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   font-weight: 600;
   font-size: 12px;
   color: hsl(var(--muted-foreground));
@@ -52,6 +68,35 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* ── 选项列表 ── */
+.edit-dialog-options-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.edit-dialog-options-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: center;
+  white-space: nowrap;
+  padding-right: 8px;
+}
+
+.edit-dialog-options-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding-right: 8px;
+}
+
+.edit-dialog-goals-box {
+  max-height: 56px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .edit-dialog-dot {
@@ -96,13 +141,67 @@
   align-items: center;
 }
 
-.edit-dialog-footer {
-  padding-top: 16px;
-  border-top: 1px solid hsl(var(--border));
-  margin-top: 16px;
+/* ── 时间选择区域 ── */
+.edit-dialog-time-row {
+  display: flex;
+  gap: 8px;
 }
 
-/* Override Ionic modal backgrounds for dark mode */
+.edit-dialog-time-col {
+  flex: 1;
+}
+
+.edit-dialog-time-label {
+  margin-bottom: 4px;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.edit-dialog-time-actions {
+  margin-top: 4px;
+  display: flex;
+  gap: 4px;
+}
+
+/* ── 底部按钮 ── */
+.edit-dialog-footer {
+  padding-top: 12px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  border-top: 1px solid hsl(var(--border));
+  margin-top: 12px;
+}
+
+.edit-dialog-footer-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.edit-dialog-footer-buttons ion-button {
+  flex: 1;
+}
+
+/* ── 时间选择器 Modal ── */
+.edit-dialog-picker {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+}
+
+.edit-dialog-picker-header {
+  display: flex;
+  justify-content: center;
+  gap: 100px;
+  padding-bottom: 16px;
+}
+
+.edit-dialog-picker ion-datetime {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* ── Dark mode ── */
 .dark ion-modal {
   --ion-background-color: hsl(var(--card));
   --background: hsl(var(--card));

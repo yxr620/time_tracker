@@ -83,9 +83,9 @@ export class SyncEngine {
   }
 
   /**
-   * Push：上传本地未同步的操作
+   * Push：上传本地未同步的操作（公开方法，可用于自动同步）
    */
-  private async push(): Promise<number> {
+  async push(): Promise<number> {
     // 查询未同步的操作 - 使用 filter 而不是 where().equals()
     const allOperations = await db.syncOperations.toArray();
     const operations = allOperations.filter(op => !op.synced);
@@ -108,9 +108,9 @@ export class SyncEngine {
   }
 
   /**
-   * Pull：拉取远程操作并合并
+   * Pull：拉取远程操作并合并（公开方法，可用于自动同步）
    */
-  private async pull(): Promise<number> {
+  async pull(): Promise<number> {
     // 获取上次处理的文件时间戳
     const lastProcessed = await db.syncMetadata.get('lastProcessedTimestamp');
     const afterTimestamp = lastProcessed ? (lastProcessed.value as number) : 0;

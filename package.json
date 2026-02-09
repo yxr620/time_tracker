@@ -26,9 +26,11 @@
     "dayjs": "^1.11.19",
     "dexie": "^4.2.1",
     "ionicons": "^8.0.13",
+    "prop-types": "^15.8.1",
     "react": "^18.3.1",
     "react-day-picker": "^9.11.1",
     "react-dom": "^18.3.1",
+    "react-swipeable-list": "^1.10.0",
     "recharts": "^3.5.0",
     "uuid": "^13.0.0",
     "zustand": "^5.0.8"
