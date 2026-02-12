@@ -7,7 +7,6 @@ import {
   useIonToast,
   IonCard,
   IonCardContent,
-  IonDatetime,
   IonModal
 } from '@ionic/react';
 import { playOutline, stopOutline, saveOutline, chatbubbleOutline, pricetagOutline, flagOutline, refreshOutline } from 'ionicons/icons';
@@ -17,6 +16,7 @@ import { useCategoryStore } from '../../stores/categoryStore';
 import { useDateStore } from '../../stores/dateStore';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import dayjs from 'dayjs';
+import { WheelTimePicker } from './WheelTimePicker';
 
 // ============ 工具函数 ============
 
@@ -33,12 +33,6 @@ const alignDateWithTime = (time: Date, dateStr: string): Date => {
     .millisecond(timePart.millisecond())
     .toDate();
 };
-
-const toIonDatetimeValue = (date: Date): string =>
-  dayjs(date).format('YYYY-MM-DDTHH:mm');
-
-const fromIonDatetimeValue = (value: string): Date =>
-  dayjs(value).toDate();
 
 // ============ 样式常量 ============
 
@@ -96,10 +90,18 @@ const ACTION_BUTTON_STYLE: React.CSSProperties = {
 const getModalContentStyle = (isDark: boolean): React.CSSProperties => ({
   display: 'flex',
   flexDirection: 'column',
-  height: '100%',
   padding: '16px',
   background: isDark ? 'hsl(222.2, 84%, 4.9%)' : '#fff'
 });
+
+const getPickerModalStyle = (isDark: boolean): React.CSSProperties => ({
+  '--height': 'auto',
+  '--width': '100%',
+  '--border-radius': '16px 16px 0 0',
+  '--background': isDark ? 'hsl(222.2, 84%, 4.9%)' : '#fff',
+  '--box-shadow': '0 -4px 24px rgba(0, 0, 0, 0.15)',
+  alignItems: 'flex-end',
+} as React.CSSProperties);
 
 const MODAL_BUTTON_ROW_STYLE: React.CSSProperties = {
   display: 'flex',
@@ -137,8 +139,8 @@ export const TimeEntryForm: React.FC = () => {
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [startPickerVisible, setStartPickerVisible] = useState(false);
   const [endPickerVisible, setEndPickerVisible] = useState(false);
-  const [startDraftValue, setStartDraftValue] = useState(() => toIonDatetimeValue(new Date()));
-  const [endDraftValue, setEndDraftValue] = useState(() => toIonDatetimeValue(new Date()));
+  const [startDraftValue, setStartDraftValue] = useState<Date>(() => new Date());
+  const [endDraftValue, setEndDraftValue] = useState<Date>(() => new Date());
   const [elapsed, setElapsed] = useState('00:00:00');
   const [present] = useIonToast();
 
@@ -188,13 +190,13 @@ export const TimeEntryForm: React.FC = () => {
   // 同步时间选择器草稿值
   useEffect(() => {
     if (startPickerVisible) {
-      setStartDraftValue(toIonDatetimeValue(startTime));
+      setStartDraftValue(startTime);
     }
   }, [startPickerVisible, startTime]);
 
   useEffect(() => {
     if (endPickerVisible) {
-      setEndDraftValue(toIonDatetimeValue(endTime ?? new Date()));
+      setEndDraftValue(endTime ?? new Date());
     }
   }, [endPickerVisible, endTime]);
 
@@ -607,8 +609,7 @@ export const TimeEntryForm: React.FC = () => {
       <IonModal
         isOpen={startPickerVisible}
         onDidDismiss={() => setStartPickerVisible(false)}
-        initialBreakpoint={0.4}
-        breakpoints={[0, 0.4]}
+        style={getPickerModalStyle(isDark)}
       >
         <div style={getModalContentStyle(isDark)}>
           <div style={MODAL_BUTTON_ROW_STYLE}>
@@ -618,27 +619,18 @@ export const TimeEntryForm: React.FC = () => {
             <IonButton
               fill="clear"
               onClick={() => {
-                const nextDate = fromIonDatetimeValue(startDraftValue);
-                setStartTime(nextDate);
-                setSelectedDate(dayjs(nextDate).format('YYYY-MM-DD'));
+                setStartTime(startDraftValue);
+                setSelectedDate(dayjs(startDraftValue).format('YYYY-MM-DD'));
                 setStartPickerVisible(false);
               }}
             >
               确定
             </IonButton>
           </div>
-          <IonDatetime
+          <WheelTimePicker
             value={startDraftValue}
-            presentation="date-time"
-            preferWheel
-            locale="zh-CN"
-            onIonChange={e => {
-              const next = e.detail.value;
-              if (typeof next === 'string') {
-                setStartDraftValue(next);
-              }
-            }}
-            style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
+            onChange={setStartDraftValue}
+            isDark={isDark}
           />
         </div>
       </IonModal>
@@ -647,8 +639,7 @@ export const TimeEntryForm: React.FC = () => {
       <IonModal
         isOpen={endPickerVisible}
         onDidDismiss={() => setEndPickerVisible(false)}
-        initialBreakpoint={0.4}
-        breakpoints={[0, 0.4]}
+        style={getPickerModalStyle(isDark)}
       >
         <div style={getModalContentStyle(isDark)}>
           <div style={MODAL_BUTTON_ROW_STYLE}>
@@ -658,26 +649,17 @@ export const TimeEntryForm: React.FC = () => {
             <IonButton
               fill="clear"
               onClick={() => {
-                const nextDate = fromIonDatetimeValue(endDraftValue);
-                setEndTime(nextDate);
+                setEndTime(endDraftValue);
                 setEndPickerVisible(false);
               }}
             >
               确定
             </IonButton>
           </div>
-          <IonDatetime
+          <WheelTimePicker
             value={endDraftValue}
-            presentation="date-time"
-            preferWheel
-            locale="zh-CN"
-            onIonChange={e => {
-              const next = e.detail.value;
-              if (typeof next === 'string') {
-                setEndDraftValue(next);
-              }
-            }}
-            style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
+            onChange={setEndDraftValue}
+            isDark={isDark}
           />
         </div>
       </IonModal>
