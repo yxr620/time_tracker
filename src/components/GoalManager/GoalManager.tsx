@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  IonModal, 
-  IonContent, 
-  IonButton, 
-  IonInput, 
+import {
+  IonModal,
+  IonContent,
+  IonButton,
+  IonInput,
   IonDatetime,
   useIonToast,
   useIonAlert,
@@ -15,14 +15,15 @@ import {
   IonIcon,
   IonText
 } from '@ionic/react';
-import { 
+import {
   addOutline,
   createOutline,
   trashOutline,
-  chevronBackOutline, 
-  chevronForwardOutline, 
+  chevronBackOutline,
+  chevronForwardOutline,
   calendarOutline
 } from 'ionicons/icons';
+import { Capacitor } from '@capacitor/core';
 import { useGoalStore } from '../../stores/goalStore';
 import { useEntryStore } from '../../stores/entryStore';
 import { useDateStore } from '../../stores/dateStore';
@@ -42,10 +43,16 @@ export const GoalManager: React.FC = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [present] = useIonToast();
   const [presentAlert] = useIonAlert();
-  
+
   const addInputRef = useRef<HTMLIonInputElement>(null);
   const editInputRef = useRef<HTMLIonInputElement>(null);
-  
+
+  // Platform-specific modal breakpoints
+  // iOS: keyboard overlays content, need taller modal (0.35) to keep button visible above keyboard
+  // Android: adjustResize compresses entire WebView, smaller modal (0.22) to avoid excess whitespace
+  const isIOS = Capacitor.getPlatform() === 'ios';
+  const modalBreakpoint = isIOS ? 0.35 : 0.22;
+
   const { goals, loadGoals, addGoal, updateGoal, deleteGoal } = useGoalStore();
   const { entries, loadEntries } = useEntryStore();
 
@@ -109,7 +116,7 @@ export const GoalManager: React.FC = () => {
       date: currentDate,
       color: '#1677ff'
     });
-    
+
     setNewGoalName('');
     setShowAddGoal(false);
   };
@@ -165,7 +172,7 @@ export const GoalManager: React.FC = () => {
     await updateGoal(editingGoal.id, {
       name: editGoalName.trim()
     });
-    
+
     setEditingGoal(null);
     setEditGoalName('');
     setShowEditGoal(false);
@@ -181,13 +188,13 @@ export const GoalManager: React.FC = () => {
   const getDateDisplayText = () => {
     const today = dayjs().format('YYYY-MM-DD');
     if (currentDate === today) return '今天';
-    
+
     const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
     if (currentDate === yesterday) return '昨天';
-    
+
     const tomorrow = dayjs().add(1, 'day').format('YYYY-MM-DD');
     if (currentDate === tomorrow) return '明天';
-    
+
     return dayjs(currentDate).format('MM月DD日');
   };
 
@@ -307,8 +314,8 @@ export const GoalManager: React.FC = () => {
       </IonCard>
 
       {/* 日期选择弹窗 */}
-      <IonModal 
-        isOpen={showDatePicker} 
+      <IonModal
+        isOpen={showDatePicker}
         onDidDismiss={() => setShowDatePicker(false)}
         initialBreakpoint={0.55}
         breakpoints={[0, 0.55, 0.7]}
@@ -496,12 +503,12 @@ export const GoalManager: React.FC = () => {
       </IonCard>
 
       {/* 添加目标弹窗 (Ionic Sheet Modal) */}
-      <IonModal 
-        isOpen={showAddGoal} 
+      <IonModal
+        isOpen={showAddGoal}
         onDidDismiss={() => setShowAddGoal(false)}
         // balanced height to keep button visible above keyboard
-        initialBreakpoint={0.2}
-        breakpoints={[0, 0.2]}
+        initialBreakpoint={modalBreakpoint}
+        breakpoints={[0, modalBreakpoint]}
         style={{ '--border-radius': '24px' }}
         onDidPresent={() => {
           setTimeout(() => {
@@ -509,8 +516,8 @@ export const GoalManager: React.FC = () => {
           }, 150);
         }}
       >
-          <IonContent className="ion-padding" style={{ '--padding-top': '16px', '--padding-bottom': '2px' }}>
-            <div className="flex flex-col gap-2">
+        <IonContent className="ion-padding" style={{ '--padding-top': '16px', '--padding-bottom': '2px' }}>
+          <div className="flex flex-col gap-2">
             <div className="relative">
               <IonInput
                 ref={addInputRef}
@@ -519,13 +526,13 @@ export const GoalManager: React.FC = () => {
                 onIonInput={e => setNewGoalName(e.detail.value!)}
                 clearInput
                 className="text-lg"
-                style={{ 
+                style={{
                   '--background': isDark ? '#1e293b' : '#f8fafc',
                   '--color': isDark ? '#f1f5f9' : '#0f172a',
                   '--border-radius': '16px',
-                  '--padding-start': '20px', 
-                  '--padding-end': '20px', 
-                  '--padding-top': '16px', 
+                  '--padding-start': '20px',
+                  '--padding-end': '20px',
+                  '--padding-top': '16px',
                   '--padding-bottom': '16px',
                   '--placeholder-color': '#94a3b8',
                   '--highlight-height': '0px',
@@ -537,11 +544,11 @@ export const GoalManager: React.FC = () => {
                 }}
               ></IonInput>
             </div>
-            
-            <IonButton 
-              expand="block" 
-              onClick={handleAddGoal} 
-              style={{ 
+
+            <IonButton
+              expand="block"
+              onClick={handleAddGoal}
+              style={{
                 '--border-radius': '16px',
                 '--box-shadow': 'none',
                 '--padding-top': '12px',
@@ -557,16 +564,16 @@ export const GoalManager: React.FC = () => {
       </IonModal>
 
       {/* 编辑目标弹窗 (Ionic Sheet Modal) */}
-      <IonModal 
-        isOpen={showEditGoal} 
+      <IonModal
+        isOpen={showEditGoal}
         onDidDismiss={() => {
           setShowEditGoal(false);
           setEditingGoal(null);
           setEditGoalName('');
         }}
         // balanced height to keep button visible above keyboard
-        initialBreakpoint={0.2}
-        breakpoints={[0, 0.2]}
+        initialBreakpoint={modalBreakpoint}
+        breakpoints={[0, modalBreakpoint]}
         style={{ '--border-radius': '24px' }}
         onDidPresent={() => {
           setTimeout(() => {
@@ -574,8 +581,8 @@ export const GoalManager: React.FC = () => {
           }, 150);
         }}
       >
-          <IonContent className="ion-padding" style={{ '--padding-top': '16px', '--padding-bottom': '2px' }}>
-            <div className="flex flex-col gap-2">
+        <IonContent className="ion-padding" style={{ '--padding-top': '16px', '--padding-bottom': '2px' }}>
+          <div className="flex flex-col gap-2">
             <div className="relative">
               <IonInput
                 ref={editInputRef}
@@ -584,13 +591,13 @@ export const GoalManager: React.FC = () => {
                 onIonInput={e => setEditGoalName(e.detail.value!)}
                 clearInput
                 className="text-lg"
-                style={{ 
+                style={{
                   '--background': isDark ? '#1e293b' : '#f8fafc',
                   '--color': isDark ? '#f1f5f9' : '#0f172a',
                   '--border-radius': '16px',
-                  '--padding-start': '20px', 
-                  '--padding-end': '20px', 
-                  '--padding-top': '16px', 
+                  '--padding-start': '20px',
+                  '--padding-end': '20px',
+                  '--padding-top': '16px',
                   '--padding-bottom': '16px',
                   '--placeholder-color': '#94a3b8',
                   '--highlight-height': '0px'
@@ -602,11 +609,11 @@ export const GoalManager: React.FC = () => {
                 }}
               ></IonInput>
             </div>
-            
-            <IonButton 
-              expand="block" 
-              onClick={handleSaveEdit} 
-              style={{ 
+
+            <IonButton
+              expand="block"
+              onClick={handleSaveEdit}
+              style={{
                 '--border-radius': '16px',
                 '--box-shadow': 'none',
                 '--padding-top': '12px',

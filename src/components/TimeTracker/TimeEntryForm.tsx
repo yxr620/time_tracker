@@ -9,6 +9,7 @@ import {
   IonCardContent,
   IonModal
 } from '@ionic/react';
+import { Capacitor } from '@capacitor/core';
 import { playOutline, stopOutline, saveOutline, chatbubbleOutline, pricetagOutline, flagOutline, refreshOutline } from 'ionicons/icons';
 import { useEntryStore } from '../../stores/entryStore';
 import { useGoalStore } from '../../stores/goalStore';
@@ -17,6 +18,7 @@ import { useDateStore } from '../../stores/dateStore';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import dayjs from 'dayjs';
 import { WheelTimePicker } from './WheelTimePicker';
+import { IOSWheelDateTimePicker } from '../../plugins/iosWheelDateTimePicker';
 
 // ============ 工具函数 ============
 
@@ -130,6 +132,7 @@ export const TimeEntryForm: React.FC = () => {
   const selectedDate = useDateStore(state => state.selectedDate);
   const setSelectedDate = useDateStore(state => state.setSelectedDate);
   const { isDark } = useDarkMode();
+  const isIOS = Capacitor.getPlatform() === 'ios';
 
   // Local state
   const [activity, setActivity] = useState('');
@@ -234,6 +237,31 @@ export const TimeEntryForm: React.FC = () => {
 
   const showToast = (message: string, color: 'success' | 'danger' | 'warning') => {
     present({ message, duration: 1500, position: 'top', color });
+  };
+
+  const openIOSNativePicker = async (
+    initialValue: Date,
+    onConfirm: (date: Date) => void
+  ) => {
+    try {
+      const result = await IOSWheelDateTimePicker.present({
+        value: initialValue.toISOString(),
+        daysBefore: 15,
+        daysAfter: 15
+      });
+
+      if (result.cancelled || !result.value) {
+        return;
+      }
+
+      const parsed = dayjs(result.value);
+      if (parsed.isValid()) {
+        onConfirm(parsed.toDate());
+      }
+    } catch (error) {
+      console.error('Failed to open iOS native wheel picker:', error);
+      showToast('打开原生时间选择器失败', 'warning');
+    }
   };
 
   const setEndTimeToOngoing = () => {
@@ -536,7 +564,16 @@ export const TimeEntryForm: React.FC = () => {
             {/* 开始时间 */}
             <div
               style={{ flex: 1, cursor: 'pointer', minWidth: '80px' }}
-              onClick={() => setStartPickerVisible(true)}
+              onClick={() => {
+                if (isIOS) {
+                  void openIOSNativePicker(startTime, (pickedDate) => {
+                    setStartTime(pickedDate);
+                    setSelectedDate(dayjs(pickedDate).format('YYYY-MM-DD'));
+                  });
+                  return;
+                }
+                setStartPickerVisible(true);
+              }}
             >
               <div style={{ ...TIME_DISPLAY_STYLE, color: isDark ? '#f1f5f9' : '#333' }}>
                 {dayjs(startTime).format('HH:mm')}
@@ -562,7 +599,15 @@ export const TimeEntryForm: React.FC = () => {
             {/* 结束时间 */}
             <div
               style={{ flex: 1, textAlign: 'right', cursor: 'pointer', minWidth: '80px' }}
-              onClick={() => setEndPickerVisible(true)}
+              onClick={() => {
+                if (isIOS) {
+                  void openIOSNativePicker(endTime ?? new Date(), (pickedDate) => {
+                    setEndTime(pickedDate);
+                  });
+                  return;
+                }
+                setEndPickerVisible(true);
+              }}
             >
               <div style={{
                 ...TIME_DISPLAY_STYLE,
@@ -606,63 +651,67 @@ export const TimeEntryForm: React.FC = () => {
       </IonButton>
 
       {/* 开始时间选择器 Modal */}
-      <IonModal
-        isOpen={startPickerVisible}
-        onDidDismiss={() => setStartPickerVisible(false)}
-        style={getPickerModalStyle(isDark)}
-      >
-        <div style={getModalContentStyle(isDark)}>
-          <div style={MODAL_BUTTON_ROW_STYLE}>
-            <IonButton fill="clear" onClick={() => setStartPickerVisible(false)}>
-              取消
-            </IonButton>
-            <IonButton
-              fill="clear"
-              onClick={() => {
-                setStartTime(startDraftValue);
-                setSelectedDate(dayjs(startDraftValue).format('YYYY-MM-DD'));
-                setStartPickerVisible(false);
-              }}
-            >
-              确定
-            </IonButton>
+      {!isIOS && (
+        <IonModal
+          isOpen={startPickerVisible}
+          onDidDismiss={() => setStartPickerVisible(false)}
+          style={getPickerModalStyle(isDark)}
+        >
+          <div style={getModalContentStyle(isDark)}>
+            <div style={MODAL_BUTTON_ROW_STYLE}>
+              <IonButton fill="clear" onClick={() => setStartPickerVisible(false)}>
+                取消
+              </IonButton>
+              <IonButton
+                fill="clear"
+                onClick={() => {
+                  setStartTime(startDraftValue);
+                  setSelectedDate(dayjs(startDraftValue).format('YYYY-MM-DD'));
+                  setStartPickerVisible(false);
+                }}
+              >
+                确定
+              </IonButton>
+            </div>
+            <WheelTimePicker
+              value={startDraftValue}
+              onChange={setStartDraftValue}
+              isDark={isDark}
+            />
           </div>
-          <WheelTimePicker
-            value={startDraftValue}
-            onChange={setStartDraftValue}
-            isDark={isDark}
-          />
-        </div>
-      </IonModal>
+        </IonModal>
+      )}
 
       {/* 结束时间选择器 Modal */}
-      <IonModal
-        isOpen={endPickerVisible}
-        onDidDismiss={() => setEndPickerVisible(false)}
-        style={getPickerModalStyle(isDark)}
-      >
-        <div style={getModalContentStyle(isDark)}>
-          <div style={MODAL_BUTTON_ROW_STYLE}>
-            <IonButton fill="clear" onClick={() => setEndPickerVisible(false)}>
-              取消
-            </IonButton>
-            <IonButton
-              fill="clear"
-              onClick={() => {
-                setEndTime(endDraftValue);
-                setEndPickerVisible(false);
-              }}
-            >
-              确定
-            </IonButton>
+      {!isIOS && (
+        <IonModal
+          isOpen={endPickerVisible}
+          onDidDismiss={() => setEndPickerVisible(false)}
+          style={getPickerModalStyle(isDark)}
+        >
+          <div style={getModalContentStyle(isDark)}>
+            <div style={MODAL_BUTTON_ROW_STYLE}>
+              <IonButton fill="clear" onClick={() => setEndPickerVisible(false)}>
+                取消
+              </IonButton>
+              <IonButton
+                fill="clear"
+                onClick={() => {
+                  setEndTime(endDraftValue);
+                  setEndPickerVisible(false);
+                }}
+              >
+                确定
+              </IonButton>
+            </div>
+            <WheelTimePicker
+              value={endDraftValue}
+              onChange={setEndDraftValue}
+              isDark={isDark}
+            />
           </div>
-          <WheelTimePicker
-            value={endDraftValue}
-            onChange={setEndDraftValue}
-            isDark={isDark}
-          />
-        </div>
-      </IonModal>
+        </IonModal>
+      )}
     </div>
   );
 };

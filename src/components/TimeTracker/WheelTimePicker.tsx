@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import dayjs from 'dayjs';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 // ============ 常量 ============
 
@@ -64,6 +65,7 @@ const ScrollColumn: React.FC<ScrollColumnProps> = React.memo(({
   const scrollRef = useRef<HTMLDivElement>(null);
   const programmaticRef = useRef(false);
   const initializedRef = useRef(false);
+  const lastIndexRef = useRef(-1);
 
   const textColor = isDark ? '#f1f5f9' : '#1e293b';
   const dimColor = isDark ? '#475569' : '#cbd5e1';
@@ -113,15 +115,29 @@ const ScrollColumn: React.FC<ScrollColumnProps> = React.memo(({
     }
   }, [items, selectedValue, onChange]);
 
-  // 监听 scroll 事件，用去抖动检测滚动结束（等待 scroll-snap 吸附完成）
+  // 监听 scroll 事件：触觉反馈 + 去抖提交
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     let timer: ReturnType<typeof setTimeout>;
+
     const onScroll = () => {
+      if (programmaticRef.current) return;
+
+      // 触觉反馈：跨越项边界时触发震动
+      const currentIdx = Math.round(el.scrollTop / ITEM_HEIGHT);
+      if (currentIdx !== lastIndexRef.current && lastIndexRef.current !== -1) {
+        Haptics.impact({ style: ImpactStyle.Light }).catch(() => {
+          // Web 端不支持，静默失败
+        });
+      }
+      lastIndexRef.current = currentIdx;
+
+      // 去抖提交
       clearTimeout(timer);
       timer = setTimeout(commitScroll, 120);
     };
+
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       el.removeEventListener('scroll', onScroll);
