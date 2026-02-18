@@ -2,15 +2,18 @@ import { useState, useEffect } from 'react';
 import {
   IonButton,
   IonSpinner,
+  IonToggle,
   IonText,
   useIonAlert,
   useIonToast
 } from '@ionic/react';
 import { syncEngine, type SyncStats, type SyncResult } from '../../services/syncEngine';
 import { isOSSConfigured } from '../../services/oss';
+import { useDarkMode } from '../../hooks/useDarkMode';
 import './SyncManagementPage.css';
 
 export const SyncManagementPage: React.FC = () => {
+  const { isDark, setDark } = useDarkMode();
   const [stats, setStats] = useState<SyncStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [lastResult, setLastResult] = useState<SyncResult | null>(null);
@@ -167,9 +170,23 @@ export const SyncManagementPage: React.FC = () => {
     });
   };
 
-  if (!isConfigured) {
-    return (
-      <div style={{ padding: '16px' }}>
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {/* 应用设置 */}
+      <div>
+        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px', color: 'hsl(var(--foreground))' }}>
+          应用设置
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid hsl(var(--border))' }}>
+          <div>
+            <div style={{ fontSize: '13px', color: 'hsl(var(--foreground))', fontWeight: '500' }}>深色模式</div>
+            <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', marginTop: '2px' }}>切换应用主题外观</div>
+          </div>
+          <IonToggle checked={isDark} onIonChange={(e) => setDark(e.detail.checked)} />
+        </div>
+      </div>
+
+      {!isConfigured && (
         <div style={{ textAlign: 'center', padding: '20px', backgroundColor: 'hsl(var(--muted))', borderRadius: '12px' }}>
           <IonText color="medium">
             <p style={{ fontSize: '16px', marginBottom: '10px', color: 'hsl(var(--foreground))' }}>OSS 未配置，无法使用同步功能</p>
@@ -178,14 +195,10 @@ export const SyncManagementPage: React.FC = () => {
             </p>
           </IonText>
         </div>
-      </div>
-    );
-  }
+      )}
 
-
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {isConfigured && (
+        <>
       {/* 同步状态 */}
       <div>
         <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px', color: 'hsl(var(--foreground))' }}>
@@ -378,6 +391,8 @@ export const SyncManagementPage: React.FC = () => {
             )}
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

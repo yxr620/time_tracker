@@ -9,8 +9,7 @@ import {
   useIonAlert,
   IonSpinner
 } from '@ionic/react';
-import { checkmarkDoneOutline, cloudUploadOutline, moonOutline, sunnyOutline } from 'ionicons/icons';
-import { useDarkMode } from './hooks/useDarkMode';
+import { checkmarkDoneOutline, cloudUploadOutline } from 'ionicons/icons';
 import { RecordsPage } from './components/RecordsPage/RecordsPage';
 import { Dashboard } from './components/Dashboard/Dashboard';
 import { TrendPage } from './components/TrendPage/TrendPage';
@@ -37,7 +36,6 @@ function App() {
   const [presentToast] = useIonToast();
   const [presentAlert] = useIonAlert();
   const [isLoading, setIsLoading] = useState(false);
-  const { isDark, toggle } = useDarkMode();
 
   // 简单的屏幕宽度检测
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
@@ -287,15 +285,13 @@ ${result.details.errors.length > 0 ? `\n⚠️ ${result.details.errors.length} �
           <div className="page-content-wrapper" style={{ padding: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {/* 同步管理（如果配置了 OSS） */}
-              {isOSSConfigured() && (
-                <>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>
-                    云端同步
-                  </div>
-                  <SyncManagementPage />
-                  <div style={{ marginTop: '24px', borderTop: '1px solid #e5e5e5', paddingTop: '16px' }} />
-                </>
-              )}
+              <>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>
+                  云端同步
+                </div>
+                <SyncManagementPage />
+                <div style={{ marginTop: '24px', borderTop: '1px solid #e5e5e5', paddingTop: '16px' }} />
+              </>
 
               {/* 导入部分 */}
               <div>
@@ -392,18 +388,6 @@ ${result.details.errors.length > 0 ? `\n⚠️ ${result.details.errors.length} �
     <div className="app mobile-layout">
       <div className="app-header">
         <h1>Time Tracker</h1>
-        <IonButton
-          fill="clear"
-          onClick={toggle}
-          style={{
-            '--padding-start': '8px',
-            '--padding-end': '8px',
-            minWidth: '40px',
-            height: '40px'
-          }}
-        >
-          <IonIcon icon={isDark ? sunnyOutline : moonOutline} style={{ fontSize: '24px' }} />
-        </IonButton>
       </div>
       <div className="app-body">
         {renderPageContent()}
@@ -438,16 +422,6 @@ ${result.details.errors.length > 0 ? `\n⚠️ ${result.details.errors.length} �
       <div className="desktop-main">
         <div className="desktop-header">
           <h1>Time Tracker</h1>
-          <IonButton
-            fill="clear"
-            onClick={toggle}
-            style={{
-              '--padding-start': '8px',
-              '--padding-end': '8px'
-            }}
-          >
-            <IonIcon icon={isDark ? sunnyOutline : moonOutline} style={{ fontSize: '24px' }} />
-          </IonButton>
         </div>
         <div className="desktop-content">
           {renderPageContent()}

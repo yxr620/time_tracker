@@ -31,10 +31,6 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ activeTab, onTab
 
   return (
     <div className="desktop-sidebar">
-      <div className="sidebar-header">
-        <h1 className="sidebar-title">Time Tracker</h1>
-      </div>
-      
       <nav className="sidebar-nav">
         {navItems.map((item) => (
           <button

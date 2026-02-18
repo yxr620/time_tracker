@@ -444,7 +444,8 @@ export const TimeEntryForm: React.FC = () => {
 
   // 正常录入界面
   return (
-    <div style={{ padding: '16px', minHeight: '100%' }}>
+    // <div style={{ padding: '16px', minHeight: '100%' }}>
+    <div style={{ padding: '0px 16px 16px', minHeight: '100%' }}>
       {/* 活动名称输入 */}
       <IonCard className="mb-2" style={getCardStyle(isDark)}>
         <IonCardContent style={{ padding: 0 }}>
