@@ -7,24 +7,21 @@ import {
   IonInput,
   IonModal,
   IonButton,
-  IonDatetime,
   useIonToast
 } from '@ionic/react';
+import { Capacitor } from '@capacitor/core';
 import { chatbubbleOutline, pricetagOutline, flagOutline } from 'ionicons/icons';
 import { useGoalStore } from '../../stores/goalStore';
 import { useCategoryStore } from '../../stores/categoryStore';
 import { useEntryStore } from '../../stores/entryStore';
+import { useDarkMode } from '../../hooks/useDarkMode';
+import { WheelTimePicker } from '../common/WheelTimePicker';
+import { useIOSTimePicker } from '../../hooks/useIOSTimePicker';
 import type { TimeEntry } from '../../services/db';
 import dayjs from 'dayjs';
 import './EditEntryDialog.css';
 
 // ============ 工具函数 ============
-
-const toIonDatetimeValue = (date: Date): string =>
-  dayjs(date).format('YYYY-MM-DDTHH:mm');
-
-const fromIonDatetimeValue = (value: string): Date =>
-  dayjs(value).toDate();
 
 interface EditEntryDialogProps {
   entry: TimeEntry | null;
@@ -49,9 +46,12 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [startPickerVisible, setStartPickerVisible] = useState(false);
   const [endPickerVisible, setEndPickerVisible] = useState(false);
-  const [startDraftValue, setStartDraftValue] = useState(() => toIonDatetimeValue(new Date()));
-  const [endDraftValue, setEndDraftValue] = useState(() => toIonDatetimeValue(new Date()));
+  const [startDraftValue, setStartDraftValue] = useState<Date>(() => new Date());
+  const [endDraftValue, setEndDraftValue] = useState<Date>(() => new Date());
   const [present] = useIonToast();
+  const { isDark } = useDarkMode();
+  const isIOS = Capacitor.getPlatform() === 'ios';
+  const { openIOSTimePicker } = useIOSTimePicker();
 
   useEffect(() => {
     if (visible) {
@@ -83,13 +83,13 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
   // 同步时间选择器草稿值
   useEffect(() => {
     if (startPickerVisible) {
-      setStartDraftValue(toIonDatetimeValue(startTime));
+      setStartDraftValue(startTime);
     }
   }, [startPickerVisible, startTime]);
 
   useEffect(() => {
     if (endPickerVisible) {
-      setEndDraftValue(toIonDatetimeValue(endTime ?? new Date()));
+      setEndDraftValue(endTime ?? new Date());
     }
   }, [endPickerVisible, endTime]);
 
@@ -258,7 +258,10 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
             <div className="edit-dialog-time-row">
               <div className="edit-dialog-time-col">
                 <div className="edit-dialog-time-label">开始时间</div>
-                <IonButton expand="block" fill="outline" size="small" onClick={() => setStartPickerVisible(true)}>
+                <IonButton expand="block" fill="outline" size="small" onClick={() => {
+                  if (isIOS) { void openIOSTimePicker(startTime, setStartTime); return; }
+                  setStartPickerVisible(true);
+                }}>
                   {dayjs(startTime).format('MM-DD HH:mm')}
                 </IonButton>
                 <div className="edit-dialog-time-actions">
@@ -268,7 +271,10 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
               </div>
               <div className="edit-dialog-time-col">
                 <div className="edit-dialog-time-label">结束时间</div>
-                <IonButton expand="block" fill="outline" size="small" onClick={() => setEndPickerVisible(true)}>
+                <IonButton expand="block" fill="outline" size="small" onClick={() => {
+                  if (isIOS) { void openIOSTimePicker(endTime ?? new Date(), setEndTime); return; }
+                  setEndPickerVisible(true);
+                }}>
                   {endTime ? dayjs(endTime).format('MM-DD HH:mm') : '进行中'}
                 </IonButton>
                 <div className="edit-dialog-time-actions">
@@ -289,49 +295,53 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
         </div>
       </IonModal>
 
-      {/* 开始时间选择器 */}
-      <IonModal
-        isOpen={startPickerVisible}
-        onDidDismiss={() => setStartPickerVisible(false)}
-        initialBreakpoint={0.4}
-        breakpoints={[0, 0.4]}
-      >
-        <div className="edit-dialog-picker">
-          <div className="edit-dialog-picker-header">
-            <IonButton fill="clear" onClick={() => setStartPickerVisible(false)}>取消</IonButton>
-            <IonButton fill="clear" onClick={() => { setStartTime(fromIonDatetimeValue(startDraftValue)); setStartPickerVisible(false); }}>确定</IonButton>
+      {/* 开始时间选择器（仅 Android）*/}
+      {!isIOS && (
+        <IonModal
+          isOpen={startPickerVisible}
+          onDidDismiss={() => setStartPickerVisible(false)}
+          style={{
+            '--height': 'auto',
+            '--width': '100%',
+            '--border-radius': '16px 16px 0 0',
+            '--background': isDark ? 'hsl(222.2, 84%, 4.9%)' : '#fff',
+            '--box-shadow': '0 -4px 24px rgba(0, 0, 0, 0.15)',
+            alignItems: 'flex-end',
+          }}
+        >
+          <div className="edit-dialog-picker" style={{ background: isDark ? 'hsl(222.2, 84%, 4.9%)' : '#fff' }}>
+            <div className="edit-dialog-picker-header">
+              <IonButton fill="clear" onClick={() => setStartPickerVisible(false)}>取消</IonButton>
+              <IonButton fill="clear" onClick={() => { setStartTime(startDraftValue); setStartPickerVisible(false); }}>确定</IonButton>
+            </div>
+            <WheelTimePicker value={startDraftValue} onChange={setStartDraftValue} isDark={isDark} />
           </div>
-          <IonDatetime
-            value={startDraftValue}
-            presentation="date-time"
-            preferWheel
-            locale="zh-CN"
-            onIonChange={e => { if (typeof e.detail.value === 'string') setStartDraftValue(e.detail.value); }}
-          />
-        </div>
-      </IonModal>
+        </IonModal>
+      )}
 
-      {/* 结束时间选择器 */}
-      <IonModal
-        isOpen={endPickerVisible}
-        onDidDismiss={() => setEndPickerVisible(false)}
-        initialBreakpoint={0.4}
-        breakpoints={[0, 0.4]}
-      >
-        <div className="edit-dialog-picker">
-          <div className="edit-dialog-picker-header">
-            <IonButton fill="clear" onClick={() => setEndPickerVisible(false)}>取消</IonButton>
-            <IonButton fill="clear" onClick={() => { setEndTime(fromIonDatetimeValue(endDraftValue)); setEndPickerVisible(false); }}>确定</IonButton>
+      {/* 结束时间选择器（仅 Android）*/}
+      {!isIOS && (
+        <IonModal
+          isOpen={endPickerVisible}
+          onDidDismiss={() => setEndPickerVisible(false)}
+          style={{
+            '--height': 'auto',
+            '--width': '100%',
+            '--border-radius': '16px 16px 0 0',
+            '--background': isDark ? 'hsl(222.2, 84%, 4.9%)' : '#fff',
+            '--box-shadow': '0 -4px 24px rgba(0, 0, 0, 0.15)',
+            alignItems: 'flex-end',
+          }}
+        >
+          <div className="edit-dialog-picker" style={{ background: isDark ? 'hsl(222.2, 84%, 4.9%)' : '#fff' }}>
+            <div className="edit-dialog-picker-header">
+              <IonButton fill="clear" onClick={() => setEndPickerVisible(false)}>取消</IonButton>
+              <IonButton fill="clear" onClick={() => { setEndTime(endDraftValue); setEndPickerVisible(false); }}>确定</IonButton>
+            </div>
+            <WheelTimePicker value={endDraftValue} onChange={setEndDraftValue} isDark={isDark} />
           </div>
-          <IonDatetime
-            value={endDraftValue}
-            presentation="date-time"
-            preferWheel
-            locale="zh-CN"
-            onIonChange={e => { if (typeof e.detail.value === 'string') setEndDraftValue(e.detail.value); }}
-          />
-        </div>
-      </IonModal>
+        </IonModal>
+      )}
     </>
   );
 };

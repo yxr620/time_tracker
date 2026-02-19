@@ -17,8 +17,8 @@ import { useCategoryStore } from '../../stores/categoryStore';
 import { useDateStore } from '../../stores/dateStore';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import dayjs from 'dayjs';
-import { WheelTimePicker } from './WheelTimePicker';
-import { IOSWheelDateTimePicker } from '../../plugins/iosWheelDateTimePicker';
+import { WheelTimePicker } from '../common/WheelTimePicker';
+import { useIOSTimePicker } from '../../hooks/useIOSTimePicker';
 
 // ============ 工具函数 ============
 
@@ -133,6 +133,7 @@ export const TimeEntryForm: React.FC = () => {
   const setSelectedDate = useDateStore(state => state.setSelectedDate);
   const { isDark } = useDarkMode();
   const isIOS = Capacitor.getPlatform() === 'ios';
+  const { openIOSTimePicker } = useIOSTimePicker();
 
   // Local state
   const [activity, setActivity] = useState('');
@@ -237,31 +238,6 @@ export const TimeEntryForm: React.FC = () => {
 
   const showToast = (message: string, color: 'success' | 'danger' | 'warning') => {
     present({ message, duration: 1500, position: 'top', color });
-  };
-
-  const openIOSNativePicker = async (
-    initialValue: Date,
-    onConfirm: (date: Date) => void
-  ) => {
-    try {
-      const result = await IOSWheelDateTimePicker.present({
-        value: initialValue.toISOString(),
-        daysBefore: 15,
-        daysAfter: 15
-      });
-
-      if (result.cancelled || !result.value) {
-        return;
-      }
-
-      const parsed = dayjs(result.value);
-      if (parsed.isValid()) {
-        onConfirm(parsed.toDate());
-      }
-    } catch (error) {
-      console.error('Failed to open iOS native wheel picker:', error);
-      showToast('打开原生时间选择器失败', 'warning');
-    }
   };
 
   const setEndTimeToOngoing = () => {
@@ -567,7 +543,7 @@ export const TimeEntryForm: React.FC = () => {
               style={{ flex: 1, cursor: 'pointer', minWidth: '80px' }}
               onClick={() => {
                 if (isIOS) {
-                  void openIOSNativePicker(startTime, (pickedDate) => {
+                  void openIOSTimePicker(startTime, (pickedDate) => {
                     setStartTime(pickedDate);
                     setSelectedDate(dayjs(pickedDate).format('YYYY-MM-DD'));
                   });
@@ -602,7 +578,7 @@ export const TimeEntryForm: React.FC = () => {
               style={{ flex: 1, textAlign: 'right', cursor: 'pointer', minWidth: '80px' }}
               onClick={() => {
                 if (isIOS) {
-                  void openIOSNativePicker(endTime ?? new Date(), (pickedDate) => {
+                  void openIOSTimePicker(endTime ?? new Date(), (pickedDate) => {
                     setEndTime(pickedDate);
                   });
                   return;
