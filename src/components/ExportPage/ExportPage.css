@@ -1,0 +1,36 @@
+.export-page {
+  padding: 16px;
+}
+
+.export-page-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.export-section-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: hsl(var(--foreground));
+}
+
+.export-section-desc {
+  font-size: 14px;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.export-section-hint {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+  padding-left: 8px;
+  margin: 0;
+}
+
+.export-divider {
+  border: none;
+  border-top: 1px solid hsl(var(--border));
+  margin: 8px 0;
+}

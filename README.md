@@ -50,8 +50,8 @@
 
 - **前端框架**：React 18 + TypeScript
 - **构建工具**：Vite
-- **UI 组件**：Ionic React + Ant Design Mobile（混用）
-- **样式方案**：Tailwind CSS
+- **UI 组件**：Ionic React
+- **样式方案**：CSS 文件 + CSS 变量主题系统（Tailwind 辅助）
 - **状态管理**：Zustand
 - **数据库**：Dexie.js (IndexedDB 封装)
 - **时间处理**：Day.js + date-fns
@@ -66,53 +66,81 @@
 ```
 time-tracker/
 ├── src/
-│   ├── main.tsx              # 应用入口
-│   ├── App.tsx               # 主应用组件（TabBar 导航 + 导出导入功能）
+│   ├── main.tsx              # 应用入口（Ionic 初始化、状态栏、全局错误处理）
+│   ├── App.tsx               # 主应用组件（TabBar 导航 + 布局切换）
+│   ├── App.css               # 全局布局样式（移动端/桌面端）
+│   ├── index.css             # CSS 变量、主题配置、Ionic 暗黑模式覆盖
 │   ├── components/
+│   │   ├── common/           # 通用 UI 组件
+│   │   │   └── WheelTimePicker.tsx
 │   │   ├── TimeTracker/
 │   │   │   └── TimeEntryForm.tsx    # 统一录入表单
 │   │   ├── EntryList/
 │   │   │   ├── EntryList.tsx        # 记录列表
-│   │   │   └── EditEntryDialog.tsx  # 编辑对话框
+│   │   │   ├── EditEntryDialog.tsx  # 编辑对话框
+│   │   │   ├── SwipeableItem.tsx    # 滑动操作组件
+│   │   │   └── index.ts            # 统一导出
 │   │   ├── TimelineView/
-│   │   │   ├── TimelineView.tsx     # 24小时时间轴
-│   │   │   └── TimelineView.css     # 时间轴样式
+│   │   │   └── TimelineView.tsx     # 24小时时间轴
 │   │   ├── GoalManager/
-│   │   │   └── GoalManager.tsx      # 目标管理（Ionic 组件）
-│   │   └── RecordsPage/
-│   │       └── RecordsPage.tsx      # 记录页面
+│   │   │   └── GoalManager.tsx      # 目标管理
+│   │   ├── RecordsPage/
+│   │   │   └── RecordsPage.tsx      # 记录页面
+│   │   ├── ExportPage/
+│   │   │   ├── ExportPage.tsx       # 导入导出页面（云同步+数据管理）
+│   │   │   └── ExportPage.css
+│   │   ├── SyncManagementPage/
+│   │   │   └── SyncManagementPage.tsx # 云同步管理
+│   │   ├── SyncButton/
+│   │   │   └── SyncButton.tsx       # 同步按钮组件
 │   │   ├── Dashboard/
-│   │   │   ├── Dashboard.tsx        # 数据分析看板（桌面端）
-│   │   │   └── Dashboard.css        # 看板样式
+│   │   │   └── Dashboard.tsx        # 数据分析看板（桌面端）
 │   │   ├── TrendPage/
-│   │   │   ├── TrendPage.tsx        # 趋势分析页面（桌面端）
-│   │   │   └── TrendPage.css        # 趋势页面样式
+│   │   │   └── TrendPage.tsx        # 趋势分析页面（桌面端）
 │   │   ├── GoalAnalysisPage/
-│   │   │   ├── GoalAnalysisPage.tsx # 目标深度分析页面（桌面端）
-│   │   │   └── GoalAnalysisPage.css # 目标分析页面样式
-│   │   └── Desktop/
-│   │       └── DesktopSidebar.tsx   # 桌面端侧边栏导航
+│   │   │   └── GoalAnalysisPage.tsx # 目标深度分析（桌面端）
+│   │   ├── Desktop/
+│   │   │   └── DesktopSidebar.tsx   # 桌面端侧边栏导航
+│   │   └── ErrorBoundary.tsx        # 全局错误边界
 │   ├── config/
-│   │   └── categoryColors.ts # 类别颜色配置
+│   │   └── categoryColors.ts # 类别颜色配置（唯一颜色来源）
 │   ├── types/
-│   │   ├── analysis.ts       # 数据分析类型定义
-│   │   └── goalAnalysis.ts   # 目标分析类型定义
-│   ├── stores/               # 状态管理
-│   │   ├── entryStore.ts
-│   │   ├── goalStore.ts
-│   │   └── categoryStore.ts
-│   └── services/
-│       ├── db.ts             # 数据库配置
-│       ├── export.ts         # 数据导出导入功能
-│       └── analysis/
-│           ├── processor.ts  # 数据分析处理器
-│           ├── goalCluster.ts        # 目标聚类算法
-│           └── goalAnalysisProcessor.ts  # 目标分析处理器
+│   │   ├── analysis.ts       # 数据分析类型
+│   │   └── goalAnalysis.ts   # 目标分析类型
+│   ├── stores/               # Zustand 状态管理
+│   │   ├── entryStore.ts     # 时间记录 store
+│   │   ├── goalStore.ts      # 目标 store
+│   │   ├── categoryStore.ts  # 类别 store
+│   │   ├── dateStore.ts      # 日期选择 store
+│   │   └── syncStore.ts      # 同步状态 store
+│   ├── services/             # 业务逻辑
+│   │   ├── db.ts             # IndexedDB 数据库定义
+│   │   ├── syncDb.ts         # 带同步操作记录的数据库封装
+│   │   ├── syncEngine.ts     # 同步引擎（Push/Pull/Merge）
+│   │   ├── export.ts         # 数据导入导出
+│   │   ├── oss.ts            # 阿里云 OSS 操作
+│   │   ├── syncDebugTools.ts # 同步调试工具
+│   │   └── analysis/         # 数据分析处理
+│   │       ├── processor.ts
+│   │       ├── goalCluster.ts
+│   │       └── goalAnalysisProcessor.ts
+│   ├── utils/                # 工具函数
+│   │   └── autoPush.ts       # 自动同步推送
+│   ├── hooks/                # 自定义 Hooks
+│   │   ├── useDarkMode.ts
+│   │   └── useIOSTimePicker.ts
+│   └── plugins/              # Capacitor 原生插件
+│       └── iosWheelDateTimePicker.ts
 ├── android/                  # Android 原生项目
-├── tailwind.config.js        # Tailwind CSS 配置
-├── postcss.config.js         # PostCSS 配置
-├── vite.config.ts           # Vite 配置
-├── capacitor.config.ts      # Capacitor 配置
+├── ios/                      # iOS 原生项目
+├── electron/                 # Electron 桌面端项目
+├── public/                   # 静态资源
+├── icons/                    # 应用图标
+├── vite.config.ts           # Vite 构建配置
+├── capacitor.config.ts      # Capacitor 原生配置
+├── tailwind.config.js       # Tailwind CSS 配置
+├── postcss.config.js        # PostCSS 配置
+├── tsconfig.json            # TypeScript 配置
 └── package.json             # 依赖管理
 ```
 
@@ -428,8 +456,7 @@ npm run lint        # 运行 ESLint 检查代码
 
 ### 配置说明
 
-- ✅ Tailwind CSS（包含 PostCSS）
-- ✅ TypeScript 路径别名（`@/*` 指向 `src/*`）
+- ✅ Tailwind CSS（辅助间距/排版，主要使用 CSS 文件 + CSS 变量）
 - ✅ Ionic 全局样式（`src/main.tsx` 中引入）
 - ✅ CSS 变量和主题配置（`src/index.css`）
 
@@ -489,7 +516,7 @@ npm run lint        # 运行 ESLint 检查代码
 - 导入时会自动过滤 categories 的 color 字段
 - 建议导入前先备份当前数据
 - 替换模式会清空所有数据，请谨慎使用
-- 导入完成后页面会自动刷新
+- 导入完成后数据会自动刷新
 
 ---
 

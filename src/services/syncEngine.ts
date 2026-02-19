@@ -3,7 +3,7 @@
  * 核心同步逻辑：Push（推送）、Pull（拉取）、Merge（合并）
  */
 
-import { db, type SyncOperation, type TimeEntry, type Goal, type Category, getDeviceId } from './db';
+import { db, type SyncOperation, getDeviceId } from './db';
 import { uploadSyncFile, listSyncFiles, downloadSyncFile, extractTimestamp, isOSSConfigured } from './oss';
 
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error';
@@ -62,6 +62,9 @@ export class SyncEngine {
       const pulledCount = await this.pull();
       console.log(`[Sync] Pull 完成，拉取 ${pulledCount} 条操作`);
       
+      // 3. 清理过期的已同步操作日志
+      await this.cleanupSyncedOperations();
+
       this.lastSyncTime = Date.now();
       
       return {
@@ -154,77 +157,36 @@ export class SyncEngine {
     const { tableName, recordId, type, data } = operation;
 
     try {
-      if (tableName === 'entries') {
-        await this.mergeEntry(recordId, type, data);
-      } else if (tableName === 'goals') {
-        await this.mergeGoal(recordId, type, data);
-      } else if (tableName === 'categories') {
-        await this.mergeCategory(recordId, type, data);
+      const tableMap = {
+        entries: db.entries,
+        goals: db.goals,
+        categories: db.categories,
+      } as const;
+
+      const table = tableMap[tableName as keyof typeof tableMap];
+      if (table) {
+        await this.mergeRecord(table, tableName, recordId, type, data);
       }
     } catch (error) {
       console.error(`[Sync] 合并操作失败:`, operation, error);
-      // 继续处理其他操作，不中断同步
     }
   }
 
   /**
-   * 合并 TimeEntry
+   * 通用合并记录（Last-Write-Wins），替代原来的 mergeEntry/mergeGoal/mergeCategory
    */
-  private async mergeEntry(
+  private async mergeRecord(
+    table: typeof db.entries | typeof db.goals | typeof db.categories,
+    tableName: string,
     id: string,
     type: 'create' | 'update' | 'delete',
-    remoteData: TimeEntry
+    remoteData: any
   ): Promise<void> {
-    const local = await db.entries.get(id);
-
-    // 如果本地不存在，直接写入（除非是删除操作）
-    if (!local) {
-      if (type !== 'delete' && !remoteData.deleted) {
-        await db.entries.put({
-          ...remoteData,
-          syncStatus: 'synced'
-        });
-      }
-      return;
-    }
-
-    // Last-Write-Wins：比较 updatedAt
-    const remoteTime = new Date(remoteData.updatedAt).getTime();
-    const localTime = new Date(local.updatedAt).getTime();
-
-    if (remoteTime > localTime) {
-      // 远程更新，覆盖本地
-      // 无论是删除还是更新，都使用 put 来保持数据一致性
-      await db.entries.put({
-        ...remoteData,
-        syncStatus: 'synced'
-      });
-      if (remoteData.deleted) {
-        console.log(`[Sync] Entry ${id} 已标记删除（远程删除）`);
-      } else {
-        console.log(`[Sync] Entry ${id} 已更新（远程更新）`);
-      }
-    } else {
-      console.log(`[Sync] Entry ${id} 跳过（本地更新）`);
-    }
-  }
-
-  /**
-   * 合并 Goal
-   */
-  private async mergeGoal(
-    id: string,
-    type: 'create' | 'update' | 'delete',
-    remoteData: Goal
-  ): Promise<void> {
-    const local = await db.goals.get(id);
+    const local = await (table as any).get(id);
 
     if (!local) {
       if (type !== 'delete' && !remoteData.deleted) {
-        await db.goals.put({
-          ...remoteData,
-          syncStatus: 'synced'
-        });
+        await (table as any).put({ ...remoteData, syncStatus: 'synced' });
       }
       return;
     }
@@ -233,55 +195,11 @@ export class SyncEngine {
     const localTime = new Date(local.updatedAt).getTime();
 
     if (remoteTime > localTime) {
-      await db.goals.put({
-        ...remoteData,
-        syncStatus: 'synced'
-      });
-      if (remoteData.deleted) {
-        console.log(`[Sync] Goal ${id} 已标记删除（远程删除）`);
-      } else {
-        console.log(`[Sync] Goal ${id} 已更新（远程更新）`);
-      }
+      await (table as any).put({ ...remoteData, syncStatus: 'synced' });
+      const action = remoteData.deleted ? '已标记删除（远程删除）' : '已更新（远程更新）';
+      console.log(`[Sync] ${tableName} ${id} ${action}`);
     } else {
-      console.log(`[Sync] Goal ${id} 跳过（本地更新）`);
-    }
-  }
-
-  /**
-   * 合并 Category
-   */
-  private async mergeCategory(
-    id: string,
-    type: 'create' | 'update' | 'delete',
-    remoteData: Category
-  ): Promise<void> {
-    const local = await db.categories.get(id);
-
-    if (!local) {
-      if (type !== 'delete' && !remoteData.deleted) {
-        await db.categories.put({
-          ...remoteData,
-          syncStatus: 'synced'
-        });
-      }
-      return;
-    }
-
-    const remoteTime = new Date(remoteData.updatedAt).getTime();
-    const localTime = new Date(local.updatedAt).getTime();
-
-    if (remoteTime > localTime) {
-      await db.categories.put({
-        ...remoteData,
-        syncStatus: 'synced'
-      });
-      if (remoteData.deleted) {
-        console.log(`[Sync] Category ${id} 已标记删除（远程删除）`);
-      } else {
-        console.log(`[Sync] Category ${id} 已更新（远程更新）`);
-      }
-    } else {
-      console.log(`[Sync] Category ${id} 跳过（本地更新）`);
+      console.log(`[Sync] ${tableName} ${id} 跳过（本地更新）`);
     }
   }
 
@@ -296,96 +214,29 @@ export class SyncEngine {
   }
 
   /**
-   * 强制全量 Push
-   * 忽略 synced 状态，上传所有当前数据
+   * 同步操作守卫：统一处理 isSyncing/isOSSConfigured 检查和 try/catch/finally
    */
-  async forceFullPush(): Promise<SyncResult> {
+  private async withSyncGuard(
+    operationName: string,
+    fn: () => Promise<Omit<SyncResult, 'status' | 'error'>>
+  ): Promise<SyncResult> {
     if (this.isSyncing) {
-      return {
-        status: 'error',
-        message: '正在同步中，请稍候'
-      };
+      return { status: 'error', message: '正在同步中，请稍候' };
     }
-
     if (!isOSSConfigured()) {
-      return {
-        status: 'error',
-        message: 'OSS 未配置，无法同步'
-      };
+      return { status: 'error', message: 'OSS 未配置，无法同步' };
     }
-
     this.isSyncing = true;
-
     try {
-      console.log('[Sync] 开始强制全量 Push...');
-      
-      const deviceId = await getDeviceId();
-      
-      // 获取所有非删除的数据
-      const entries = await db.entries.filter(e => !e.deleted).toArray();
-      const goals = await db.goals.filter(g => !g.deleted).toArray();
-      const categories = await db.categories.filter(c => !c.deleted).toArray();
-      
-      // 创建操作日志
-      const operations: SyncOperation[] = [];
-      
-      for (const entry of entries) {
-        operations.push({
-          id: crypto.randomUUID(),
-          timestamp: new Date(),
-          deviceId,
-          tableName: 'entries',
-          recordId: entry.id!,
-          type: 'create',
-          data: entry,
-          synced: false
-        });
-      }
-      
-      for (const goal of goals) {
-        operations.push({
-          id: crypto.randomUUID(),
-          timestamp: new Date(),
-          deviceId,
-          tableName: 'goals',
-          recordId: goal.id!,
-          type: 'create',
-          data: goal,
-          synced: false
-        });
-      }
-      
-      for (const category of categories) {
-        operations.push({
-          id: crypto.randomUUID(),
-          timestamp: new Date(),
-          deviceId,
-          tableName: 'categories',
-          recordId: category.id,
-          type: 'create',
-          data: category,
-          synced: false
-        });
-      }
-      
-      // 直接上传（不写入 syncOperations 表）
-      if (operations.length > 0) {
-        await uploadSyncFile(operations);
-      }
-      
-      console.log(`[Sync] 强制全量 Push 完成，上传 ${operations.length} 条记录`);
-      
-      return {
-        status: 'success',
-        message: '强制全量 Push 完成',
-        pushedCount: operations.length,
-        pulledCount: 0
-      };
+      console.log(`[Sync] 开始${operationName}...`);
+      const partial = await fn();
+      console.log(`[Sync] ${operationName}完成`);
+      return { status: 'success', ...partial };
     } catch (error) {
-      console.error('[Sync] 强制全量 Push 失败:', error);
+      console.error(`[Sync] ${operationName}失败:`, error);
       return {
         status: 'error',
-        message: error instanceof Error ? error.message : '强制全量 Push 失败',
+        message: error instanceof Error ? error.message : `${operationName}失败`,
         error: error as Error
       };
     } finally {
@@ -394,55 +245,50 @@ export class SyncEngine {
   }
 
   /**
+   * 强制全量 Push
+   */
+  async forceFullPush(): Promise<SyncResult> {
+    return this.withSyncGuard('强制全量 Push', async () => {
+      const deviceId = await getDeviceId();
+
+      const entries = await db.entries.filter(e => !e.deleted).toArray();
+      const goals = await db.goals.filter(g => !g.deleted).toArray();
+      const categories = await db.categories.filter(c => !c.deleted).toArray();
+
+      const operations: SyncOperation[] = [
+        ...entries.map(entry => this.createSyncOp(deviceId, 'entries', entry.id!, entry)),
+        ...goals.map(goal => this.createSyncOp(deviceId, 'goals', goal.id!, goal)),
+        ...categories.map(cat => this.createSyncOp(deviceId, 'categories', cat.id, cat)),
+      ];
+
+      if (operations.length > 0) {
+        await uploadSyncFile(operations);
+      }
+
+      return { message: '强制全量 Push 完成', pushedCount: operations.length, pulledCount: 0 };
+    });
+  }
+
+  /**
    * 强制全量 Pull
-   * 忽略 lastProcessedTimestamp，拉取所有远程文件
    */
   async forceFullPull(): Promise<SyncResult> {
-    if (this.isSyncing) {
-      return {
-        status: 'error',
-        message: '正在同步中，请稍候'
-      };
-    }
-
-    if (!isOSSConfigured()) {
-      return {
-        status: 'error',
-        message: 'OSS 未配置，无法同步'
-      };
-    }
-
-    this.isSyncing = true;
-
-    try {
-      console.log('[Sync] 开始强制全量 Pull...');
-      
-      // 列出所有远程文件（afterTimestamp = 0）
+    return this.withSyncGuard('强制全量 Pull', async () => {
       const files = await listSyncFiles(0);
 
       if (files.length === 0) {
-        console.log('[Sync] OSS 上没有文件');
-        return {
-          status: 'success',
-          message: 'OSS 上没有文件',
-          pushedCount: 0,
-          pulledCount: 0
-        };
+        return { message: 'OSS 上没有文件', pushedCount: 0, pulledCount: 0 };
       }
 
       let totalOperations = 0;
-
-      // 按时间顺序处理每个文件
       for (const file of files) {
         const operations = await downloadSyncFile(file.name);
-        
         for (const operation of operations) {
           await this.mergeOperation(operation);
           totalOperations++;
         }
       }
 
-      // 更新 lastProcessedTimestamp
       if (files.length > 0) {
         const lastFile = files[files.length - 1];
         const timestamp = extractTimestamp(lastFile.name);
@@ -453,24 +299,8 @@ export class SyncEngine {
         });
       }
 
-      console.log(`[Sync] 强制全量 Pull 完成，拉取 ${totalOperations} 条操作`);
-
-      return {
-        status: 'success',
-        message: '强制全量 Pull 完成',
-        pushedCount: 0,
-        pulledCount: totalOperations
-      };
-    } catch (error) {
-      console.error('[Sync] 强制全量 Pull 失败:', error);
-      return {
-        status: 'error',
-        message: error instanceof Error ? error.message : '强制全量 Pull 失败',
-        error: error as Error
-      };
-    } finally {
-      this.isSyncing = false;
-    }
+      return { message: '强制全量 Pull 完成', pushedCount: 0, pulledCount: totalOperations };
+    });
   }
 
   /**
@@ -478,14 +308,10 @@ export class SyncEngine {
    */
   async forceFullSync(): Promise<SyncResult> {
     const pushResult = await this.forceFullPush();
-    if (pushResult.status === 'error') {
-      return pushResult;
-    }
+    if (pushResult.status === 'error') return pushResult;
 
     const pullResult = await this.forceFullPull();
-    if (pullResult.status === 'error') {
-      return pullResult;
-    }
+    if (pullResult.status === 'error') return pullResult;
 
     return {
       status: 'success',
@@ -499,121 +325,45 @@ export class SyncEngine {
    * 增量 Push
    */
   async incrementalPush(): Promise<SyncResult> {
-    if (this.isSyncing) {
-      return {
-        status: 'error',
-        message: '正在同步中，请稍候'
-      };
-    }
-
-    if (!isOSSConfigured()) {
-      return {
-        status: 'error',
-        message: 'OSS 未配置，无法同步'
-      };
-    }
-
-    this.isSyncing = true;
-
-    try {
+    return this.withSyncGuard('增量 Push', async () => {
       const pushedCount = await this.push();
-      return {
-        status: 'success',
-        message: '增量 Push 完成',
-        pushedCount,
-        pulledCount: 0
-      };
-    } catch (error) {
-      console.error('[Sync] 增量 Push 失败:', error);
-      return {
-        status: 'error',
-        message: error instanceof Error ? error.message : '增量 Push 失败',
-        error: error as Error
-      };
-    } finally {
-      this.isSyncing = false;
-    }
+      return { message: '增量 Push 完成', pushedCount, pulledCount: 0 };
+    });
   }
 
   /**
    * 增量 Pull
    */
   async incrementalPull(): Promise<SyncResult> {
-    if (this.isSyncing) {
-      return {
-        status: 'error',
-        message: '正在同步中，请稍候'
-      };
-    }
-
-    if (!isOSSConfigured()) {
-      return {
-        status: 'error',
-        message: 'OSS 未配置，无法同步'
-      };
-    }
-
-    this.isSyncing = true;
-
-    try {
+    return this.withSyncGuard('增量 Pull', async () => {
       const pulledCount = await this.pull();
-      return {
-        status: 'success',
-        message: '增量 Pull 完成',
-        pushedCount: 0,
-        pulledCount
-      };
-    } catch (error) {
-      console.error('[Sync] 增量 Pull 失败:', error);
-      return {
-        status: 'error',
-        message: error instanceof Error ? error.message : '增量 Pull 失败',
-        error: error as Error
-      };
-    } finally {
-      this.isSyncing = false;
-    }
+      return { message: '增量 Pull 完成', pushedCount: 0, pulledCount };
+    });
   }
 
   /**
    * 增量同步（Push + Pull）
    */
   async incrementalSync(): Promise<SyncResult> {
-    if (this.isSyncing) {
-      return {
-        status: 'error',
-        message: '正在同步中，请稍候'
-      };
-    }
-
-    if (!isOSSConfigured()) {
-      return {
-        status: 'error',
-        message: 'OSS 未配置，无法同步'
-      };
-    }
-
-    this.isSyncing = true;
-
-    try {
+    return this.withSyncGuard('增量同步', async () => {
       const pushedCount = await this.push();
       const pulledCount = await this.pull();
-      return {
-        status: 'success',
-        message: '增量同步完成',
-        pushedCount,
-        pulledCount
-      };
-    } catch (error) {
-      console.error('[Sync] 增量同步失败:', error);
-      return {
-        status: 'error',
-        message: error instanceof Error ? error.message : '增量同步失败',
-        error: error as Error
-      };
-    } finally {
-      this.isSyncing = false;
-    }
+      return { message: '增量同步完成', pushedCount, pulledCount };
+    });
+  }
+
+  /** 创建同步操作记录的辅助方法 */
+  private createSyncOp(deviceId: string, tableName: 'entries' | 'goals' | 'categories', recordId: string, data: any): SyncOperation {
+    return {
+      id: crypto.randomUUID(),
+      timestamp: new Date(),
+      deviceId,
+      tableName,
+      recordId,
+      type: 'create',
+      data,
+      synced: false
+    };
   }
 
   /**

@@ -3,8 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
 import { db, type TimeEntry } from '../services/db';
 import { syncDb } from '../services/syncDb';
-import { syncEngine } from '../services/syncEngine';
-import { isOSSConfigured } from '../services/oss';
+import { autoPush } from '../utils/autoPush';
 
 interface EntryStore {
   entries: TimeEntry[];
@@ -79,21 +78,7 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
 
     set({ currentEntry: null });
     await get().loadEntries();
-
-    // 方案 1：记录完成后仅 Push（自动备份）
-    if (isOSSConfigured()) {
-      // 异步执行，不阻塞用户操作
-      syncEngine.push()
-        .then(pushedCount => {
-          if (pushedCount > 0) {
-            console.log(`[AutoSync] 记录完成后自动 Push，上传 ${pushedCount} 条操作`);
-          }
-        })
-        .catch(error => {
-          // 失败不影响用户操作，只记录日志
-          console.error('[AutoSync] 记录完成后 Push 失败:', error);
-        });
-    }
+    autoPush('记录完成后');
   },
 
   addEntry: async (entry) => {
@@ -106,19 +91,7 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
 
     await syncDb.entries.add(newEntry);
     await get().loadEntries();
-
-    // 方案 1：添加记录后自动 Push
-    if (isOSSConfigured()) {
-      syncEngine.push()
-        .then(pushedCount => {
-          if (pushedCount > 0) {
-            console.log(`[AutoSync] 添加记录后自动 Push，上传 ${pushedCount} 条操作`);
-          }
-        })
-        .catch(error => {
-          console.error('[AutoSync] 添加记录后 Push 失败:', error);
-        });
-    }
+    autoPush('添加记录后');
   },
 
   updateEntry: async (id, updates) => {

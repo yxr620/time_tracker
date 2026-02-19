@@ -22,6 +22,10 @@ interface ExportData {
   };
 }
 
+/** 清理 categories：移除 color 字段（color 应从配置文件读取） */
+const stripCategoryColors = (categories: any[]): any[] =>
+  categories.filter(c => !c.deleted).map(({ color, ...rest }) => rest);
+
 // 获取上次同步时间
 const getLastSyncTime = async (): Promise<Date | null> => {
   const metadata = await db.syncMetadata.get('lastSyncTime');
@@ -49,14 +53,7 @@ export const exportFullJSON = async () => {
   // 过滤已删除的记录
   const entries = allEntries.filter(e => !e.deleted);
   const goals = allGoals.filter(g => !g.deleted);
-  const categoriesRaw = allCategories.filter(c => !c.deleted);
-  
-  // 清理 categories：移除可能存在的 color 字段（color 应从配置文件读取）
-  // 兼容旧数据库中可能存在的 color 字段
-  const categories = categoriesRaw.map((cat: any) => {
-    const { color, ...rest } = cat;
-    return rest;
-  });
+  const categories = stripCategoryColors(allCategories);
   
   const exportTime = new Date();
   
@@ -113,14 +110,8 @@ export const exportIncrementalJSON = async () => {
     .toArray();
   
   const allCategories = await db.categories.toArray();
-  const categoriesRaw = allCategories.filter(c => !c.deleted);
-  
-  // 清理 categories：移除可能存在的 color 字段
-  const categories = categoriesRaw.map((cat: any) => {
-    const { color, ...rest } = cat;
-    return rest;
-  });
-  
+  const categories = stripCategoryColors(allCategories);
+
   const exportData: ExportData = {
     exportTime: exportTime.toISOString(),
     exportType: 'incremental',
@@ -156,13 +147,7 @@ export const exportToJSON = async (startDate?: Date, endDate?: Date) => {
   // 过滤已删除的记录
   let entries = allEntries.filter(e => !e.deleted);
   let goals = allGoals.filter(g => !g.deleted);
-  const categoriesRaw = allCategories.filter(c => !c.deleted);
-  
-  // 清理 categories：移除可能存在的 color 字段
-  const categories = categoriesRaw.map((cat: any) => {
-    const { color, ...rest } = cat;
-    return rest;
-  });
+  const categories = stripCategoryColors(allCategories);
   
   if (startDate || endDate) {
     entries = entries.filter(entry => {
