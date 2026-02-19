@@ -16,7 +16,9 @@ import { GoalManager } from './components/GoalManager/GoalManager';
 import { useSyncStore } from './stores/syncStore';
 import { isOSSConfigured } from './services/oss';
 import { syncEngine } from './services/syncEngine';
+import { emitSyncToast } from './services/syncToast';
 import { DesktopSidebar } from './components/Desktop/DesktopSidebar';
+import { SyncToastListener } from './components/common/SyncToastListener';
 import { getDefaultDateRange } from './services/analysis/processor';
 import type { DateRange } from './types/analysis';
 import './App.css';
@@ -102,20 +104,22 @@ function App() {
 
   // 应用启动时自动 Pull
   useEffect(() => {
-    const autoPullOnStartup = async () => {
-      if (!isOSSConfigured()) {
-        console.log('[AutoSync] OSS 未配置，跳过启动时自动 Pull');
-        return;
+    if (!isOSSConfigured()) return;
+
+    syncEngine.incrementalPull().then(result => {
+      if (result.status === 'success') {
+        emitSyncToast({
+          message: `自动 Pull 完成（↓${result.pulledCount || 0}）`,
+          color: 'success',
+          duration: 1200,
+        });
+      } else if (result.message !== '正在同步中，请稍候') {
+        emitSyncToast({ message: `自动 Pull 失败：${result.message}`, color: 'danger', duration: 2200 });
       }
-      try {
-        console.log('[AutoSync] 应用启动，开始自动 Pull...');
-        const pulledCount = await syncEngine.pull();
-        console.log(`[AutoSync] 启动时 Pull 完成，拉取 ${pulledCount} 条操作`);
-      } catch (error) {
-        console.error('[AutoSync] 启动时 Pull 失败:', error);
-      }
-    };
-    autoPullOnStartup();
+    }).catch(err => {
+      console.error('[AutoSync] 启动时 Pull 失败:', err);
+      emitSyncToast({ message: '自动 Pull 失败', color: 'danger', duration: 2200 });
+    });
   }, []);
 
   // 分析页面日期范围变更回调
@@ -170,6 +174,7 @@ function App() {
 
   return (
     <IonApp>
+      <SyncToastListener />
       <Layout activeTab={activeTab} onTabChange={setActiveTab}>
         {renderPageContent()}
       </Layout>

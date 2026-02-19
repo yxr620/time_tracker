@@ -100,11 +100,13 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
       updatedAt: new Date()
     });
     await get().loadEntries();
+    autoPush('更新记录后');
   },
 
   deleteEntry: async (id) => {
     await syncDb.entries.delete(id);
     await get().loadEntries();
+    autoPush('删除记录后');
   },
 
   setNextStartTime: (time) => {

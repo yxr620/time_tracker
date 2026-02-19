@@ -42,6 +42,7 @@ export const useGoalStore = create<GoalStore>((set, get) => ({
       updatedAt: new Date()
     });
     await get().loadGoals();
+    autoPush('更新目标后');
   },
 
   deleteGoal: async (id) => {

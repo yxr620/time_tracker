@@ -170,6 +170,33 @@ export const SyncManagementPage: React.FC = () => {
     });
   };
 
+  const handlePurgeDeletedRecords = () => {
+    presentAlert({
+      header: '清理已删除数据',
+      message: '这将物理删除 30 天前已软删除的记录。确保所有设备都已同步后再执行。确定继续？',
+      buttons: [
+        { text: '取消', role: 'cancel' },
+        {
+          text: '确定',
+          handler: async () => {
+            setLoading(true);
+            try {
+              const result = await syncEngine.purgeDeletedRecords(30);
+              const total = result.entries + result.goals + result.categories;
+              await loadStats();
+              showToast(`已清理 ${total} 条软删除记录`, 'success');
+            } catch (error) {
+              console.error('清理已删除数据失败:', error);
+              showToast('清理失败', 'danger');
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    });
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       {/* 应用设置 */}
@@ -218,9 +245,21 @@ export const SyncManagementPage: React.FC = () => {
               <span className="stat-label" style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>未同步操作:</span>
               <span className="stat-value" style={{ fontWeight: '500', color: stats.pendingOps > 0 ? 'hsl(var(--destructive))' : 'hsl(34 89% 52%)' }}>{stats.pendingOps} 条</span>
             </div>
-            <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+            <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
               <span className="stat-label" style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>已同步操作:</span>
               <span className="stat-value" style={{ fontWeight: '500', color: 'hsl(var(--foreground))' }}>{stats.syncedOps} 条</span>
+            </div>
+            <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
+              <span className="stat-label" style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>数据记录:</span>
+              <span className="stat-value" style={{ fontWeight: '500', color: 'hsl(var(--foreground))' }}>
+                {stats.totalEntries} 条目 / {stats.totalGoals} 目标 / {stats.totalCategories} 分类
+              </span>
+            </div>
+            <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+              <span className="stat-label" style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>已删除记录:</span>
+              <span className="stat-value" style={{ fontWeight: '500', color: (stats.deletedEntries + stats.deletedGoals + stats.deletedCategories) > 0 ? 'hsl(var(--destructive))' : 'hsl(var(--foreground))' }}>
+                {stats.deletedEntries + stats.deletedGoals + stats.deletedCategories} 条
+              </span>
             </div>
           </div>
         ) : (
@@ -351,8 +390,20 @@ export const SyncManagementPage: React.FC = () => {
           >
             🗑️ 清理操作日志
           </IonButton>
-          <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px' }}>
+          <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px', marginBottom: '2px' }}>
             删除 7 天前的已同步操作日志
+          </div>
+          <IonButton
+            expand="block"
+            fill="outline"
+            onClick={handlePurgeDeletedRecords}
+            disabled={loading}
+            style={{ '--border-radius': '10px', height: '42px', margin: '0' }}
+          >
+            🗑️ 清理已删除数据
+          </IonButton>
+          <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px' }}>
+            物理删除 30 天前已软删除的记录
           </div>
         </div>
       </div>

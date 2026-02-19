@@ -1,6 +1,10 @@
 /**
  * Aliyun OSS Service
  * 处理云端文件的上传、下载和列表操作
+ *
+ * OSS 文件结构:
+ *   sync/{userId}/oplog/{deviceId}_{timestamp}.json   - 增量操作日志
+ *   sync/{userId}/snapshots/{deviceId}.json            - 设备全量快照（每设备一个，覆盖写入）
  */
 
 import OSS from 'ali-oss';
@@ -46,13 +50,12 @@ export function isOSSConfigured(): boolean {
 }
 
 /**
- * 上传同步文件到 OSS
+ * 上传操作日志到 OSS (oplog)
  * @param data 要上传的数据（操作日志数组）
  * @returns 上传的文件路径
  */
 export async function uploadSyncFile(data: any[]): Promise<string> {
   if (!isOSSConfigured()) {
-    console.warn('[OSS] OSS 未配置，跳过上传');
     throw new Error('OSS 未配置');
   }
 
@@ -62,12 +65,11 @@ export async function uploadSyncFile(data: any[]): Promise<string> {
     const deviceId = await getDeviceId();
     const timestamp = Date.now();
     
-    // 文件名格式: sync/{userId}/{deviceId}_{timestamp}.json
-    const fileName = `sync/${userId}/${deviceId}_${timestamp}.json`;
+    // 文件名格式: sync/{userId}/oplog/{deviceId}_{timestamp}.json
+    const fileName = `sync/${userId}/oplog/${deviceId}_${timestamp}.json`;
     
     const content = JSON.stringify(data, null, 2);
     
-    // 在浏览器环境中使用 Blob 代替 Buffer
     const blob = new Blob([content], { type: 'application/json' });
     await client.put(fileName, blob, {
       headers: {
@@ -75,7 +77,7 @@ export async function uploadSyncFile(data: any[]): Promise<string> {
       }
     });
     
-    console.log(`[OSS] 已上传: ${fileName}, ${data.length} 条操作`);
+    console.log(`[OSS] 已上传 oplog: ${fileName}, ${data.length} 条操作`);
     return fileName;
   } catch (error) {
     console.error('[OSS] 上传失败:', error);
@@ -83,14 +85,40 @@ export async function uploadSyncFile(data: any[]): Promise<string> {
   }
 }
 
-interface OSSObject {
+export interface OSSObject {
   name: string;
   lastModified: string;
   size: number;
 }
 
 /**
- * 列出用户目录下的所有同步文件
+ * 分页列出指定前缀下的所有 OSS 对象
+ */
+async function listAllObjects(prefix: string): Promise<OSSObject[]> {
+  const client = getOSSClient();
+  const allObjects: OSSObject[] = [];
+  let marker: string | undefined;
+
+  do {
+    const query: any = { prefix, 'max-keys': '1000' };
+    if (marker) {
+      query.marker = marker;
+    }
+    
+    const result = await client.list(query, {});
+    
+    if (result.objects) {
+      allObjects.push(...(result.objects as OSSObject[]));
+    }
+    
+    marker = result.nextMarker;
+  } while (marker);
+
+  return allObjects;
+}
+
+/**
+ * 列出其他设备的操作日志文件（带分页）
  * @param afterTimestamp 只获取该时间戳之后的文件（可选）
  * @returns 文件列表
  */
@@ -99,24 +127,15 @@ export async function listSyncFiles(afterTimestamp?: number): Promise<OSSObject[
     throw new Error('OSS 未配置');
   }
 
-  const client = getOSSClient();
   const userId = getUserId();
   const deviceId = await getDeviceId();
-  
-  const prefix = `sync/${userId}/`;
+  const prefix = `sync/${userId}/oplog/`;
   
   try {
-    const result = await client.list({
-      prefix,
-      'max-keys': '1000' // 最多获取 1000 个文件
-    }, {});
-    
-    if (!result.objects) {
-      return [];
-    }
+    const allObjects = await listAllObjects(prefix);
     
     // 过滤掉本设备上传的文件
-    let files = (result.objects as OSSObject[]).filter((obj: OSSObject) => {
+    let files = allObjects.filter((obj: OSSObject) => {
       const fileName = obj.name.split('/').pop() || '';
       return !fileName.startsWith(deviceId);
     });
@@ -124,28 +143,15 @@ export async function listSyncFiles(afterTimestamp?: number): Promise<OSSObject[
     // 如果指定了时间戳，过滤掉更早的文件
     if (afterTimestamp) {
       files = files.filter((obj: OSSObject) => {
-        const fileName = obj.name.split('/').pop() || '';
-        const match = fileName.match(/_(\d+)\.json$/);
-        if (match) {
-          const fileTimestamp = parseInt(match[1], 10);
-          return fileTimestamp > afterTimestamp;
-        }
-        return false;
+        const ts = extractTimestamp(obj.name);
+        return ts > afterTimestamp;
       });
     }
     
     // 按时间戳排序（从旧到新）
-    files.sort((a: OSSObject, b: OSSObject) => {
-      const extractTimestamp = (name: string): number => {
-        const fileName = name.split('/').pop() || '';
-        const match = fileName.match(/_(\d+)\.json$/);
-        return match ? parseInt(match[1], 10) : 0;
-      };
-      
-      return extractTimestamp(a.name) - extractTimestamp(b.name);
-    });
+    files.sort((a: OSSObject, b: OSSObject) => extractTimestamp(a.name) - extractTimestamp(b.name));
     
-    console.log(`[OSS] 找到 ${files.length} 个待同步文件`);
+    console.log(`[OSS] 找到 ${files.length} 个待同步 oplog 文件`);
     return files;
   } catch (error) {
     console.error('[OSS] 列出文件失败:', error);
@@ -184,4 +190,135 @@ export async function downloadSyncFile(fileName: string): Promise<any[]> {
 export function extractTimestamp(fileName: string): number {
   const match = fileName.match(/_(\d+)\.json$/);
   return match ? parseInt(match[1], 10) : 0;
+}
+
+// ===========================
+// 快照 (Snapshot) 相关
+// ===========================
+
+/**
+ * 快照数据结构
+ */
+export interface SnapshotData {
+  deviceId: string;
+  timestamp: number;
+  entries: any[];
+  goals: any[];
+  categories: any[];
+}
+
+/**
+ * 上传设备快照到 OSS（覆盖写入）
+ * 每个设备只保留一个快照文件
+ */
+export async function uploadSnapshot(data: SnapshotData): Promise<string> {
+  if (!isOSSConfigured()) {
+    throw new Error('OSS 未配置');
+  }
+
+  const client = getOSSClient();
+  const userId = getUserId();
+  
+  const fileName = `sync/${userId}/snapshots/${data.deviceId}.json`;
+  
+  const content = JSON.stringify(data, null, 2);
+  const blob = new Blob([content], { type: 'application/json' });
+  await client.put(fileName, blob, {
+    headers: { 'Content-Type': 'application/json' }
+  });
+  
+  console.log(`[OSS] 已上传快照: ${fileName}, entries=${data.entries.length}, goals=${data.goals.length}, categories=${data.categories.length}`);
+  return fileName;
+}
+
+/**
+ * 列出其他设备的快照文件
+ */
+export async function listSnapshotFiles(): Promise<OSSObject[]> {
+  if (!isOSSConfigured()) {
+    throw new Error('OSS 未配置');
+  }
+
+  const deviceId = await getDeviceId();
+  const userId = getUserId();
+  const prefix = `sync/${userId}/snapshots/`;
+  
+  const allObjects = await listAllObjects(prefix);
+  
+  // 过滤掉本设备的快照
+  const files = allObjects.filter((obj: OSSObject) => {
+    const fileName = obj.name.split('/').pop() || '';
+    return !fileName.startsWith(deviceId);
+  });
+  
+  console.log(`[OSS] 找到 ${files.length} 个其他设备的快照`);
+  return files;
+}
+
+/**
+ * 下载快照文件
+ */
+export async function downloadSnapshot(fileName: string): Promise<SnapshotData> {
+  if (!isOSSConfigured()) {
+    throw new Error('OSS 未配置');
+  }
+
+  const client = getOSSClient();
+  const result = await client.get(fileName);
+  const content = result.content.toString('utf-8');
+  const data: SnapshotData = JSON.parse(content);
+  
+  console.log(`[OSS] 已下载快照: ${fileName}, entries=${data.entries.length}, goals=${data.goals.length}, categories=${data.categories.length}`);
+  return data;
+}
+
+// ===========================
+// 本设备 Oplog 管理
+// ===========================
+
+/**
+ * 列出本设备的操作日志文件（用于清理）
+ */
+export async function listOwnOplogFiles(): Promise<OSSObject[]> {
+  if (!isOSSConfigured()) {
+    throw new Error('OSS 未配置');
+  }
+
+  const deviceId = await getDeviceId();
+  const userId = getUserId();
+  const prefix = `sync/${userId}/oplog/`;
+  
+  const allObjects = await listAllObjects(prefix);
+  
+  const files = allObjects.filter((obj: OSSObject) => {
+    const fileName = obj.name.split('/').pop() || '';
+    return fileName.startsWith(deviceId);
+  });
+  
+  files.sort((a, b) => extractTimestamp(a.name) - extractTimestamp(b.name));
+  return files;
+}
+
+// ===========================
+// 删除操作
+// ===========================
+
+/**
+ * 批量删除 OSS 文件
+ * ali-oss deleteMulti 每次最多 1000 个
+ */
+export async function deleteOSSFiles(fileNames: string[]): Promise<void> {
+  if (fileNames.length === 0) return;
+  if (!isOSSConfigured()) {
+    throw new Error('OSS 未配置');
+  }
+
+  const client = getOSSClient();
+  
+  const batchSize = 1000;
+  for (let i = 0; i < fileNames.length; i += batchSize) {
+    const batch = fileNames.slice(i, i + batchSize);
+    await client.deleteMulti(batch);
+    console.log(`[OSS] 已删除 ${batch.length} 个文件 (批次 ${Math.floor(i / batchSize) + 1})`);
+  }
 }
