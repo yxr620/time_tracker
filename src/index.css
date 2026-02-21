@@ -50,6 +50,7 @@
     /* Ionic component overrides for dark mode */
     --ion-background-color: hsl(222.2 84% 4.9%);
     --ion-text-color: hsl(210 40% 98%);
+    --ion-overlay-background-color: hsl(222.2 84% 8%);
     --ion-item-background: transparent;
     --ion-card-background: hsl(217.2 32.6% 12%);
     --ion-toolbar-background: hsl(222.2 84% 4.9%);

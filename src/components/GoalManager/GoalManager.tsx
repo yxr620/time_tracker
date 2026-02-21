@@ -51,7 +51,7 @@ export const GoalManager: React.FC = () => {
   // iOS: keyboard overlays content, need taller modal (0.35) to keep button visible above keyboard
   // Android: adjustResize compresses entire WebView, smaller modal (0.22) to avoid excess whitespace
   const isIOS = Capacitor.getPlatform() === 'ios';
-  const modalBreakpoint = isIOS ? 0.35 : 0.22;
+  const modalBreakpoint = isIOS ? 0.36 : 0.22;
 
   const { goals, loadGoals, addGoal, updateGoal, deleteGoal } = useGoalStore();
   const { entries, loadEntries } = useEntryStore();
