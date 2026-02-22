@@ -51,3 +51,12 @@ coverage
 *.tmp
 *.temp
 .cache
+
+# Native build artifacts
+ios/App/Pods/
+ios/App/build/
+android/.gradle/
+android/build/
+android/app/build/
+electron/build/
+electron/dist/

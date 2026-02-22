@@ -10,45 +10,119 @@
   overflow: hidden;
 }
 
-/* 头部 */
+/* 头部：内联配置 */
 .ai-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 0 16px;
+  gap: 8px;
+  padding: 0 0 12px;
   flex-shrink: 0;
 }
 
-.ai-header h1 {
-  font-size: 24px;
-  font-weight: 600;
+.ai-header-config {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-config-select,
+.ai-config-input {
+  padding: 6px 10px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  border-radius: 8px;
+  font-size: 13px;
   color: hsl(var(--foreground));
-  margin: 0;
+  outline: none;
+  transition: border-color 0.15s ease;
+  font-family: inherit;
+}
+
+.ai-config-select:focus,
+.ai-config-input:focus {
+  border-color: hsl(var(--primary) / 0.5);
+}
+
+.ai-config-input::placeholder {
+  color: hsl(var(--muted-foreground) / 0.5);
+}
+
+.ai-config-provider {
+  flex-shrink: 0;
+  min-width: 90px;
+}
+
+.ai-config-key {
+  flex: 1;
+  min-width: 80px;
+}
+
+.ai-config-model {
+  flex-shrink: 0;
+  min-width: 100px;
+  max-width: 200px;
 }
 
 .ai-header-actions {
   display: flex;
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .ai-icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border: none;
   background: transparent;
   border-radius: 8px;
   color: hsl(var(--muted-foreground));
   cursor: pointer;
-  font-size: 18px;
+  font-size: 16px;
   transition: all 0.15s ease;
 }
 
 .ai-icon-btn:hover {
   background: hsl(var(--accent));
   color: hsl(var(--foreground));
+}
+
+.ai-icon-btn-active {
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.1);
+}
+
+/* 高级设置栏 */
+.ai-advanced-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 12px;
+  flex-shrink: 0;
+}
+
+.ai-advanced-label {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ai-config-baseurl {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-advanced-hint {
+  font-size: 11px;
+  color: hsl(var(--muted-foreground) / 0.6);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* 消息区 */
@@ -174,33 +248,156 @@
   color: hsl(var(--destructive)) !important;
 }
 
-/* AI 气泡内 Markdown */
-.ai-msg-assistant .ai-msg-bubble h3,
-.ai-msg-assistant .ai-msg-bubble h4 {
-  margin: 8px 0 4px;
+/* ── AI 气泡内 Markdown 排版 ──────────────────────────────── */
+
+/* 段落 */
+.ai-msg-assistant .ai-msg-bubble p {
+  margin: 0 0 8px;
+}
+
+.ai-msg-assistant .ai-msg-bubble p:last-child {
+  margin-bottom: 0;
+}
+
+/* 标题 */
+.ai-msg-assistant .ai-msg-bubble h1,
+.ai-msg-assistant .ai-msg-bubble h2 {
+  margin: 12px 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ai-msg-assistant .ai-msg-bubble h3 {
+  margin: 10px 0 4px;
   font-size: 14px;
   font-weight: 600;
 }
 
+.ai-msg-assistant .ai-msg-bubble h4,
+.ai-msg-assistant .ai-msg-bubble h5,
+.ai-msg-assistant .ai-msg-bubble h6 {
+  margin: 8px 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* 加粗 / 斜体 */
+.ai-msg-assistant .ai-msg-bubble strong {
+  font-weight: 600;
+}
+
+.ai-msg-assistant .ai-msg-bubble em {
+  font-style: italic;
+}
+
+/* 删除线 */
+.ai-msg-assistant .ai-msg-bubble del {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* 列表 */
 .ai-msg-assistant .ai-msg-bubble ul {
   margin: 4px 0;
   padding-left: 18px;
   list-style: disc;
 }
 
+.ai-msg-assistant .ai-msg-bubble ol {
+  margin: 4px 0;
+  padding-left: 20px;
+  list-style: decimal;
+}
+
 .ai-msg-assistant .ai-msg-bubble li {
   margin-bottom: 2px;
 }
 
+.ai-msg-assistant .ai-msg-bubble li>ul,
+.ai-msg-assistant .ai-msg-bubble li>ol {
+  margin: 2px 0;
+}
+
+/* 行内代码 */
 .ai-msg-assistant .ai-msg-bubble code {
   background: hsl(var(--muted));
-  padding: 1px 4px;
-  border-radius: 3px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12.5px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+/* 代码块 */
+.ai-msg-assistant .ai-msg-bubble pre {
+  margin: 8px 0;
+  padding: 10px 12px;
+  background: hsl(var(--muted) / 0.6);
+  border: 1px solid hsl(var(--border) / 0.5);
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.ai-msg-assistant .ai-msg-bubble pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+
+/* 表格 */
+.ai-msg-assistant .ai-msg-bubble table {
+  width: 100%;
+  margin: 8px 0;
+  border-collapse: collapse;
   font-size: 13px;
 }
 
-.ai-msg-assistant .ai-msg-bubble strong {
+.ai-msg-assistant .ai-msg-bubble th,
+.ai-msg-assistant .ai-msg-bubble td {
+  padding: 5px 10px;
+  border: 1px solid hsl(var(--border));
+  text-align: left;
+}
+
+.ai-msg-assistant .ai-msg-bubble th {
+  background: hsl(var(--muted) / 0.4);
   font-weight: 600;
+}
+
+.ai-msg-assistant .ai-msg-bubble tr:nth-child(even) {
+  background: hsl(var(--muted) / 0.15);
+}
+
+/* 引用块 */
+.ai-msg-assistant .ai-msg-bubble blockquote {
+  margin: 8px 0;
+  padding: 4px 12px;
+  border-left: 3px solid hsl(var(--primary) / 0.4);
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+}
+
+.ai-msg-assistant .ai-msg-bubble blockquote p {
+  margin: 0;
+}
+
+/* 分割线 */
+.ai-msg-assistant .ai-msg-bubble hr {
+  margin: 10px 0;
+  border: none;
+  border-top: 1px solid hsl(var(--border) / 0.5);
+}
+
+/* 链接 */
+.ai-msg-assistant .ai-msg-bubble a {
+  color: hsl(var(--primary));
+  text-decoration: none;
+}
+
+.ai-msg-assistant .ai-msg-bubble a:hover {
+  text-decoration: underline;
 }
 
 /* 打字动画 */
@@ -337,141 +534,7 @@
   color: hsl(var(--destructive-foreground, 0 0% 100%));
 }
 
-/* 设置弹窗遮罩 */
-.ai-settings-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(2px);
-}
-
-.ai-settings-modal {
-  background: hsl(var(--card));
-  border-radius: 16px;
-  padding: 24px;
-  width: 420px;
-  max-width: calc(100vw - 48px);
-  max-height: calc(100vh - 96px);
-  overflow-y: auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-.ai-settings-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.ai-settings-header h2 {
-  font-size: 18px;
-  font-weight: 600;
-  color: hsl(var(--foreground));
-  margin: 0;
-}
-
-.ai-settings-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  color: hsl(var(--muted-foreground));
-  cursor: pointer;
-  font-size: 20px;
-  transition: all 0.15s ease;
-}
-
-.ai-settings-close:hover {
-  background: hsl(var(--accent));
-  color: hsl(var(--foreground));
-}
-
-/* 设置字段 */
-.ai-field {
-  margin-bottom: 16px;
-}
-
-.ai-field-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 500;
-  color: hsl(var(--muted-foreground));
-  margin-bottom: 6px;
-}
-
-.ai-field select,
-.ai-field input {
-  width: 100%;
-  padding: 9px 12px;
-  border: 1px solid hsl(var(--border));
-  background: hsl(var(--background));
-  border-radius: 8px;
-  font-size: 14px;
-  color: hsl(var(--foreground));
-  outline: none;
-  transition: border-color 0.15s ease;
-  font-family: inherit;
-}
-
-.ai-field select:focus,
-.ai-field input:focus {
-  border-color: hsl(var(--primary) / 0.5);
-}
-
-.ai-field input::placeholder {
-  color: hsl(var(--muted-foreground) / 0.6);
-}
-
-.ai-field-hint {
-  font-size: 12px;
-  color: hsl(var(--muted-foreground));
-  margin-top: 4px;
-}
-
-/* 高级设置折叠 */
-.ai-advanced-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: hsl(var(--muted-foreground));
-  font-size: 13px;
-  cursor: pointer;
-  margin-bottom: 12px;
-}
-
-.ai-advanced-toggle:hover {
-  color: hsl(var(--foreground));
-}
-
-/* 保存按钮 */
-.ai-save-btn {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-  margin-top: 8px;
-}
-
-.ai-save-btn:hover {
-  opacity: 0.9;
-}
+/* （设置弹窗已移至头部内联，保留空注释以免影响后续选择器） */
 
 /* ── 执行阶段列表 ─────────────────────────────────────────── */
 .ai-phases {

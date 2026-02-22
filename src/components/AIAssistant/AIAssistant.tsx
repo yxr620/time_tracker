@@ -5,15 +5,25 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { IonIcon } from '@ionic/react';
-import { sendOutline, settingsOutline, trashOutline, stopCircleOutline } from 'ionicons/icons';
+import { sendOutline, trashOutline, stopCircleOutline, settingsOutline } from 'ionicons/icons';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import { useAIStore } from '../../stores/aiStore';
-import { buildTimeContext } from '../../services/ai/contextBuilder';
-import { chatStream, type ChatMessage as LLMMessage } from '../../services/ai/llmClient';
-import { AISettings } from './AISettings';
+import { runToolCallLoop } from '../../services/ai/toolCallEngine';
+import type { ChatMessage as LLMMessage } from '../../services/ai/llmClient';
+import { AI_PROVIDERS } from '../../services/ai/providers';
 import './AIAssistant.css';
+
+// 配置 marked：关闭 mangle/headerIds 避免不必要的输出
+marked.setOptions({
+  breaks: true,       // 换行符 → <br>
+  gfm: true,          // GitHub Flavored Markdown（表格、删除线等）
+});
 
 // 快捷问题预设
 const QUICK_PROMPTS = [
+  '📊 生成本周报告',
+  '📊 生成本月报告',
   '昨天做了什么？',
   '上周时间总结',
   '本月哪个类别花的时间最多？',
@@ -21,33 +31,18 @@ const QUICK_PROMPTS = [
   '对比本周和上周',
 ];
 
-/** 简单 Markdown→HTML（加粗、列表、换行） */
+/** Markdown → 安全 HTML */
 function renderMarkdown(text: string): string {
-  return text
-    // 加粗
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    // 行内代码
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    // 无序列表
-    .replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>')
-    // 有序列表
-    .replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>')
-    // 连续 <li> 包裹 <ul>
-    .replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>')
-    // 标题
-    .replace(/^### (.+)$/gm, '<h4>$1</h4>')
-    .replace(/^## (.+)$/gm, '<h3>$1</h3>')
-    // 换行
-    .replace(/\n/g, '<br/>');
+  const raw = marked.parse(text, { async: false }) as string;
+  return DOMPurify.sanitize(raw);
 }
 
 // 阶段配置：label 和 icon
 const PHASE_CONFIG: Record<string, { label: string; icon: string }> = {
-  parsing: { icon: '🔍', label: '解析时间范围' },
-  'parsing.regex': { icon: '📝', label: '正则匹配' },
-  'parsing.llm': { icon: '🤔', label: 'AI 理解时间表达' },
-  loading: { icon: '📂', label: '检索数据' },
-  thinking: { icon: '💭', label: '生成回答' },
+  preparing: { icon: '📋', label: '准备上下文' },
+  thinking: { icon: '💭', label: '分析问题' },
+  toolCall: { icon: '🔧', label: '查询数据' },
+  answering: { icon: '✍️', label: '生成回答' },
 };
 
 /**
@@ -99,13 +94,16 @@ const PhasesIndicator: React.FC<{
 );
 
 export const AIAssistant: React.FC = () => {
-  const { config, messages, addMessage, updateMessage, clearMessages, isConfigured } = useAIStore();
+  const { config, providerConfigs, messages, addMessage, updateMessage, clearMessages, isConfigured, updateConfig, setProvider } = useAIStore();
   const [input, setInput] = useState('');
-  const [showSettings, setShowSettings] = useState(false);
   const [sending, setSending] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const currentProvider = AI_PROVIDERS.find(p => p.id === config.providerId);
+  const isCustom = config.providerId === 'custom';
   // 阶段累积：每次发送前重置，onPhase 调用时追加
   const phasesRef = useRef<Array<{ key: string; detail?: string; level?: number; failed?: boolean }>>([]);
 
@@ -133,7 +131,6 @@ export const AIAssistant: React.FC = () => {
     if (!query || sending) return;
 
     if (!isConfigured()) {
-      setShowSettings(true);
       return;
     }
 
@@ -155,78 +152,49 @@ export const AIAssistant: React.FC = () => {
     abortRef.current = abort;
 
     try {
-      // onPhase 回调：追加到阶段列表，不覆盖已有阶段
-      // parsing 是父阶段；parsing.regex / parsing.llm 是子步骤（level=1）
-      const onPhase = (phase: 'parsing' | 'resolving' | 'loading' | 'thinking', detail?: string) => {
-        if (phase === 'parsing') {
-          // 父阶段 + 子步骤 "正则匹配"（先标记为进行中，结果待定）
-          phasesRef.current = [
-            ...phasesRef.current,
-            { key: 'parsing', detail },
-            { key: 'parsing.regex', detail, level: 1 },
-          ];
-        } else if (phase === 'resolving') {
-          if (phasesRef.current.some(p => p.key === 'parsing.llm')) {
-            // 第二次调用：更新已有 parsing.llm 的 detail（LLM 回复内容）
-            phasesRef.current = phasesRef.current.map(p =>
-              p.key === 'parsing.llm' ? { ...p, detail } : p
-            );
-          } else {
-            // 第一次调用：正则未命中，标记 regex 为 failed，追加 LLM 子步骤
-            phasesRef.current = phasesRef.current.map(p =>
-              p.key === 'parsing.regex' ? { ...p, failed: true } : p
-            );
-            phasesRef.current = [
-              ...phasesRef.current,
-              { key: 'parsing.llm', detail, level: 1 },
-            ];
-          }
-        } else {
-          phasesRef.current = [
-            ...phasesRef.current,
-            { key: phase, detail },
-          ];
-        }
-        updateMessage(aiMsgId, { phases: [...phasesRef.current] });
-      };
-
-      // 构建上下文（传入 config 以支持 LLM 二次时间解析）
-      const { systemPrompt } = await buildTimeContext(query, {
-        baseURL: config.baseURL,
-        apiKey: config.apiKey,
-        model: config.model,
-      }, onPhase);
-
-      // 构建消息历史（最多保留最近 6 条对话 + system）
+      // 构建消息历史（最多保留最近 6 条对话）
       const historyMessages = useAIStore.getState().messages;
       const recentHistory: LLMMessage[] = historyMessages
-        .filter(m => m.id !== aiMsgId) // 排除当前占位
+        .filter(m => m.id !== aiMsgId && m.role !== 'assistant' || (m.role === 'assistant' && m.content && !m.loading))
+        .filter(m => m.id !== aiMsgId)
         .slice(-6)
         .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
 
-      const llmMessages: LLMMessage[] = [
-        { role: 'system', content: systemPrompt },
-        ...recentHistory,
-      ];
-
-      // 流式调用
       let accumulated = '';
       let thinkingAccum = '';
-      await chatStream(
+
+      const { content, thinking } = await runToolCallLoop(
         { baseURL: config.baseURL, apiKey: config.apiKey, model: config.model },
-        llmMessages,
-        (delta) => {
-          accumulated += delta;
-          updateMessage(aiMsgId, { content: accumulated, loading: true });
+        query,
+        recentHistory,
+        {
+          onPhase: (phase, detail) => {
+            phasesRef.current = [
+              ...phasesRef.current,
+              { key: phase, detail },
+            ];
+            updateMessage(aiMsgId, { phases: [...phasesRef.current] });
+          },
+          onChunk: (delta) => {
+            accumulated += delta;
+            updateMessage(aiMsgId, { content: accumulated, loading: true });
+          },
+          onThinking: (thinkingDelta) => {
+            thinkingAccum += thinkingDelta;
+            updateMessage(aiMsgId, { thinking: thinkingAccum, loading: true });
+          },
+          onToolCall: () => {
+            // 工具调用信息已通过 onPhase 显示
+          },
         },
         abort.signal,
-        (thinkingDelta) => {
-          thinkingAccum += thinkingDelta;
-          updateMessage(aiMsgId, { thinking: thinkingAccum, loading: true });
-        },
       );
 
-      updateMessage(aiMsgId, { content: accumulated, thinking: thinkingAccum || undefined, loading: false });
+      updateMessage(aiMsgId, {
+        content: content || accumulated,
+        thinking: thinking || thinkingAccum || undefined,
+        loading: false,
+      });
     } catch (err: any) {
       if (err.name === 'AbortError') {
         updateMessage(aiMsgId, { loading: false });
@@ -255,27 +223,88 @@ export const AIAssistant: React.FC = () => {
 
   return (
     <div className="ai-assistant">
-      {/* 头部 */}
+      {/* 头部：内联 API 配置 */}
       <div className="ai-header">
-        <h1>AI 时间助手</h1>
+        <div className="ai-header-config">
+          <select
+            className="ai-config-select ai-config-provider"
+            value={config.providerId}
+            onChange={e => setProvider(e.target.value)}
+            title="选择服务商"
+          >
+            {AI_PROVIDERS.map(p => (
+              <option key={p.id} value={p.id}>
+                {p.name}{providerConfigs[p.id]?.apiKey ? ' ✓' : ''}
+              </option>
+            ))}
+          </select>
+          <input
+            className="ai-config-input ai-config-key"
+            type="password"
+            value={config.apiKey}
+            onChange={e => updateConfig({ apiKey: e.target.value })}
+            placeholder={currentProvider?.placeholder || 'API Key'}
+            title="API Key（仅存储在本地）"
+          />
+          {isCustom || (currentProvider?.models.length === 0) ? (
+            <input
+              className="ai-config-input ai-config-model"
+              type="text"
+              value={config.model}
+              onChange={e => updateConfig({ model: e.target.value })}
+              placeholder="模型名称"
+              title="模型"
+            />
+          ) : (
+            <select
+              className="ai-config-select ai-config-model"
+              value={config.model}
+              onChange={e => updateConfig({ model: e.target.value })}
+              title="选择模型"
+            >
+              {currentProvider?.models.map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          )}
+        </div>
         <div className="ai-header-actions">
           {messages.length > 0 && (
             <button className="ai-icon-btn" onClick={clearMessages} title="清空对话">
               <IonIcon icon={trashOutline} />
             </button>
           )}
-          <button className="ai-icon-btn" onClick={() => setShowSettings(true)} title="设置">
+          <button
+            className={`ai-icon-btn ${showAdvanced ? 'ai-icon-btn-active' : ''}`}
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            title="高级设置"
+          >
             <IonIcon icon={settingsOutline} />
           </button>
         </div>
       </div>
+
+      {/* 高级设置：Base URL */}
+      {showAdvanced && (
+        <div className="ai-advanced-bar">
+          <label className="ai-advanced-label">Base URL</label>
+          <input
+            className="ai-config-input ai-config-baseurl"
+            type="text"
+            value={config.baseURL}
+            onChange={e => updateConfig({ baseURL: e.target.value })}
+            placeholder="https://..."
+          />
+          <span className="ai-advanced-hint">可接入 Ollama 本地模型或 OpenAI 兼容代理</span>
+        </div>
+      )}
 
       {/* 消息区 */}
       <div className="ai-messages">
         {messages.length === 0 ? (
           <div className="ai-welcome">
             <div className="ai-welcome-icon">✨</div>
-            <h2>AI 时间助手</h2>
+            <h2>你好！</h2>
             <p>向我提问关于你的时间记录的任何问题</p>
             <div className="ai-quick-prompts">
               {QUICK_PROMPTS.map((prompt, i) => (
@@ -370,10 +399,6 @@ export const AIAssistant: React.FC = () => {
         )}
       </div>
 
-      {/* 设置弹窗 */}
-      {showSettings && (
-        <AISettings onClose={() => setShowSettings(false)} />
-      )}
     </div>
   );
 };

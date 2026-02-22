@@ -16,7 +16,7 @@ import {
   Bar,
   Legend,
 } from 'recharts';
-import { subDays, startOfWeek, endOfWeek, subWeeks, format } from 'date-fns';
+import dayjs from 'dayjs';
 import {
   loadRawData,
   processEntries,
@@ -118,21 +118,21 @@ export const TrendPage: React.FC<TrendPageProps> = ({ onBack, dateRange: dateRan
       // 2. 加载周度对比数据 (最近3个完整周)
       // 基于今天计算，找到上一个完整周（不包含今天所在的不完整周）
       const today = new Date();
-      const todayWeekStart = startOfWeek(today, { weekStartsOn: 0 }); // 今天所在周的周日
+      const todayWeekStart = dayjs(today).day(0).startOf('day'); // 今天所在周的周日
       // 如果今天是周六，则今天所在周是完整的；否则取上一周作为最近完整周
       const todayDayOfWeek = today.getDay(); // 0=周日, 6=周六
       const lastCompleteWeekStart = todayDayOfWeek === 6 
         ? todayWeekStart // 今天是周六，本周完整
-        : subWeeks(todayWeekStart, 1); // 否则取上一周
+        : todayWeekStart.subtract(1, 'week'); // 否则取上一周
       
       // 计算前3周的时间段（从最近完整周往前推）
       const weeks = [2, 1, 0].map(weeksAgo => {
-        const start = subWeeks(lastCompleteWeekStart, weeksAgo);
-        const end = endOfWeek(start, { weekStartsOn: 0 });
+        const start = lastCompleteWeekStart.subtract(weeksAgo, 'week');
+        const end = start.day(6).endOf('day');
         return {
-          start,
-          end,
-          label: `${format(start, 'MM/dd')}-${format(end, 'MM/dd')}`
+          start: start.toDate(),
+          end: end.toDate(),
+          label: `${start.format('MM/DD')}-${end.format('MM/DD')}`
         };
       });
 
@@ -164,8 +164,8 @@ export const TrendPage: React.FC<TrendPageProps> = ({ onBack, dateRange: dateRan
     setSelectedRange(days);
     if (days > 0) {
       const today = new Date();
-      const end = subDays(today, 1); // 昨天
-      const start = subDays(today, days); // N天前
+      const end = dayjs(today).subtract(1, 'day').toDate(); // 昨天
+      const start = dayjs(today).subtract(days, 'day').toDate(); // N天前
       const range = { start, end };
       setDateRange(range);
       onDateRangeChange?.(range, days);

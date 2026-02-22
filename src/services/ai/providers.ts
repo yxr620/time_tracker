@@ -16,14 +16,14 @@ export const AI_PROVIDERS: AIProvider[] = [
     id: 'qwen',
     name: '通义千问',
     baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-    models: ['qwen3.5-plus', 'qwen3-flash', 'qwen-max', 'qwen-plus', 'qwen-turbo'],
+    models: ['qwen3.5-plus', 'qwen3.5-plus-2026-02-15', 'qwen3-max-preview'],
     placeholder: 'sk-...',
   },
   {
     id: 'gemini',
     name: 'Gemini',
     baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
-    models: ['gemini-3-flash-preview', 'gemini-3.1-pro-preview', 'gemini-2.5-flash', 'gemini-2.5-pro'],
+    models: ['gemini-3-flash-preview', 'gemini-3.1-pro-preview', 'gemini-3-pro-preview'],
     placeholder: 'AIza...',
   },
   {

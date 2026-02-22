@@ -3,12 +3,11 @@
  * 从用户自然语言中提取时间范围，支持相对时间和绝对日期
  */
 
-import {
-  startOfDay, endOfDay, subDays,
-  startOfWeek, endOfWeek, subWeeks,
-  startOfMonth, endOfMonth, subMonths,
-} from 'date-fns';
+import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
 import type { DateRange } from '../../types/analysis';
+
+dayjs.extend(isoWeek);
 
 export interface ParseResult {
   range: DateRange;
@@ -23,7 +22,6 @@ interface TimePattern {
 }
 
 const now = () => new Date();
-const WEEK_OPTS = { weekStartsOn: 1 } as const;
 
 /** 查询中是否提到了"周"上下文（指某个绝对日期所在的那周） */
 const hasWeekCtx = (q: string) => /[那这当][一]?周|所[在]?周/.test(q);
@@ -42,64 +40,64 @@ const patterns: TimePattern[] = [
   {
     pattern: /前天/,
     resolver: () => {
-      const d = subDays(now(), 2);
-      return { start: startOfDay(d), end: endOfDay(d) };
+      const d = dayjs(now()).subtract(2, 'day');
+      return { start: d.startOf('day').toDate(), end: d.endOf('day').toDate() };
     },
   },
   {
     pattern: /昨天|yesterday/i,
     resolver: () => {
-      const d = subDays(now(), 1);
-      return { start: startOfDay(d), end: endOfDay(d) };
+      const d = dayjs(now()).subtract(1, 'day');
+      return { start: d.startOf('day').toDate(), end: d.endOf('day').toDate() };
     },
   },
   {
     pattern: /今天|today/i,
     resolver: () => {
       const d = now();
-      return { start: startOfDay(d), end: endOfDay(d) };
+      return { start: dayjs(d).startOf('day').toDate(), end: dayjs(d).endOf('day').toDate() };
     },
   },
   {
     pattern: /上周|上一周|last\s*week/i,
     resolver: () => {
-      const d = subWeeks(now(), 1);
-      return { start: startOfWeek(d, WEEK_OPTS), end: endOfWeek(d, WEEK_OPTS) };
+      const d = dayjs(now()).subtract(1, 'week');
+      return { start: d.startOf('isoWeek').toDate(), end: d.endOf('isoWeek').toDate() };
     },
   },
   {
     pattern: /本周|这周|this\s*week/i,
     resolver: () => ({
-      start: startOfWeek(now(), WEEK_OPTS),
-      end: endOfDay(now()),
+      start: dayjs(now()).startOf('isoWeek').toDate(),
+      end: dayjs(now()).endOf('day').toDate(),
     }),
   },
   {
     pattern: /上个月|上月|last\s*month/i,
     resolver: () => {
-      const d = subMonths(now(), 1);
-      return { start: startOfMonth(d), end: endOfMonth(d) };
+      const d = dayjs(now()).subtract(1, 'month');
+      return { start: d.startOf('month').toDate(), end: d.endOf('month').toDate() };
     },
   },
   {
     pattern: /本月|这个月|this\s*month/i,
     resolver: () => ({
-      start: startOfMonth(now()),
-      end: endOfDay(now()),
+      start: dayjs(now()).startOf('month').toDate(),
+      end: dayjs(now()).endOf('day').toDate(),
     }),
   },
   {
     pattern: /最近\s*(\d+)\s*天/,
     resolver: (m) => ({
-      start: startOfDay(subDays(now(), parseInt(m[1]))),
-      end: endOfDay(now()),
+      start: dayjs(now()).subtract(parseInt(m[1]), 'day').startOf('day').toDate(),
+      end: dayjs(now()).endOf('day').toDate(),
     }),
   },
   {
     pattern: /最近\s*(\d+)\s*周/,
     resolver: (m) => ({
-      start: startOfDay(subWeeks(now(), parseInt(m[1]))),
-      end: endOfDay(now()),
+      start: dayjs(now()).subtract(parseInt(m[1]), 'week').startOf('day').toDate(),
+      end: dayjs(now()).endOf('day').toDate(),
     }),
   },
 
@@ -108,19 +106,19 @@ const patterns: TimePattern[] = [
     pattern: /(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*[日号]/,
     resolver: (m, q) => {
       const d = new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
-      if (hasWeekCtx(q)) return { start: startOfWeek(d, WEEK_OPTS), end: endOfWeek(d, WEEK_OPTS) };
-      if (hasMonthCtx(q)) return { start: startOfMonth(d), end: endOfMonth(d) };
-      return { start: startOfDay(d), end: endOfDay(d) };
+      if (hasWeekCtx(q)) return { start: dayjs(d).startOf('isoWeek').toDate(), end: dayjs(d).endOf('isoWeek').toDate() };
+      if (hasMonthCtx(q)) return { start: dayjs(d).startOf('month').toDate(), end: dayjs(d).endOf('month').toDate() };
+      return { start: dayjs(d).startOf('day').toDate(), end: dayjs(d).endOf('day').toDate() };
     },
   },
 
-  // ── 绝对日期：YYYY-MM-DD ─────────────────────────────────────────
+  // ── 绝对日期：YYYY-MM-DD ─────────────────────────────────
   {
     pattern: /(\d{4})-(\d{1,2})-(\d{1,2})/,
     resolver: (m, q) => {
       const d = new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
-      if (hasWeekCtx(q)) return { start: startOfWeek(d, WEEK_OPTS), end: endOfWeek(d, WEEK_OPTS) };
-      return { start: startOfDay(d), end: endOfDay(d) };
+      if (hasWeekCtx(q)) return { start: dayjs(d).startOf('isoWeek').toDate(), end: dayjs(d).endOf('isoWeek').toDate() };
+      return { start: dayjs(d).startOf('day').toDate(), end: dayjs(d).endOf('day').toDate() };
     },
   },
 
@@ -131,8 +129,8 @@ const patterns: TimePattern[] = [
       const month0 = parseInt(m[1]) - 1;
       const day = parseInt(m[2]);
       const d = new Date(inferYear(month0, day), month0, day);
-      if (hasWeekCtx(q)) return { start: startOfWeek(d, WEEK_OPTS), end: endOfWeek(d, WEEK_OPTS) };
-      return { start: startOfDay(d), end: endOfDay(d) };
+      if (hasWeekCtx(q)) return { start: dayjs(d).startOf('isoWeek').toDate(), end: dayjs(d).endOf('isoWeek').toDate() };
+      return { start: dayjs(d).startOf('day').toDate(), end: dayjs(d).endOf('day').toDate() };
     },
   },
 
@@ -141,7 +139,7 @@ const patterns: TimePattern[] = [
     pattern: /(\d{4})\s*年\s*(\d{1,2})\s*月(?![\d日号])/,
     resolver: (m) => {
       const d = new Date(parseInt(m[1]), parseInt(m[2]) - 1, 1);
-      return { start: startOfMonth(d), end: endOfMonth(d) };
+      return { start: dayjs(d).startOf('month').toDate(), end: dayjs(d).endOf('month').toDate() };
     },
   },
 ];
@@ -158,8 +156,8 @@ export function parseTimeRange(query: string): ParseResult {
   // fallback：最近 30 天（比 7 天更有用，且会触发 LLM 二次解析兜底）
   return {
     range: {
-      start: startOfDay(subDays(now(), 30)),
-      end: endOfDay(now()),
+      start: dayjs(now()).subtract(30, 'day').startOf('day').toDate(),
+      end: dayjs(now()).endOf('day').toDate(),
     },
     matched: false,
   };

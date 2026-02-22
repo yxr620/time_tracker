@@ -8,7 +8,7 @@
  * 2. 正则未匹配时，调 LLM 做轻量时间提取（非流式，~300-500ms）
  */
 
-import { format } from 'date-fns';
+import dayjs from 'dayjs';
 import { loadRawData, processEntries, formatDuration } from '../analysis/processor';
 import { parseTimeRange } from './intentParser';
 import { chatOnce, type LLMConfig } from './llmClient';
@@ -24,7 +24,7 @@ async function extractTimeWithLLM(
   query: string,
   config: LLMConfig,
 ): Promise<{ range: DateRange | null; raw: string }> {
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const today = dayjs().format('YYYY-MM-DD');
   const systemPrompt = `你是时间范围解析工具。当前日期：${today}。
 从用户的问题中提取需要查询的时间范围，只返回 JSON，不包含其他内容：
 {"start":"YYYY-MM-DD","end":"YYYY-MM-DD"}
@@ -83,7 +83,7 @@ export async function buildTimeContext(
   }
 
   // 3. 检索数据
-  const rangeLabel = `${format(dateRange.start, 'MM月dd日')} 至 ${format(dateRange.end, 'MM月dd日')}`;
+  const rangeLabel = `${dayjs(dateRange.start).format('MM月DD日')} 至 ${dayjs(dateRange.end).format('MM月DD日')}`;
   onPhase?.('loading', rangeLabel);
   const { entries: rawEntries, goals, categories } = await loadRawData({ dateRange });
   const processed = processEntries(rawEntries, goals, categories);
@@ -100,8 +100,8 @@ export async function buildTimeContext(
   // 5. 格式化详细记录
   const entriesText = display
     .map(e => {
-      const start = format(e.startTime, 'MM-dd HH:mm');
-      const end = format(e.endTime, 'HH:mm');
+      const start = dayjs(e.startTime).format('MM-DD HH:mm');
+      const end = dayjs(e.endTime).format('HH:mm');
       return `${start}~${end} | ${e.activity} | ${e.categoryName} | ${e.goalName} | ${formatDuration(e.duration)}`;
     })
     .join('\n');
@@ -131,7 +131,7 @@ export async function buildTimeContext(
   const systemPrompt = `你是用户的个人时间管理助手。根据以下时间记录数据回答用户的问题。
 
 ## 时间范围
-${format(dateRange.start, 'yyyy-MM-dd')} 至 ${format(dateRange.end, 'yyyy-MM-dd')}
+${dayjs(dateRange.start).format('YYYY-MM-DD')} 至 ${dayjs(dateRange.end).format('YYYY-MM-DD')}
 
 ## 统计摘要
 - 记录数：${processed.length} 条${truncated ? `（仅展示最近 ${MAX_ENTRIES} 条详情）` : ''}
@@ -148,7 +148,11 @@ ${entriesText || '（无记录）'}
 2. 时长用"X小时Y分钟"格式
 3. 给出有洞察的总结和分析，不要只是复述数据
 4. 数据为空时如实告知
-5. 如果用户的问题与时间记录无关，礼貌地引导回时间管理话题`;
+5. 如果用户的问题与时间记录无关，礼貌地引导回时间管理话题
+6. 当用户请求"报告"或"总结"时，按以下结构组织回答：
+   a) **时间分配摘要**：各类别时间占比、与往期对比
+   b) **目标回顾**：投入最多的目标、连续坚持的目标
+   c) **洞察与发现**：值得注意的行为模式、作息规律变化、改进建议`;
 
   // 数据准备完毕，通知进入生成阶段
   onPhase?.('thinking');

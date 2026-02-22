@@ -2,7 +2,7 @@
  * 数据分析处理器
  * 负责数据加载、清洗、聚合等逻辑
  */
-import { format, startOfDay, endOfDay, eachDayOfInterval, differenceInMinutes } from 'date-fns';
+import dayjs from 'dayjs';
 import { db } from '../db';
 import type { TimeEntry, Goal, Category } from '../db';
 import { CATEGORY_COLORS } from '../../config/categoryColors';
@@ -19,8 +19,8 @@ import type {
 /** 默认时间范围：最近30天（不含今天） */
 export function getDefaultDateRange(): DateRange {
   const today = new Date();
-  const end = endOfDay(new Date(today.getTime() - 24 * 60 * 60 * 1000)); // 昨天
-  const start = startOfDay(new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)); // 30天前
+  const end = dayjs(today).subtract(1, 'day').endOf('day').toDate(); // 昨天
+  const start = dayjs(today).subtract(30, 'day').startOf('day').toDate(); // 30天前
   return { start, end };
 }
 
@@ -77,7 +77,7 @@ export function processEntries(
     .map(entry => {
       const startTime = new Date(entry.startTime);
       const endTime = new Date(entry.endTime!);
-      const duration = differenceInMinutes(endTime, startTime);
+      const duration = dayjs(endTime).diff(startTime, 'minute');
 
       return {
         id: entry.id!,
@@ -89,7 +89,7 @@ export function processEntries(
         categoryName: entry.categoryId ? (categoryMap.get(entry.categoryId) || '未分类') : '未分类',
         goalId: entry.goalId,
         goalName: entry.goalId ? (goalMap.get(entry.goalId) || '无目标') : '无目标',
-        date: format(startTime, 'yyyy-MM-dd'),
+        date: dayjs(startTime).format('YYYY-MM-DD'),
         hour: startTime.getHours(),
         weekday: startTime.getDay(),
       };
@@ -168,14 +168,26 @@ export function groupByCategory(entries: ProcessedEntry[]): ChartDataPoint[] {
     .sort((a, b) => b.value - a.value);
 }
 
+/** 生成日期范围内的每一天 */
+function eachDayOfInterval(start: Date, end: Date): Date[] {
+  const days: Date[] = [];
+  let current = dayjs(start).startOf('day');
+  const endDay = dayjs(end).startOf('day');
+  while (current.isBefore(endDay) || current.isSame(endDay, 'day')) {
+    days.push(current.toDate());
+    current = current.add(1, 'day');
+  }
+  return days;
+}
+
 /** 按日期分组（趋势图） */
 export function groupByDay(entries: ProcessedEntry[], dateRange: DateRange): TrendDataPoint[] {
   const groups = new Map<string, number>();
 
   // 初始化日期范围内所有日期为0
-  const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
+  const days = eachDayOfInterval(dateRange.start, dateRange.end);
   days.forEach(day => {
-    groups.set(format(day, 'yyyy-MM-dd'), 0);
+    groups.set(dayjs(day).format('YYYY-MM-DD'), 0);
   });
 
   // 聚合数据
@@ -187,7 +199,7 @@ export function groupByDay(entries: ProcessedEntry[], dateRange: DateRange): Tre
     .map(([date, value]) => ({
       date,
       value: Math.round(value / 60 * 10) / 10, // 转换为小时，保留1位小数
-      label: format(new Date(date), 'MM/dd'),
+      label: dayjs(date).format('MM/DD'),
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 }
@@ -220,14 +232,14 @@ export function groupByDayAndCategory(
   });
 
   // 初始化日期范围内所有日期
-  const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const days = eachDayOfInterval(dateRange.start, dateRange.end);
+  const today = dayjs().format('YYYY-MM-DD');
   
   const data: CategoryTrendDataPoint[] = days.map(day => {
-    const dateStr = format(day, 'yyyy-MM-dd');
+    const dateStr = dayjs(day).format('YYYY-MM-DD');
     const point: CategoryTrendDataPoint = {
       date: dateStr,
-      label: format(day, 'MM/dd'),
+      label: dayjs(day).format('MM/DD'),
     };
     // 初始化所有类别为0
     categorySet.forEach((_, id) => {

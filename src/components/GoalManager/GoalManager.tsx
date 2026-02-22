@@ -31,6 +31,7 @@ import { useDarkMode } from '../../hooks/useDarkMode';
 import dayjs from 'dayjs';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import type { Goal } from '../../services/db';
+import { suggestGoals } from '../../services/goalSuggester';
 
 dayjs.extend(isSameOrBefore);
 
@@ -46,6 +47,12 @@ export const GoalManager: React.FC = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [present] = useIonToast();
   const [presentAlert] = useIonAlert();
+
+  // 目标建议相关状态
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [selectedSuggestions, setSelectedSuggestions] = useState<Set<string>>(new Set());
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   const addInputRef = useRef<HTMLIonInputElement>(null);
   const editInputRef = useRef<HTMLIonInputElement>(null);
@@ -222,9 +229,9 @@ export const GoalManager: React.FC = () => {
     >
       {/* 日期选择器 */}
       <IonCard
-        className="mb-4"
         style={{
           margin: 0,
+          marginBottom: '1rem',
           borderRadius: '24px',
           backdropFilter: 'blur(8px)',
           background: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255,255,255,0.92)',
@@ -232,7 +239,7 @@ export const GoalManager: React.FC = () => {
           border: isDark ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(148, 163, 184, 0.12)'
         }}
       >
-        <IonCardContent className="pt-4 pb-4">
+        <IonCardContent style={{ paddingTop: '1rem', paddingBottom: '1rem' }}>
           <div
             style={{
               display: 'flex',
@@ -352,16 +359,16 @@ export const GoalManager: React.FC = () => {
       {/* 统计信息 */}
       {todayGoals.length > 0 && (
         <IonCard
-          className="mb-4"
           style={{
             margin: 0,
+            marginBottom: '1rem',
             borderRadius: '24px',
             background: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255,255,255,0.95)',
             boxShadow: isDark ? '0 12px 28px rgba(0, 0, 0, 0.3)' : '0 12px 28px rgba(15, 23, 42, 0.08)',
             border: isDark ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(148, 163, 184, 0.12)'
           }}
         >
-          <IonCardContent className="pt-6 pb-6">
+          <IonCardContent style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
             <div
               style={{
                 textAlign: 'center',
@@ -386,7 +393,7 @@ export const GoalManager: React.FC = () => {
           border: isDark ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(148, 163, 184, 0.12)'
         }}
       >
-        <IonCardContent className="pb-0">
+        <IonCardContent style={{ paddingBottom: 0 }}>
           <div
             style={{
               display: 'flex',
@@ -423,12 +430,144 @@ export const GoalManager: React.FC = () => {
           {todayGoals.length === 0 ? (
             <div
               style={{
-                padding: '48px 16px',
+                padding: '32px 16px',
                 textAlign: 'center',
                 color: isDark ? '#94a3b8' : '#9ca3af'
               }}
             >
-              暂无目标，点击上方按钮添加
+              {!showSuggestions ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                  <div>暂无目标，点击上方按钮添加</div>
+                  {isToday && (
+                    <IonButton
+                      fill="outline"
+                      size="small"
+                      color="primary"
+                      disabled={loadingSuggestions}
+                      onClick={async () => {
+                        setLoadingSuggestions(true);
+                        try {
+                          const result = await suggestGoals(todayGoals.map(g => g.name));
+                          if (result.length === 0) {
+                            present({ message: '暂无历史目标可推荐', duration: 1500, position: 'top', color: 'warning' });
+                          } else {
+                            setSuggestions(result);
+                            setSelectedSuggestions(new Set(result));
+                            setShowSuggestions(true);
+                          }
+                        } finally {
+                          setLoadingSuggestions(false);
+                        }
+                      }}
+                      style={{
+                        '--border-radius': '16px',
+                        fontWeight: 600,
+                        fontSize: '14px'
+                      }}
+                    >
+                      {loadingSuggestions ? '加载中...' : '🪄 建议今日目标'}
+                    </IonButton>
+                  )}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: isDark ? '#e2e8f0' : '#334155',
+                    marginBottom: '12px',
+                    textAlign: 'center'
+                  }}>
+                    根据历史记录推荐
+                  </div>
+                  {suggestions.map(name => {
+                    const isChecked = selectedSuggestions.has(name);
+                    return (
+                      <div
+                        key={name}
+                        onClick={() => {
+                          const next = new Set(selectedSuggestions);
+                          if (isChecked) next.delete(name);
+                          else next.add(name);
+                          setSelectedSuggestions(next);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '10px 12px',
+                          borderRadius: '12px',
+                          cursor: 'pointer',
+                          background: isChecked
+                            ? (isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)')
+                            : 'transparent',
+                          transition: 'background 0.15s',
+                          marginBottom: '4px'
+                        }}
+                      >
+                        <span style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '6px',
+                          border: isChecked ? '2px solid #3b82f6' : `2px solid ${isDark ? '#475569' : '#cbd5e1'}`,
+                          background: isChecked ? '#3b82f6' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          fontSize: '12px',
+                          color: '#fff',
+                          transition: 'all 0.15s'
+                        }}>
+                          {isChecked && '✓'}
+                        </span>
+                        <span style={{
+                          fontSize: '15px',
+                          fontWeight: 500,
+                          color: isDark ? '#e2e8f0' : '#1e293b'
+                        }}>
+                          {name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px', justifyContent: 'center' }}>
+                    <IonButton
+                      fill="clear"
+                      size="small"
+                      color="medium"
+                      onClick={() => {
+                        setShowSuggestions(false);
+                        setSuggestions([]);
+                        setSelectedSuggestions(new Set());
+                      }}
+                    >
+                      取消
+                    </IonButton>
+                    <IonButton
+                      size="small"
+                      disabled={selectedSuggestions.size === 0}
+                      onClick={async () => {
+                        for (const name of selectedSuggestions) {
+                          await addGoal({ name, date: currentDate, color: '#1677ff' });
+                        }
+                        present({
+                          message: `已添加 ${selectedSuggestions.size} 个目标`,
+                          duration: 1500,
+                          position: 'top',
+                          color: 'success'
+                        });
+                        setShowSuggestions(false);
+                        setSuggestions([]);
+                        setSelectedSuggestions(new Set());
+                      }}
+                      style={{ '--border-radius': '12px', fontWeight: 600 }}
+                    >
+                      添加 {selectedSuggestions.size} 个目标
+                    </IonButton>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <IonList
@@ -527,16 +666,16 @@ export const GoalManager: React.FC = () => {
         }}
       >
         <IonContent className="ion-padding" style={{ '--padding-top': '16px', '--padding-bottom': '2px' }}>
-          <div className="flex flex-col gap-2">
-            <div className="relative">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ position: 'relative' }}>
               <IonInput
                 ref={addInputRef}
                 value={newGoalName}
                 placeholder="输入目标名称"
                 onIonInput={e => setNewGoalName(e.detail.value!)}
                 clearInput
-                className="text-lg"
                 style={{
+                  fontSize: '1.125rem',
                   '--background': isDark ? '#1e293b' : '#f8fafc',
                   '--color': isDark ? '#f1f5f9' : '#0f172a',
                   '--border-radius': '16px',
@@ -546,7 +685,7 @@ export const GoalManager: React.FC = () => {
                   '--padding-bottom': '16px',
                   '--placeholder-color': '#94a3b8',
                   '--highlight-height': '0px',
-                }}
+                } as React.CSSProperties}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     handleAddGoal();
@@ -592,16 +731,16 @@ export const GoalManager: React.FC = () => {
         }}
       >
         <IonContent className="ion-padding" style={{ '--padding-top': '16px', '--padding-bottom': '2px' }}>
-          <div className="flex flex-col gap-2">
-            <div className="relative">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ position: 'relative' }}>
               <IonInput
                 ref={editInputRef}
                 value={editGoalName}
                 placeholder="输入目标名称"
                 onIonInput={e => setEditGoalName(e.detail.value!)}
                 clearInput
-                className="text-lg"
                 style={{
+                  fontSize: '1.125rem',
                   '--background': isDark ? '#1e293b' : '#f8fafc',
                   '--color': isDark ? '#f1f5f9' : '#0f172a',
                   '--border-radius': '16px',
@@ -611,7 +750,7 @@ export const GoalManager: React.FC = () => {
                   '--padding-bottom': '16px',
                   '--placeholder-color': '#94a3b8',
                   '--highlight-height': '0px'
-                }}
+                } as React.CSSProperties}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     handleSaveEdit();

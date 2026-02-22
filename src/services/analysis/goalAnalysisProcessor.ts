@@ -3,7 +3,7 @@
  * 负责加载数据、聚类、计算统计指标等
  */
 
-import { format, differenceInDays, startOfDay, endOfDay, subDays } from 'date-fns';
+import dayjs from 'dayjs';
 import { db } from '../db';
 import type { TimeEntry, Goal } from '../db';
 import {
@@ -88,7 +88,7 @@ export function calculateClusterStats(
     
     totalDuration += Math.max(0, duration);
     
-    const dateStr = format(startTime, 'yyyy-MM-dd');
+    const dateStr = dayjs(startTime).format('YYYY-MM-DD');
     activeDates.add(dateStr);
 
     if (!lastActiveDate || startTime > lastActiveDate) {
@@ -131,7 +131,7 @@ function calculateLongestStreak(activeDates: Set<string>): number {
   for (let i = 1; i < sortedDates.length; i++) {
     const prevDate = new Date(sortedDates[i - 1]);
     const currDate = new Date(sortedDates[i]);
-    const diff = differenceInDays(currDate, prevDate);
+    const diff = dayjs(currDate).diff(prevDate, 'day');
 
     if (diff === 1) {
       currentStreak++;
@@ -168,7 +168,7 @@ export function findUnlinkedEventSuggestions(
       suggestions.push({
         entryId: entry.id!,
         activity: entry.activity,
-        date: format(startTime, 'yyyy-MM-dd'),
+        date: dayjs(startTime).format('YYYY-MM-DD'),
         duration: Math.round(duration),
         suggestedClusterId: match.clusterId,
         suggestedClusterName: match.clusterName,
@@ -293,7 +293,7 @@ function calculateOverviewStats(
   }
 
   // 日期范围天数
-  const daysInRange = Math.max(1, differenceInDays(dateRange.end, dateRange.start) + 1);
+  const daysInRange = Math.max(1, dayjs(dateRange.end).diff(dateRange.start, 'day') + 1);
 
   // 活跃聚类数（有时间记录的）
   const activeClusters = stats.filter(s => s.totalDuration > 0).length;
@@ -339,8 +339,8 @@ function calculateGoalDistribution(
  */
 export function getDefaultGoalAnalysisDateRange(): DateRange {
   const today = new Date();
-  const end = endOfDay(subDays(today, 1)); // 昨天
-  const start = startOfDay(subDays(today, 30)); // 30天前
+  const end = dayjs(today).subtract(1, 'day').endOf('day').toDate(); // 昨天
+  const start = dayjs(today).subtract(30, 'day').startOf('day').toDate(); // 30天前
   return { start, end };
 }
 
@@ -371,7 +371,7 @@ export function getRelativeTimeDesc(date: Date | null): string {
   if (!date) return '从未';
   
   const now = new Date();
-  const days = differenceInDays(now, date);
+  const days = dayjs(now).diff(date, 'day');
   
   if (days === 0) return '今天';
   if (days === 1) return '昨天';

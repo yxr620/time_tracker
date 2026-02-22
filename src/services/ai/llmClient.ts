@@ -139,3 +139,62 @@ export async function chatOnce(
   const json = await res.json();
   return json.choices?.[0]?.message?.content || '';
 }
+
+/**
+ * 带工具声明的非流式调用
+ * 返回完整 message 对象（可能包含 tool_calls）
+ */
+export interface ToolCallResult {
+  id: string;
+  type: 'function';
+  function: { name: string; arguments: string };
+}
+
+export interface ChatMessageWithTools {
+  role: 'assistant';
+  content: string | null;
+  tool_calls?: ToolCallResult[];
+}
+
+export async function chatWithTools(
+  config: LLMConfig,
+  messages: ChatMessage[],
+  tools: unknown[],
+  signal?: AbortSignal,
+): Promise<ChatMessageWithTools> {
+  const url = `${config.baseURL.replace(/\/$/, '')}/chat/completions`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages,
+      tools,
+      stream: false,
+      temperature: 0.7,
+      max_tokens: 2048,
+    }),
+    signal,
+  });
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error(`LLM 请求失败 (${res.status}): ${errText || res.statusText}`);
+  }
+
+  const json = await res.json();
+  const message = json.choices?.[0]?.message;
+  if (!message) {
+    throw new Error('LLM 响应格式异常：无 message');
+  }
+
+  return {
+    role: 'assistant',
+    content: message.content || null,
+    tool_calls: message.tool_calls || undefined,
+  };
+}
