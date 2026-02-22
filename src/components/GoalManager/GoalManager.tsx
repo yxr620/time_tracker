@@ -29,7 +29,10 @@ import { useEntryStore } from '../../stores/entryStore';
 import { useDateStore } from '../../stores/dateStore';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import dayjs from 'dayjs';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import type { Goal } from '../../services/db';
+
+dayjs.extend(isSameOrBefore);
 
 export const GoalManager: React.FC = () => {
   const { isDark } = useDarkMode();
@@ -54,7 +57,8 @@ export const GoalManager: React.FC = () => {
   const modalBreakpoint = isIOS ? 0.36 : 0.22;
 
   const { goals, loadGoals, addGoal, updateGoal, deleteGoal } = useGoalStore();
-  const { entries, loadEntries } = useEntryStore();
+  const { entries, loadEntries, getEarliestEntryDate } = useEntryStore();
+  const earliestDate = getEarliestEntryDate();
 
   useEffect(() => {
     loadGoals();
@@ -85,7 +89,10 @@ export const GoalManager: React.FC = () => {
   };
 
   // 日期切换
+  const isEarliestDay = earliestDate ? dayjs(currentDate).isSameOrBefore(dayjs(earliestDate), 'day') : false;
+
   const handlePrevDay = () => {
+    if (isEarliestDay) return;
     const prevDay = dayjs(currentDate).subtract(1, 'day').format('YYYY-MM-DD');
     setSelectedDate(prevDay);
   };
@@ -238,6 +245,7 @@ export const GoalManager: React.FC = () => {
               fill="clear"
               color="medium"
               onClick={handlePrevDay}
+              disabled={isEarliestDay}
               style={{
                 '--padding-start': '6px',
                 '--padding-end': '6px',
@@ -324,6 +332,8 @@ export const GoalManager: React.FC = () => {
           <IonDatetime
             presentation="date"
             value={currentDate}
+            min={earliestDate || undefined}
+            max={dayjs().format('YYYY-MM-DD')}
             locale="zh-CN"
             firstDayOfWeek={1}
             onIonChange={(e) => {

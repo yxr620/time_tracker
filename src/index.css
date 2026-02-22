@@ -60,7 +60,9 @@
 }
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* 跨平台系统字体：iOS → SF Pro，Android → Roboto，Web → 系统默认 */
+  --app-font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Roboto, Arial, sans-serif;
+  font-family: var(--app-font-family);
   line-height: 1.5;
   font-weight: 400;
 
