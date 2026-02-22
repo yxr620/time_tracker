@@ -15,7 +15,7 @@ import {
   ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
 } from 'recharts';
-import { subDays, differenceInDays } from 'date-fns';
+import dayjs from 'dayjs';
 import {
   analyzeGoals,
   getDefaultGoalAnalysisDateRange,
@@ -143,8 +143,8 @@ export const GoalAnalysisPage: React.FC<GoalAnalysisPageProps> = ({
     setSelectedRange(days);
     if (days > 0) {
       const today = new Date();
-      const end = subDays(today, 1); // 昨天
-      const start = subDays(today, days); // N天前
+      const end = dayjs(today).subtract(1, 'day').toDate(); // 昨天
+      const start = dayjs(today).subtract(days, 'day').toDate(); // N天前
       const range = { start, end };
       setDateRange(range);
       onDateRangeChange?.(range, days);
@@ -571,7 +571,7 @@ const UnlinkedEventSection: React.FC<{
     
     const suggestionDate = new Date(suggestion.date);
     const candidates = cluster.goals
-      .map(g => ({ goal: g, diff: Math.abs(differenceInDays(new Date(g.date), suggestionDate)) }))
+      .map(g => ({ goal: g, diff: Math.abs(dayjs(g.date).diff(suggestionDate, 'day')) }))
       .filter(c => c.diff <= 2)
       .sort((a, b) => a.diff - b.diff);
     

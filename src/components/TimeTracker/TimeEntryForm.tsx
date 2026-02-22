@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   IonButton,
   IonInput,
@@ -19,6 +19,7 @@ import { useDarkMode } from '../../hooks/useDarkMode';
 import dayjs from 'dayjs';
 import { WheelTimePicker } from '../common/WheelTimePicker';
 import { useIOSTimePicker } from '../../hooks/useIOSTimePicker';
+import { predictMetadata, invalidatePredictionCache } from '../../services/metadataPredictor';
 
 // ============ 工具函数 ============
 
@@ -148,6 +149,10 @@ export const TimeEntryForm: React.FC = () => {
   const [elapsed, setElapsed] = useState('00:00:00');
   const [present] = useIonToast();
 
+  // 智能预选：追踪用户是否手动选过（手动选过就不再覆盖）
+  const userPickedCategoryRef = useRef(false);
+  const userPickedGoalRef = useRef(false);
+
   // ============ Effects ============
 
   // 初始化：加载数据（只执行一次）
@@ -161,6 +166,29 @@ export const TimeEntryForm: React.FC = () => {
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 智能预选：当活动名称变化时，防抖调用预测
+  useEffect(() => {
+    if (!activity.trim()) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        const result = await predictMetadata(activity, currentGoals);
+        // 只在用户尚未手动选择时自动填充
+        if (result.categoryId && !userPickedCategoryRef.current) {
+          setSelectedCategoryId(result.categoryId);
+        }
+        if (result.goalId && !userPickedGoalRef.current) {
+          setSelectedGoalId(result.goalId);
+        }
+      } catch {
+        // 静默忽略预测错误
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activity]);
 
   // 当从记录列表或时间轴点击时，自动设置开始时间和结束时间
   useEffect(() => {
@@ -260,6 +288,9 @@ export const TimeEntryForm: React.FC = () => {
     setSelectedCategoryId('');
     setSelectedGoalId(null);
     setEndTime(null);
+    userPickedCategoryRef.current = false;
+    userPickedGoalRef.current = false;
+    invalidatePredictionCache();
   };
 
   const getNextStartTime = () => {
@@ -423,7 +454,7 @@ export const TimeEntryForm: React.FC = () => {
     // <div style={{ padding: '16px', minHeight: '100%' }}>
     <div style={{ padding: '0px 16px 16px', minHeight: '100%' }}>
       {/* 活动名称输入 */}
-      <IonCard className="mb-2" style={getCardStyle(isDark)}>
+      <IonCard style={{ ...getCardStyle(isDark), marginBottom: '0.5rem' }}>
         <IonCardContent style={{ padding: 0 }}>
           <IonItem
             lines="none"
@@ -453,7 +484,7 @@ export const TimeEntryForm: React.FC = () => {
       </IonCard>
 
       {/* 类别选择 */}
-      <IonCard className="mb-2" style={getCardStyle(isDark)}>
+      <IonCard style={{ ...getCardStyle(isDark), marginBottom: '0.5rem' }}>
         <IonCardContent style={{ padding: '14px 20px' }}>
           <div style={getSectionLabelStyle(isDark)}>
             <IonIcon icon={pricetagOutline} style={{ fontSize: '14px' }} />
@@ -477,7 +508,7 @@ export const TimeEntryForm: React.FC = () => {
                     c.id === selectedCategoryId,
                     '#3b82f6',
                     '#666',
-                    () => setSelectedCategoryId(c.id === selectedCategoryId ? '' : c.id)
+                    () => { userPickedCategoryRef.current = true; setSelectedCategoryId(c.id === selectedCategoryId ? '' : c.id); }
                   )}
                 </React.Fragment>
               ))}
@@ -487,7 +518,7 @@ export const TimeEntryForm: React.FC = () => {
       </IonCard>
 
       {/* 目标选择 */}
-      <IonCard className="mb-2" style={getCardStyle(isDark)}>
+      <IonCard style={{ ...getCardStyle(isDark), marginBottom: '0.5rem' }}>
         <IonCardContent style={{ padding: '14px 20px' }}>
           <div style={getSectionLabelStyle(isDark)}>
             <IonIcon icon={flagOutline} style={{ fontSize: '14px' }} />
@@ -505,7 +536,7 @@ export const TimeEntryForm: React.FC = () => {
                       g.id === selectedGoalId,
                       '#f59e0b',
                       '#666',
-                      () => setSelectedGoalId(g.id === selectedGoalId ? null : g.id!)
+                      () => { userPickedGoalRef.current = true; setSelectedGoalId(g.id === selectedGoalId ? null : g.id!); }
                     )}
                   </React.Fragment>
                 ))}
@@ -519,7 +550,7 @@ export const TimeEntryForm: React.FC = () => {
                       g.id === selectedGoalId,
                       '#f59e0b',
                       '#999',
-                      () => setSelectedGoalId(g.id === selectedGoalId ? null : g.id!),
+                      () => { userPickedGoalRef.current = true; setSelectedGoalId(g.id === selectedGoalId ? null : g.id!); },
                       '*'
                     )}
                   </React.Fragment>
@@ -535,7 +566,7 @@ export const TimeEntryForm: React.FC = () => {
       </IonCard>
 
       {/* 时间选择卡片 */}
-      <IonCard className="mb-2" style={getCardStyle(isDark)}>
+      <IonCard style={{ ...getCardStyle(isDark), marginBottom: '0.5rem' }}>
         <IonCardContent style={{ padding: '16px 20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
             {/* 开始时间 */}

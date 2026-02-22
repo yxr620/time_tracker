@@ -4,10 +4,12 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/*
+  覆盖 Ionic 的平台差异字体变量，使 Ionic 组件和普通元素使用同一字体族。
+  App.css 在构建顺序上晚于 @ionic/react/css/*，因此此处声明可以生效。
+*/
+html {
+  --ion-font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Roboto, Arial, sans-serif;
 }
 
 .app {

@@ -22,6 +22,7 @@ interface EntryStore {
   setTimeRange: (startTime: Date, endTime: Date) => void;
   getLastEntryEndTime: () => Date | null;
   getLastEntryEndTimeForDate: (date: string) => Date | null;
+  getEarliestEntryDate: () => string | null;
 }
 
 export const useEntryStore = create<EntryStore>((set, get) => ({
@@ -152,5 +153,17 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
     );
     
     return sortedByEndTime[0].endTime;
+  },
+
+  // 获取最早记录的日期（YYYY-MM-DD 格式）
+  getEarliestEntryDate: () => {
+    const { entries } = get();
+    if (entries.length === 0) return null;
+    
+    const sorted = [...entries].sort((a, b) => 
+      new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+    );
+    
+    return dayjs(sorted[0].startTime).format('YYYY-MM-DD');
   }
 }));

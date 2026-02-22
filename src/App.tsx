@@ -5,12 +5,13 @@ import {
   IonTabBar,
   IonTabButton,
 } from '@ionic/react';
-import { checkmarkDoneOutline, cloudUploadOutline } from 'ionicons/icons';
+import { checkmarkDoneOutline, settingsOutline } from 'ionicons/icons';
 import { RecordsPage } from './components/RecordsPage/RecordsPage';
 import { Dashboard } from './components/Dashboard/Dashboard';
 import { TrendPage } from './components/TrendPage/TrendPage';
 import { GoalAnalysisPage } from './components/GoalAnalysisPage/GoalAnalysisPage';
 import { ExportPage } from './components/ExportPage/ExportPage';
+import { AIAssistant } from './components/AIAssistant/AIAssistant';
 import recordsIcon from './assets/recordsIcon.png';
 import { GoalManager } from './components/GoalManager/GoalManager';
 import { useSyncStore } from './stores/syncStore';
@@ -55,7 +56,7 @@ const MobileLayout: React.FC<LayoutProps> = ({ activeTab, onTabChange, children 
           <IonIcon icon={checkmarkDoneOutline} style={{ fontSize: '24px' }} />
         </IonTabButton>
         <IonTabButton tab="export" onClick={() => onTabChange('export')}>
-          <IonIcon icon={cloudUploadOutline} style={{ fontSize: '24px' }} />
+          <IonIcon icon={settingsOutline} style={{ fontSize: '24px' }} />
         </IonTabButton>
       </IonTabBar>
     </div>
@@ -163,6 +164,8 @@ function App() {
         return <RecordsPage />;
       case 'goals':
         return <GoalManager />;
+      case 'ai':
+        return <AIAssistant />;
       case 'export':
         return <ExportPage />;
       default:

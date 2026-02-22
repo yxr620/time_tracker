@@ -30,9 +30,10 @@ interface TimelineViewProps {
 }
 
 export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDateChange }) => {
-  const { entries, loadEntries, setNextStartTime, setTimeRange } = useEntryStore();
+  const { entries, loadEntries, setNextStartTime, setTimeRange, getEarliestEntryDate } = useEntryStore();
   const { loadCategories, getCategoryColor } = useCategoryStore();
   const { goals, loadGoals } = useGoalStore();
+  const earliestDate = getEarliestEntryDate();
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const [gapBlocks, setGapBlocks] = useState<GapBlock[]>([]);
   const [datePickerVisible, setDatePickerVisible] = useState(false);
@@ -225,7 +226,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
   const timeLabels = [0, 6, 12, 18, 24];
 
   // 日期导航
+  const isEarliestDay = earliestDate ? dayjs(selectedDate).isSame(dayjs(earliestDate), 'day') || dayjs(selectedDate).isBefore(dayjs(earliestDate), 'day') : false;
+
   const goToPreviousDay = () => {
+    if (isEarliestDay) return;
     onDateChange(dayjs(selectedDate).subtract(1, 'day').toDate());
   };
 
@@ -243,7 +247,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
     <div className="timeline-view">
       {/* 日期选择器 */}
       <div className="timeline-header">
-        <button onClick={goToPreviousDay} className="date-nav-btn">←</button>
+        <button onClick={goToPreviousDay} className="date-nav-btn" disabled={isEarliestDay}>←</button>
         <div 
           className="date-display date-display-clickable"
           onClick={() => setDatePickerVisible(true)}
@@ -274,6 +278,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
             ref={datetimeRef}
             presentation="date"
             value={dayjs(selectedDate).format('YYYY-MM-DD')}
+            min={earliestDate || undefined}
             max={dayjs().format('YYYY-MM-DD')}
             locale="zh-CN"
             firstDayOfWeek={1}

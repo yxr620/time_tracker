@@ -5,7 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { subDays } from 'date-fns';
+import dayjs from 'dayjs';
 import {
   loadRawData,
   processEntries,
@@ -119,8 +119,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend, onOpenGoalAna
     setSelectedRange(days);
     if (days > 0) {
       const today = new Date();
-      const end = subDays(today, 1); // 昨天
-      const start = subDays(today, days); // N天前
+      const end = dayjs(today).subtract(1, 'day').toDate(); // 昨天
+      const start = dayjs(today).subtract(days, 'day').toDate(); // N天前
       const range = { start, end };
       setDateRange(range);
       onDateRangeChange?.(range, days);
