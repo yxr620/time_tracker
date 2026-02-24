@@ -15,7 +15,7 @@ import { AIAssistant } from './components/AIAssistant/AIAssistant';
 import recordsIcon from './assets/recordsIcon.png';
 import { GoalManager } from './components/GoalManager/GoalManager';
 import { useSyncStore } from './stores/syncStore';
-import { isOSSConfigured } from './services/oss';
+import { isSyncReady } from './services/syncConfig';
 import { syncEngine } from './services/syncEngine';
 import { emitSyncToast } from './services/syncToast';
 import { DesktopSidebar } from './components/Desktop/DesktopSidebar';
@@ -105,7 +105,7 @@ function App() {
 
   // 应用启动时自动 Pull
   useEffect(() => {
-    if (!isOSSConfigured()) return;
+    if (!isSyncReady()) return;
 
     syncEngine.incrementalPull().then(result => {
       if (result.status === 'success') {

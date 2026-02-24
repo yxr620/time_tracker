@@ -4,6 +4,7 @@ import {
   IonSpinner,
   useIonToast,
   useIonAlert,
+  IonToggle,
 } from '@ionic/react';
 import { SyncManagementPage } from '../SyncManagementPage/SyncManagementPage';
 import { exportFullJSON, exportIncrementalJSON, importFromJSON, ImportStrategy } from '../../services/export';
@@ -11,9 +12,11 @@ import { db } from '../../services/db';
 import { useEntryStore } from '../../stores/entryStore';
 import { useGoalStore } from '../../stores/goalStore';
 import { useCategoryStore } from '../../stores/categoryStore';
+import { useDarkMode } from '../../hooks/useDarkMode';
 import './ExportPage.css';
 
 export const ExportPage: React.FC = () => {
+  const { isDark, setDark } = useDarkMode();
   const [importStrategy, setImportStrategy] = useState<typeof ImportStrategy.MERGE | typeof ImportStrategy.REPLACE>(ImportStrategy.MERGE);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [presentToast] = useIonToast();
@@ -176,10 +179,25 @@ ${result.details.errors.length > 0 ? `\n⚠️ ${result.details.errors.length} �
   return (
     <div className="page-content-wrapper export-page">
       <div className="export-page-sections">
+
         {/* 同步管理 */}
         <section className="export-section">
           <h3 className="export-section-title">云端同步</h3>
           <SyncManagementPage />
+        </section>
+
+        <hr className="export-divider" />
+
+        {/* 通用设置 */}
+        <section className="export-section">
+          <h3 className="export-section-title">通用设置</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'hsl(var(--card))', borderRadius: '12px', border: '1px solid hsl(var(--border))' }}>
+            <div>
+              <div style={{ fontSize: '15px', color: 'hsl(var(--foreground))', fontWeight: '500' }}>深色模式</div>
+              <div style={{ fontSize: '12px', color: 'hsl(var(--muted-foreground))', marginTop: '4px' }}>切换应用主题外观</div>
+            </div>
+            <IonToggle checked={isDark} onIonChange={(e) => setDark(e.detail.checked)} />
+          </div>
         </section>
 
         <hr className="export-divider" />

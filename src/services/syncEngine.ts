@@ -552,7 +552,7 @@ function handleAutoSyncResult(result: SyncResult): void {
     });
   } else {
     emitSyncToast({
-      message: `自动同步失败：${result.message}`,
+      message: '自动同步失败，详情请查看设置页',
       color: 'danger',
       duration: 2200,
     });

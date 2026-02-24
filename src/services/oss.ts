@@ -5,19 +5,29 @@
  * OSS 文件结构:
  *   sync/{userId}/oplog/{deviceId}_{timestamp}.json   - 增量操作日志
  *   sync/{userId}/snapshots/{deviceId}.json            - 设备全量快照（每设备一个，覆盖写入）
+ *
+ * 配置优先级: localStorage > .env 环境变量
  */
 
 import OSS from 'ali-oss';
 import { getDeviceId } from './db';
+import { getSavedOSSConfig } from './syncConfig';
 
-// OSS 配置
-const OSS_CONFIG = {
-  region: import.meta.env.VITE_OSS_REGION || 'oss-cn-hangzhou',
-  bucket: import.meta.env.VITE_OSS_BUCKET || '',
-  accessKeyId: import.meta.env.VITE_OSS_ACCESS_KEY_ID || '',
-  accessKeySecret: import.meta.env.VITE_OSS_ACCESS_KEY_SECRET || '',
-  secure: true
-};
+/**
+ * 获取 OSS 配置（动态读取）
+ * 优先从 localStorage 读取用户在 APP 内保存的配置，
+ * 降级到 .env 构建时注入的环境变量。
+ */
+function getOSSConfig() {
+  const saved = getSavedOSSConfig();
+  return {
+    region: saved?.region || import.meta.env.VITE_OSS_REGION || 'oss-cn-hangzhou',
+    bucket: saved?.bucket || import.meta.env.VITE_OSS_BUCKET || '',
+    accessKeyId: saved?.accessKeyId || import.meta.env.VITE_OSS_ACCESS_KEY_ID || '',
+    accessKeySecret: saved?.accessKeySecret || import.meta.env.VITE_OSS_ACCESS_KEY_SECRET || '',
+    secure: true
+  };
+}
 
 // 用户 ID（未来可以通过登录系统获取）
 const getUserId = (): string => {
@@ -30,12 +40,13 @@ const getUserId = (): string => {
  * 初始化 OSS 客户端
  */
 function getOSSClient(): OSS {
-  if (!OSS_CONFIG.accessKeyId || !OSS_CONFIG.accessKeySecret) {
-    throw new Error('OSS 配置缺失，请设置 VITE_OSS_ACCESS_KEY_ID 和 VITE_OSS_ACCESS_KEY_SECRET');
+  const config = getOSSConfig();
+  if (!config.accessKeyId || !config.accessKeySecret) {
+    throw new Error('OSS 配置缺失，请在设置页面配置 OSS 或设置环境变量');
   }
 
   try {
-    return new OSS(OSS_CONFIG);
+    return new OSS(config);
   } catch (error) {
     console.error('[OSS] 客户端初始化失败:', error);
     throw error;
@@ -46,7 +57,8 @@ function getOSSClient(): OSS {
  * 检查 OSS 是否已配置
  */
 export function isOSSConfigured(): boolean {
-  return !!(OSS_CONFIG.accessKeyId && OSS_CONFIG.accessKeySecret && OSS_CONFIG.bucket);
+  const config = getOSSConfig();
+  return !!(config.accessKeyId && config.accessKeySecret && config.bucket);
 }
 
 /**
@@ -64,19 +76,19 @@ export async function uploadSyncFile(data: any[]): Promise<string> {
     const userId = getUserId();
     const deviceId = await getDeviceId();
     const timestamp = Date.now();
-    
+
     // 文件名格式: sync/{userId}/oplog/{deviceId}_{timestamp}.json
     const fileName = `sync/${userId}/oplog/${deviceId}_${timestamp}.json`;
-    
+
     const content = JSON.stringify(data, null, 2);
-    
+
     const blob = new Blob([content], { type: 'application/json' });
     await client.put(fileName, blob, {
       headers: {
         'Content-Type': 'application/json'
       }
     });
-    
+
     console.log(`[OSS] 已上传 oplog: ${fileName}, ${data.length} 条操作`);
     return fileName;
   } catch (error) {
@@ -104,13 +116,13 @@ async function listAllObjects(prefix: string): Promise<OSSObject[]> {
     if (marker) {
       query.marker = marker;
     }
-    
+
     const result = await client.list(query, {});
-    
+
     if (result.objects) {
       allObjects.push(...(result.objects as OSSObject[]));
     }
-    
+
     marker = result.nextMarker;
   } while (marker);
 
@@ -130,16 +142,16 @@ export async function listSyncFiles(afterTimestamp?: number): Promise<OSSObject[
   const userId = getUserId();
   const deviceId = await getDeviceId();
   const prefix = `sync/${userId}/oplog/`;
-  
+
   try {
     const allObjects = await listAllObjects(prefix);
-    
+
     // 过滤掉本设备上传的文件
     let files = allObjects.filter((obj: OSSObject) => {
       const fileName = obj.name.split('/').pop() || '';
       return !fileName.startsWith(deviceId);
     });
-    
+
     // 如果指定了时间戳，过滤掉更早的文件
     if (afterTimestamp) {
       files = files.filter((obj: OSSObject) => {
@@ -147,10 +159,10 @@ export async function listSyncFiles(afterTimestamp?: number): Promise<OSSObject[
         return ts > afterTimestamp;
       });
     }
-    
+
     // 按时间戳排序（从旧到新）
     files.sort((a: OSSObject, b: OSSObject) => extractTimestamp(a.name) - extractTimestamp(b.name));
-    
+
     console.log(`[OSS] 找到 ${files.length} 个待同步 oplog 文件`);
     return files;
   } catch (error) {
@@ -170,12 +182,12 @@ export async function downloadSyncFile(fileName: string): Promise<any[]> {
   }
 
   const client = getOSSClient();
-  
+
   try {
     const result = await client.get(fileName);
     const content = result.content.toString('utf-8');
     const data = JSON.parse(content);
-    
+
     console.log(`[OSS] 已下载: ${fileName}, ${data.length} 条操作`);
     return data;
   } catch (error) {
@@ -218,15 +230,15 @@ export async function uploadSnapshot(data: SnapshotData): Promise<string> {
 
   const client = getOSSClient();
   const userId = getUserId();
-  
+
   const fileName = `sync/${userId}/snapshots/${data.deviceId}.json`;
-  
+
   const content = JSON.stringify(data, null, 2);
   const blob = new Blob([content], { type: 'application/json' });
   await client.put(fileName, blob, {
     headers: { 'Content-Type': 'application/json' }
   });
-  
+
   console.log(`[OSS] 已上传快照: ${fileName}, entries=${data.entries.length}, goals=${data.goals.length}, categories=${data.categories.length}`);
   return fileName;
 }
@@ -242,15 +254,15 @@ export async function listSnapshotFiles(): Promise<OSSObject[]> {
   const deviceId = await getDeviceId();
   const userId = getUserId();
   const prefix = `sync/${userId}/snapshots/`;
-  
+
   const allObjects = await listAllObjects(prefix);
-  
+
   // 过滤掉本设备的快照
   const files = allObjects.filter((obj: OSSObject) => {
     const fileName = obj.name.split('/').pop() || '';
     return !fileName.startsWith(deviceId);
   });
-  
+
   console.log(`[OSS] 找到 ${files.length} 个其他设备的快照`);
   return files;
 }
@@ -267,7 +279,7 @@ export async function downloadSnapshot(fileName: string): Promise<SnapshotData> 
   const result = await client.get(fileName);
   const content = result.content.toString('utf-8');
   const data: SnapshotData = JSON.parse(content);
-  
+
   console.log(`[OSS] 已下载快照: ${fileName}, entries=${data.entries.length}, goals=${data.goals.length}, categories=${data.categories.length}`);
   return data;
 }
@@ -287,14 +299,14 @@ export async function listOwnOplogFiles(): Promise<OSSObject[]> {
   const deviceId = await getDeviceId();
   const userId = getUserId();
   const prefix = `sync/${userId}/oplog/`;
-  
+
   const allObjects = await listAllObjects(prefix);
-  
+
   const files = allObjects.filter((obj: OSSObject) => {
     const fileName = obj.name.split('/').pop() || '';
     return fileName.startsWith(deviceId);
   });
-  
+
   files.sort((a, b) => extractTimestamp(a.name) - extractTimestamp(b.name));
   return files;
 }
@@ -314,7 +326,7 @@ export async function deleteOSSFiles(fileNames: string[]): Promise<void> {
   }
 
   const client = getOSSClient();
-  
+
   const batchSize = 1000;
   for (let i = 0; i < fileNames.length; i += batchSize) {
     const batch = fileNames.slice(i, i + batchSize);

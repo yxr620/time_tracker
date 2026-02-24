@@ -6,6 +6,10 @@
 import { create } from 'zustand';
 import { syncEngine, type SyncStatus, type SyncResult, startAutoSync } from '../services/syncEngine';
 import { isOSSConfigured } from '../services/oss';
+import {
+  isAutoSyncEnabled as getAutoSyncEnabled,
+  setAutoSyncEnabled as persistAutoSyncEnabled,
+} from '../services/syncConfig';
 
 interface SyncStore {
   status: SyncStatus;
@@ -14,10 +18,12 @@ interface SyncStore {
   pushedCount: number;
   pulledCount: number;
   isConfigured: boolean;
-  
+  autoSyncEnabled: boolean;
+
   // 方法
   sync: () => Promise<void>;
   checkConfig: () => void;
+  setAutoSyncEnabled: (enabled: boolean) => void;
   startAutoSync: (intervalMinutes?: number) => void;
   stopAutoSync: () => void;
 }
@@ -31,13 +37,14 @@ export const useSyncStore = create<SyncStore>((set, get) => ({
   pushedCount: 0,
   pulledCount: 0,
   isConfigured: isOSSConfigured(),
+  autoSyncEnabled: getAutoSyncEnabled(),
 
   sync: async () => {
     try {
       set({ status: 'syncing', message: '正在同步...' });
-      
+
       const result: SyncResult = await syncEngine.sync();
-      
+
       set({
         status: result.status,
         message: result.message,
@@ -54,20 +61,28 @@ export const useSyncStore = create<SyncStore>((set, get) => ({
       }
     } catch (error) {
       console.error('[SyncStore] 同步失败:', error);
-      set({ 
-        status: 'error', 
-        message: error instanceof Error ? error.message : '同步失败' 
+      set({
+        status: 'error',
+        message: error instanceof Error ? error.message : '同步失败'
       });
     }
   },
 
   checkConfig: () => {
     try {
-      set({ isConfigured: isOSSConfigured() });
+      set({
+        isConfigured: isOSSConfigured(),
+        autoSyncEnabled: getAutoSyncEnabled(),
+      });
     } catch (error) {
       console.error('[SyncStore] 检查配置失败:', error);
-      set({ isConfigured: false });
+      set({ isConfigured: false, autoSyncEnabled: false });
     }
+  },
+
+  setAutoSyncEnabled: (enabled: boolean) => {
+    persistAutoSyncEnabled(enabled);
+    set({ autoSyncEnabled: enabled });
   },
 
   startAutoSync: (intervalMinutes = 10) => {

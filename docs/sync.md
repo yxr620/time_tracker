@@ -117,14 +117,18 @@ interface SyncOperation {
 
 ### 触发机制
 
-**自动触发**（静默执行）：
+**自动触发**（静默执行，受自动同步开关控制）：
 
-| 时机 | 操作 |
-|---|---|
-| 应用启动 | 增量 Pull（经由 `withSyncGuard`，不会与其他同步并发） |
-| 数据变更后 | 增量 Push（`stopTracking` / `addEntry` / `updateEntry` / `deleteEntry` / `addGoal` / `updateGoal` / `deleteGoal`） |
+> 自动同步开关存储在 `localStorage`（key: `autoSyncEnabled`），新设备默认关闭。
+> 用户可在「设置 → 同步管理」中手动开启/关闭。
+> 开关关闭时，自动 Push/Pull 不执行，但手动同步始终可用。
 
-**手动触发**（同步管理页面）：
+| 时机 | 操作 | 前置检查 |
+|---|---|---|
+| 应用启动 | 增量 Pull（经由 `withSyncGuard`，不会与其他同步并发） | `isSyncReady()`（OSS 已配置 + 开关开启） |
+| 数据变更后 | 增量 Push（`stopTracking` / `addEntry` / `updateEntry` / `deleteEntry` / `addGoal` / `updateGoal` / `deleteGoal`） | `isSyncReady()` |
+
+**手动触发**（同步管理页面，不受开关影响）：
 
 - 增量同步 / 增量 Push / 增量 Pull
 - 强制全量同步 / 强制全量 Push / 强制全量 Pull
@@ -220,11 +224,12 @@ OSS Bucket
 | `src/services/db.ts` | 数据库 Schema（v1→v4）、Syncable 接口、同步辅助函数 |
 | `src/services/syncDb.ts` | 同步感知的 CRUD（自动记录 oplog，软删除） |
 | `src/services/oss.ts` | 阿里云 OSS 封装（分页列表、oplog/snapshot CRUD、批量删除） |
+| `src/services/syncConfig.ts` | 同步配置管理（自动同步开关 + OSS 配置，localStorage 持久化） |
 | `src/services/syncEngine.ts` | **同步引擎核心**（Push/Pull/LWW 合并、snapshot-first、清理） |
 | `src/services/syncToast.ts` | 全局同步 toast 事件通道 |
 | `src/services/syncDebugTools.ts` | 浏览器控制台调试工具（`window.syncDebug`） |
-| `src/utils/autoPush.ts` | 数据变更后自动 Push |
-| `src/stores/syncStore.ts` | 同步状态管理（Zustand） |
+| `src/utils/autoPush.ts` | 数据变更后自动 Push（受自动同步开关控制） |
+| `src/stores/syncStore.ts` | 同步状态管理（Zustand，含自动同步开关状态） |
 | `src/components/common/SyncToastListener.tsx` | 全局 toast 监听组件 |
 | `src/components/SyncManagementPage/SyncManagementPage.tsx` | 同步管理界面 |
 
@@ -294,6 +299,14 @@ await syncEngine.getSyncStats();               // 获取同步统计信息
 
 ### 4. 应用配置
 
+**方式一：应用内配置（推荐）**
+
+进入「设置 → 同步管理」，填写 Region、Bucket、AccessKey ID 和 AccessKey Secret，点击保存即可。
+
+配置存储在 `localStorage` 中，持久化生效。
+
+**方式二：.env 文件**
+
 编辑 `.env` 文件：
 
 ```env
@@ -304,6 +317,8 @@ VITE_OSS_ACCESS_KEY_SECRET=your-access-key-secret
 ```
 
 重启开发服务器后生效。
+
+> **优先级**：应用内配置（localStorage）> .env 环境变量
 
 ---
 
@@ -390,6 +405,15 @@ Electron 默认启用严格安全策略，需在 `electron/src/setup.ts` 中：
 ---
 
 ## 更新日志
+
+### v3.2.0 (2026-02)
+- ✅ **自动同步开关**：新增 `syncConfig.ts`，通过 localStorage 管理自动同步开关
+- ✅ 新设备默认关闭自动同步，用户可在设置页手动开启
+- ✅ 开关控制：启动自动 Pull + 数据变更后自动 Push
+- ✅ 手动同步不受开关影响，始终可用
+- ✅ **应用内 OSS 配置**：设置页提供 OSS 配置表单，无需 .env 文件
+- ✅ OSS 配置优先级：localStorage > .env 环境变量
+- ✅ `oss.ts` 重构：静态 `OSS_CONFIG` 改为动态 `getOSSConfig()` 函数
 
 ### v3.1.0 (2026-02)
 - ✅ **Snapshot-First 架构**：每次 Pull 先检查 snapshot（利用 lastModified 跳过未变化的），彻底消除 oplog 间隙导致的数据丢失风险

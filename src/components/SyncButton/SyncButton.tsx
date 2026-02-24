@@ -24,7 +24,7 @@ export const SyncButton: React.FC = () => {
       });
     } else if (status === 'error' && message) {
       present({
-        message,
+        message: '同步失败，详情请查看设置页',
         duration: 3000,
         position: 'top',
         color: 'danger',

@@ -8,17 +8,18 @@
  */
 
 import { syncEngine } from '../services/syncEngine';
-import { isOSSConfigured } from '../services/oss';
+import { isSyncReady } from '../services/syncConfig';
 import { emitSyncToast } from '../services/syncToast';
 
 /**
  * 异步执行自动 Push，不阻塞调用方。
  * 内部使用 incrementalPush()（带 isSyncing 守卫），
  * 如果正在同步中会安全跳过，不会产生并发冲突。
+ * 受自动同步开关控制：开关关闭时不执行。
  * @param context 日志上下文描述（如 "记录完成后"、"添加目标后"）
  */
 export function autoPush(context: string): void {
-  if (!isOSSConfigured()) return;
+  if (!isSyncReady()) return;
 
   syncEngine.incrementalPush()
     .then(result => {
