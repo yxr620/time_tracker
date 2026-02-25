@@ -35,7 +35,7 @@ export function autoPush(context: string): void {
         if (result.message !== '正在同步中，请稍候') {
           console.warn(`[AutoSync] ${context} Push 跳过: ${result.message}`);
           emitSyncToast({
-            message: `自动 Push 失败：${result.message}`,
+            message: '自动 Push 失败，详情请查看设置页',
             color: 'danger',
             duration: 2200
           });
@@ -45,7 +45,7 @@ export function autoPush(context: string): void {
     .catch(error => {
       console.error(`[AutoSync] ${context} Push 失败:`, error);
       emitSyncToast({
-        message: '自动 Push 失败',
+        message: '自动 Push 失败，详情请查看设置页',
         color: 'danger',
         duration: 2200
       });
