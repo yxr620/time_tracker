@@ -22,12 +22,8 @@ marked.setOptions({
 
 // 快捷问题预设
 const QUICK_PROMPTS = [
-  '📊 生成本周报告',
-  '📊 生成本月报告',
-  '昨天做了什么？',
-  '上周时间总结',
-  '本月哪个类别花的时间最多？',
-  '最近7天的工作效率如何？',
+  '生成本周汇报',
+  '昨天做了什么',
   '对比本周和上周',
 ];
 
@@ -49,10 +45,25 @@ const PHASE_CONFIG: Record<string, { label: string; icon: string }> = {
  * 阶段列表指示器
  * - loading=true 时，最后一项显示 spinner；其余显示 ✓
  * - loading=false 时，全部显示 ✓（流程结束）
- * - level>0 的步骤缩进显示，表示子步骤
+ * - 含 debugInfo 的阶段可折叠展开查看详情
  */
+/** 复制文本到剪贴板 */
+function copyToClipboard(text: string) {
+  navigator.clipboard.writeText(text).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+}
+
 const PhasesIndicator: React.FC<{
-  phases: Array<{ key: string; detail?: string; level?: number; failed?: boolean }>;
+  phases: Array<{ key: string; detail?: string; level?: number; failed?: boolean; debugInfo?: string }>;
   loading?: boolean;
 }> = ({ phases, loading }) => (
   <div className="ai-phases">
@@ -60,31 +71,34 @@ const PhasesIndicator: React.FC<{
       const cfg = PHASE_CONFIG[p.key] || { icon: '⏳', label: '处理中' };
       const isActive = loading && i === phases.length - 1;
       const level = p.level || 0;
-      const isExpandable = p.key === 'parsing.llm' && !!p.detail && !isActive;
+      const hasDebug = !!p.debugInfo && !isActive;
+
+      const statusIcon = isActive
+        ? <span className="ai-phase-spinner" />
+        : p.failed
+          ? <span className="ai-phase-cross">✗</span>
+          : <span className="ai-phase-check">✓</span>;
+
+      const labelText = p.detail || (isActive ? `${cfg.label}...` : cfg.label);
+
       return (
         <div
           key={i}
           className={`ai-phase ${isActive ? 'ai-phase-active' : p.failed ? 'ai-phase-failed' : 'ai-phase-done'}`}
           style={level > 0 ? { paddingLeft: `${level * 20}px` } : undefined}
         >
-          {isActive
-            ? <span className="ai-phase-spinner" />
-            : p.failed
-              ? <span className="ai-phase-cross">✗</span>
-              : <span className="ai-phase-check">✓</span>
-          }
+          {statusIcon}
           <span className="ai-phase-icon">{cfg.icon}</span>
-          {isExpandable ? (
-            <details className="ai-phase-expandable">
-              <summary className="ai-phase-label ai-phase-expandable-summary">
-                {cfg.label}
+          {hasDebug ? (
+            <details className="ai-phase-debug">
+              <summary className="ai-phase-debug-summary">
+                {labelText}
               </summary>
-              <pre className="ai-phase-expand-content">{p.detail}</pre>
+              <pre className="ai-phase-debug-content">{p.debugInfo}</pre>
             </details>
           ) : (
             <span className="ai-phase-label">
-              {isActive ? `${cfg.label}...` : cfg.label}
-              {p.detail && !isExpandable && <span className="ai-phase-detail">{p.detail}</span>}
+              {labelText}
             </span>
           )}
         </div>
@@ -98,6 +112,7 @@ export const AIAssistant: React.FC = () => {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -105,7 +120,7 @@ export const AIAssistant: React.FC = () => {
   const currentProvider = AI_PROVIDERS.find(p => p.id === config.providerId);
   const isCustom = config.providerId === 'custom';
   // 阶段累积：每次发送前重置，onPhase 调用时追加
-  const phasesRef = useRef<Array<{ key: string; detail?: string; level?: number; failed?: boolean }>>([]);
+  const phasesRef = useRef<Array<{ key: string; detail?: string; level?: number; failed?: boolean; debugInfo?: string }>>([]);
 
   // 自动滚动到底部
   const scrollToBottom = useCallback(() => {
@@ -140,6 +155,16 @@ export const AIAssistant: React.FC = () => {
     }
     setSending(true);
 
+    // 构建消息历史（在添加新消息前获取，避免当前问题被重复发送）
+    const existingMessages = useAIStore.getState().messages;
+    const recentHistory: LLMMessage[] = existingMessages
+      .filter(m => m.role === 'user' || (m.role === 'assistant' && m.content && !m.loading && !m.error))
+      .slice(-6)
+      .map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content.replace(/<think>[\s\S]*?<\/think>\n?/g, '').trim(),
+      }));
+
     // 添加用户消息
     addMessage({ role: 'user', content: query });
 
@@ -152,13 +177,6 @@ export const AIAssistant: React.FC = () => {
     abortRef.current = abort;
 
     try {
-      // 构建消息历史（最多保留最近 6 条对话）
-      const historyMessages = useAIStore.getState().messages;
-      const recentHistory: LLMMessage[] = historyMessages
-        .filter(m => m.id !== aiMsgId && m.role !== 'assistant' || (m.role === 'assistant' && m.content && !m.loading))
-        .filter(m => m.id !== aiMsgId)
-        .slice(-6)
-        .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
 
       let accumulated = '';
       let thinkingAccum = '';
@@ -168,11 +186,16 @@ export const AIAssistant: React.FC = () => {
         query,
         recentHistory,
         {
-          onPhase: (phase, detail) => {
-            phasesRef.current = [
-              ...phasesRef.current,
-              { key: phase, detail },
-            ];
+          onPhase: (phase, detail, debugInfo) => {
+            const prev = phasesRef.current;
+            // 如果最后一项 key 相同且当前带 debugInfo，则更新最后一项（补充调试信息）
+            if (debugInfo && prev.length > 0 && prev[prev.length - 1].key === phase) {
+              const updated = [...prev];
+              updated[updated.length - 1] = { ...updated[updated.length - 1], detail: detail ?? updated[updated.length - 1].detail, debugInfo };
+              phasesRef.current = updated;
+            } else {
+              phasesRef.current = [...prev, { key: phase, detail, debugInfo }];
+            }
             updateMessage(aiMsgId, { phases: [...phasesRef.current] });
           },
           onChunk: (delta) => {
@@ -220,6 +243,46 @@ export const AIAssistant: React.FC = () => {
       handleSend();
     }
   };
+
+  const buildAssistantCopyText = useCallback((msg: {
+    phases?: Array<{ key: string; detail?: string; debugInfo?: string }>;
+    thinking?: string;
+    content: string;
+  }) => {
+    const sections: string[] = [];
+
+    if (msg.phases?.length) {
+      const phaseText = msg.phases.map((phase, index) => {
+        const phaseName = PHASE_CONFIG[phase.key]?.label || phase.key;
+        const title = phase.detail || phaseName;
+        const debug = phase.debugInfo ? `\n${phase.debugInfo}` : '';
+        return `${index + 1}. ${title}${debug}`;
+      }).join('\n\n');
+      sections.push(`过程日志\n${phaseText}`);
+    }
+
+    if (msg.thinking) {
+      sections.push(`思考过程\n${msg.thinking}`);
+    }
+
+    if (msg.content) {
+      sections.push(`最终回答\n${msg.content}`);
+    }
+
+    return sections.join('\n\n');
+  }, []);
+
+  const handleCopyAssistantMessage = useCallback((msgId: string, msg: {
+    phases?: Array<{ key: string; detail?: string; debugInfo?: string }>;
+    thinking?: string;
+    content: string;
+  }) => {
+    const fullText = buildAssistantCopyText(msg);
+    if (!fullText) return;
+    copyToClipboard(fullText);
+    setCopiedMsgId(msgId);
+    setTimeout(() => setCopiedMsgId(prev => (prev === msgId ? null : prev)), 1500);
+  }, [buildAssistantCopyText]);
 
   return (
     <div className="ai-assistant">
@@ -326,6 +389,19 @@ export const AIAssistant: React.FC = () => {
                 <div className={`ai-msg-bubble ${msg.error ? 'ai-msg-error' : ''}`}>
                   {msg.role === 'assistant' ? (
                     <>
+                      {!msg.loading && (msg.content || msg.phases?.length || msg.thinking) && (
+                        <button
+                          className="ai-msg-copy-btn"
+                          onClick={() => handleCopyAssistantMessage(msg.id, {
+                            phases: msg.phases,
+                            thinking: msg.thinking,
+                            content: msg.content,
+                          })}
+                          title="复制完整过程与回答"
+                        >
+                          {copiedMsgId === msg.id ? '已复制' : '复制全部'}
+                        </button>
+                      )}
                       {/* 执行阶段列表 */}
                       {msg.phases && msg.phases.length > 0 && (
                         <PhasesIndicator phases={msg.phases} loading={msg.loading} />
@@ -359,7 +435,7 @@ export const AIAssistant: React.FC = () => {
       {/* 快捷问题（对话中也显示） */}
       {messages.length > 0 && !sending && (
         <div className="ai-quick-bar">
-          {QUICK_PROMPTS.slice(0, 3).map((prompt, i) => (
+          {QUICK_PROMPTS.map((prompt, i) => (
             <button
               key={i}
               className="ai-quick-btn ai-quick-btn-sm"

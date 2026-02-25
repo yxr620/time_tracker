@@ -243,6 +243,26 @@
   border-bottom-left-radius: 4px;
 }
 
+.ai-msg-copy-btn {
+  display: block;
+  margin-left: auto;
+  margin-bottom: 8px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.4);
+  color: hsl(var(--muted-foreground));
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ai-msg-copy-btn:hover {
+  background: hsl(var(--muted) / 0.7);
+  color: hsl(var(--foreground));
+}
+
 .ai-msg-error {
   border-color: hsl(var(--destructive) / 0.3) !important;
   color: hsl(var(--destructive)) !important;
@@ -623,12 +643,14 @@
   opacity: 0.75;
 }
 
-/* 可展开的 AI 理解时间表达步骤 */
-.ai-phase-expandable {
+/* 可折叠的调试信息面板 */
+.ai-phase-debug {
   display: inline;
+  flex: 1;
+  min-width: 0;
 }
 
-.ai-phase-expandable-summary {
+.ai-phase-debug-summary {
   display: inline-flex;
   align-items: baseline;
   gap: 4px;
@@ -637,34 +659,37 @@
   list-style: none;
 }
 
-.ai-phase-expandable-summary::-webkit-details-marker {
+.ai-phase-debug-summary::-webkit-details-marker {
   display: none;
 }
 
-.ai-phase-expandable-summary::after {
+.ai-phase-debug-summary::after {
   content: ' ▶';
   font-size: 9px;
   opacity: 0.6;
+  transition: transform 0.15s ease;
 }
 
-details[open].ai-phase-expandable .ai-phase-expandable-summary::after {
+details[open].ai-phase-debug .ai-phase-debug-summary::after {
   content: ' ▼';
 }
 
-.ai-phase-expand-content {
+.ai-phase-debug-content {
   margin-top: 4px;
   margin-left: 0;
-  padding: 6px 8px;
+  padding: 8px 10px;
   background: hsl(var(--muted) / 0.4);
   border: 1px solid hsl(var(--border) / 0.5);
   border-radius: 6px;
   font-size: 11px;
-  font-family: monospace;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
   white-space: pre-wrap;
   word-break: break-all;
   color: hsl(var(--foreground));
-  max-height: 200px;
+  max-height: 300px;
   overflow-y: auto;
+  line-height: 1.5;
+  user-select: text;
 }
 
 /* ── Thinking 模型推理过程 ───────────────────────────────── */

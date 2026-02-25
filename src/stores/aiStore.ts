@@ -15,7 +15,14 @@ export interface ChatMessage {
   loading?: boolean;
   error?: boolean;
   /** 已完成的处理阶段列表（顺序累积，最后一项为当前阶段） */
-  phases?: Array<{ key: string; detail?: string; level?: number; failed?: boolean }>;
+  phases?: Array<{
+    key: string;
+    detail?: string;
+    level?: number;
+    failed?: boolean;
+    /** 可折叠的详细调试信息（JSON、prompt 文本等） */
+    debugInfo?: string;
+  }>;
   /** thinking 模型输出的推理过程（流式累积） */
   thinking?: string;
 }

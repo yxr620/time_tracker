@@ -23,7 +23,7 @@ export interface ToolCallInfo {
 }
 
 export interface ToolCallEngineCallbacks {
-    onPhase: (phase: string, detail?: string) => void;
+    onPhase: (phase: string, detail?: string, debugInfo?: string) => void;
     onChunk: (delta: string) => void;
     onThinking?: (delta: string) => void;
     onToolCall?: (info: ToolCallInfo) => void;
@@ -81,6 +81,8 @@ export async function runToolCallLoop(
     // 1. 构建 system prompt
     callbacks.onPhase('preparing', '构建上下文');
     const systemPrompt = await buildSystemPrompt();
+    // 准备完毕后，补充 debugInfo
+    callbacks.onPhase('preparing', undefined, systemPrompt);
 
     // 组装消息列表（system + 历史 + 当前问题）
     const messages: ChatMessage[] = [
@@ -95,7 +97,9 @@ export async function runToolCallLoop(
         round++;
         signal?.throwIfAborted();
 
-        callbacks.onPhase('thinking', round === 1 ? '分析问题' : '综合分析');
+        // 将当前发送给模型的消息列表作为 debugInfo
+        const thinkingDebug = formatMessagesDebug(messages);
+        callbacks.onPhase('thinking', round === 1 ? '分析问题' : '综合分析', thinkingDebug);
 
         try {
             // 非流式调用（带 tools）
@@ -107,9 +111,14 @@ export async function runToolCallLoop(
                 // （直接使用非流式结果也可以，但流式体验更好）
                 if (response.content) {
                     // 直接输出非流式结果
-                    callbacks.onPhase('answering');
+                    const directDebug = formatMessagesDebug(messages);
+                    callbacks.onPhase('answering', undefined, directDebug);
+                    // 传递 thinking 内容（如有）
+                    if (response.thinking) {
+                        callbacks.onThinking?.(response.thinking);
+                    }
                     callbacks.onChunk(response.content);
-                    return { content: response.content };
+                    return { content: response.content, thinking: response.thinking };
                 }
                 // 万一空内容，做一次流式请求
                 break;
@@ -139,6 +148,10 @@ export async function runToolCallLoop(
 
                 const result = await executeTool(tc.function.name, args);
 
+                // 构建工具调用的详细调试信息
+                const toolDebug = JSON.stringify({ tool: tc.function.name, args, result }, null, 2);
+                callbacks.onPhase('toolCall', toolLabel, toolDebug);
+
                 // 通知 UI
                 callbacks.onToolCall?.({
                     name: tc.function.name,
@@ -163,7 +176,8 @@ export async function runToolCallLoop(
     }
 
     // 3. 最终流式输出
-    callbacks.onPhase('answering');
+    const answeringDebug = formatMessagesDebug(messages);
+    callbacks.onPhase('answering', undefined, answeringDebug);
     signal?.throwIfAborted();
 
     let accumulated = '';
@@ -204,6 +218,42 @@ function formatToolLabel(name: string, args: Record<string, unknown>): string {
         default:
             return name;
     }
+}
+
+/**
+ * 格式化消息列表为可读的调试文本
+ */
+function formatMessagesDebug(messages: ChatMessage[]): string {
+    return messages.map((m, i) => {
+        const msg = m as any;
+        const role = msg.role.toUpperCase();
+        const parts: string[] = [];
+
+        // 主内容
+        const content = msg.content || '';
+        if (content) {
+            const display = content.length > 2000
+                ? content.slice(0, 2000) + `\n... (${content.length} chars total)`
+                : content;
+            parts.push(display);
+        }
+
+        // assistant 的 tool_calls
+        if (msg.tool_calls && msg.tool_calls.length > 0) {
+            const calls = msg.tool_calls.map((tc: any) => {
+                const name = tc.function?.name || 'unknown';
+                let argsStr = tc.function?.arguments || '{}';
+                try { argsStr = JSON.stringify(JSON.parse(argsStr), null, 2); } catch { /* keep raw */ }
+                return `  → ${name}(${argsStr})`;
+            }).join('\n');
+            parts.push(`[tool_calls]\n${calls}`);
+        }
+
+        // tool 消息的 tool_call_id
+        const suffix = msg.tool_call_id ? ` (tool_call_id: ${msg.tool_call_id})` : '';
+
+        return `── [${i + 1}] ${role}${suffix} ──\n${parts.join('\n') || '(empty)'}`;
+    }).join('\n\n');
 }
 
 /**

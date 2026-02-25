@@ -63,6 +63,61 @@ export async function chatStream(
   let full = '';
   let buffer = '';
 
+  // <think> tag streaming parser state (Qwen3 等模型在 content 中输出推理过程)
+  let insideThink = false;
+  let tagBuf = '';
+
+  /** 检查 text 末尾是否与 tag 的某个前缀匹配，返回匹配长度 */
+  function partialTagLen(text: string, tag: string): number {
+    const maxCheck = Math.min(tag.length - 1, text.length);
+    for (let i = maxCheck; i >= 1; i--) {
+      if (text.endsWith(tag.slice(0, i))) return i;
+    }
+    return 0;
+  }
+
+  /** 处理 content chunk，将 <think> 块路由到 onThinking */
+  function processContentChunk(raw: string) {
+    tagBuf += raw;
+    while (tagBuf.length > 0) {
+      if (insideThink) {
+        const endIdx = tagBuf.indexOf('</think>');
+        if (endIdx !== -1) {
+          const t = tagBuf.slice(0, endIdx);
+          if (t && onThinking) onThinking(t);
+          tagBuf = tagBuf.slice(endIdx + 8).replace(/^\n/, '');
+          insideThink = false;
+        } else {
+          const keep = partialTagLen(tagBuf, '</think>');
+          const safe = tagBuf.length - keep;
+          if (safe > 0) {
+            if (onThinking) onThinking(tagBuf.slice(0, safe));
+            tagBuf = tagBuf.slice(safe);
+          }
+          break;
+        }
+      } else {
+        const startIdx = tagBuf.indexOf('<think>');
+        if (startIdx !== -1) {
+          const before = tagBuf.slice(0, startIdx);
+          if (before) { full += before; onChunk(before); }
+          tagBuf = tagBuf.slice(startIdx + 7);
+          insideThink = true;
+        } else {
+          const keep = partialTagLen(tagBuf, '<think>');
+          const safe = tagBuf.length - keep;
+          if (safe > 0) {
+            const s = tagBuf.slice(0, safe);
+            full += s;
+            onChunk(s);
+            tagBuf = tagBuf.slice(safe);
+          }
+          break;
+        }
+      }
+    }
+  }
+
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -82,22 +137,31 @@ export async function chatStream(
         const delta = json.choices?.[0]?.delta;
         if (!delta) continue;
 
-        // 主回答 content
+        // 主回答 content（含 <think> 标签过滤）
         const content: string = delta.content || '';
         if (content) {
-          full += content;
-          onChunk(content);
+          processContentChunk(content);
         }
 
-        // Thinking 模型的推理过程（Qwen-QwQ / DeepSeek-R1 等）
+        // Thinking 模型的推理过程（Qwen-QwQ / DeepSeek-R1 等，使用独立字段，Ollama 使用 thinking）
         const reasoning: string =
-          delta.reasoning_content || delta.thinking_content || '';
+          delta.reasoning_content || delta.thinking_content || delta.thinking || '';
         if (reasoning && onThinking) {
           onThinking(reasoning);
         }
       } catch {
         // skip malformed JSON lines
       }
+    }
+  }
+
+  // 刷新 tag buffer 中的剩余内容
+  if (tagBuf) {
+    if (insideThink) {
+      if (onThinking) onThinking(tagBuf);
+    } else {
+      full += tagBuf;
+      onChunk(tagBuf);
     }
   }
 
@@ -154,6 +218,7 @@ export interface ChatMessageWithTools {
   role: 'assistant';
   content: string | null;
   tool_calls?: ToolCallResult[];
+  thinking?: string;
 }
 
 export async function chatWithTools(
@@ -192,9 +257,18 @@ export async function chatWithTools(
     throw new Error('LLM 响应格式异常：无 message');
   }
 
+  // Strip <think>...</think> blocks (Qwen3 等模型会在 content 中输出推理过程)
+  const rawContent = message.content || '';
+  let thinkingContent = message.reasoning_content || message.thinking_content || message.thinking || '';
+  const cleanContent = rawContent.replace(/<think>([\s\S]*?)<\/think>\n?/g, (_: string, t: string) => {
+    if (!thinkingContent) thinkingContent += t;
+    return '';
+  }).trim();
+
   return {
     role: 'assistant',
-    content: message.content || null,
+    content: cleanContent || null,
     tool_calls: message.tool_calls || undefined,
+    thinking: thinkingContent || undefined,
   };
 }
