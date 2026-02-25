@@ -46,6 +46,8 @@ export interface ProviderConfig {
 interface AIConfigStorage {
   activeProviderId: string;
   providers: Record<string, ProviderConfig>;
+  /** 用户保存的自定义模型名称列表（按 provider 分组） */
+  customModels?: Record<string, string[]>;
 }
 
 interface AIStore {
@@ -53,9 +55,15 @@ interface AIStore {
   config: AIConfig;
   /** 所有 provider 的独立配置 */
   providerConfigs: Record<string, ProviderConfig>;
+  /** 用户保存的自定义模型名称列表（按 provider 分组） */
+  customModels: Record<string, string[]>;
   isConfigured: () => boolean;
   updateConfig: (partial: Partial<AIConfig>) => void;
   setProvider: (providerId: string) => void;
+  /** 为当前 provider 添加自定义模型名称 */
+  addCustomModel: (model: string) => void;
+  /** 为当前 provider 删除自定义模型名称 */
+  removeCustomModel: (model: string) => void;
 
   // 对话
   messages: ChatMessage[];
@@ -127,11 +135,25 @@ function saveStorage(storage: AIConfigStorage) {
   } catch { /* ignore */ }
 }
 
+/** 兼容旧版 customModels（flat string[] → per-provider Record） */
+function migrateCustomModels(storage: AIConfigStorage): Record<string, string[]> {
+  const cm = storage.customModels;
+  if (!cm) return {};
+  // 已经是 Record 形式
+  if (!Array.isArray(cm)) return cm as Record<string, string[]>;
+  // 旧版: flat string[] → 归入 custom provider
+  if ((cm as unknown as string[]).length > 0) {
+    return { custom: cm as unknown as string[] };
+  }
+  return {};
+}
+
 const initialStorage = loadStorage();
 
 export const useAIStore = create<AIStore>((set, get) => ({
   config: resolveConfig(initialStorage),
   providerConfigs: initialStorage.providers,
+  customModels: migrateCustomModels(initialStorage),
   messages: [],
 
   isConfigured: () => {
@@ -154,7 +176,7 @@ export const useAIStore = create<AIStore>((set, get) => ({
     const providerConfigs = { ...prev.providerConfigs, [providerId]: updatedPc };
 
     set({ config, providerConfigs });
-    saveStorage({ activeProviderId: providerId, providers: providerConfigs });
+    saveStorage({ activeProviderId: providerId, providers: providerConfigs, customModels: prev.customModels });
   },
 
   setProvider: (providerId) => {
@@ -184,7 +206,29 @@ export const useAIStore = create<AIStore>((set, get) => ({
     providerConfigs[providerId] = targetPc;
 
     set({ config, providerConfigs });
-    saveStorage({ activeProviderId: providerId, providers: providerConfigs });
+    saveStorage({ activeProviderId: providerId, providers: providerConfigs, customModels: prev.customModels });
+  },
+
+  addCustomModel: (model) => {
+    const trimmed = model.trim();
+    if (!trimmed) return;
+    const prev = get();
+    const providerId = prev.config.providerId;
+    const existing = prev.customModels[providerId] || [];
+    if (existing.includes(trimmed)) return;
+    const customModels = { ...prev.customModels, [providerId]: [...existing, trimmed] };
+    set({ customModels });
+    saveStorage({ activeProviderId: providerId, providers: prev.providerConfigs, customModels });
+  },
+
+  removeCustomModel: (model) => {
+    const prev = get();
+    const providerId = prev.config.providerId;
+    const existing = prev.customModels[providerId] || [];
+    const updated = existing.filter(m => m !== model);
+    const customModels = { ...prev.customModels, [providerId]: updated };
+    set({ customModels });
+    saveStorage({ activeProviderId: providerId, providers: prev.providerConfigs, customModels });
   },
 
   addMessage: (msg) => {

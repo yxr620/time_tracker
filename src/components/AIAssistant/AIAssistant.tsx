@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { IonIcon } from '@ionic/react';
-import { sendOutline, trashOutline, stopCircleOutline, settingsOutline } from 'ionicons/icons';
+import { sendOutline, trashOutline, stopCircleOutline, settingsOutline, addOutline, closeCircleOutline } from 'ionicons/icons';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { useAIStore } from '../../stores/aiStore';
@@ -108,17 +108,24 @@ const PhasesIndicator: React.FC<{
 );
 
 export const AIAssistant: React.FC = () => {
-  const { config, providerConfigs, messages, addMessage, updateMessage, clearMessages, isConfigured, updateConfig, setProvider } = useAIStore();
+  const { config, providerConfigs, customModels, messages, addMessage, updateMessage, clearMessages, isConfigured, updateConfig, setProvider, addCustomModel, removeCustomModel } = useAIStore();
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
+  /** 自定义模型：是否处于手动输入新模型模式 */
+  const [customModelInput, setCustomModelInput] = useState(false);
+  const [customModelDraft, setCustomModelDraft] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const currentProvider = AI_PROVIDERS.find(p => p.id === config.providerId);
-  const isCustom = config.providerId === 'custom';
+  /** 当前 provider 的用户自定义模型 */
+  const providerCustomModels = customModels[config.providerId] || [];
+  /** 预设模型 + 用户添加的模型合并列表 */
+  const presetModels = currentProvider?.models || [];
+  const allModels = [...presetModels, ...providerCustomModels.filter(m => !presetModels.includes(m))];
   // 阶段累积：每次发送前重置，onPhase 调用时追加
   const phasesRef = useRef<Array<{ key: string; detail?: string; level?: number; failed?: boolean; debugInfo?: string }>>([]);
 
@@ -292,7 +299,7 @@ export const AIAssistant: React.FC = () => {
           <select
             className="ai-config-select ai-config-provider"
             value={config.providerId}
-            onChange={e => setProvider(e.target.value)}
+            onChange={e => { setProvider(e.target.value); setCustomModelInput(false); setCustomModelDraft(''); }}
             title="选择服务商"
           >
             {AI_PROVIDERS.map(p => (
@@ -309,26 +316,95 @@ export const AIAssistant: React.FC = () => {
             placeholder={currentProvider?.placeholder || 'API Key'}
             title="API Key（仅存储在本地）"
           />
-          {isCustom || (currentProvider?.models.length === 0) ? (
-            <input
-              className="ai-config-input ai-config-model"
-              type="text"
-              value={config.model}
-              onChange={e => updateConfig({ model: e.target.value })}
-              placeholder="模型名称"
-              title="模型"
-            />
+          {/* 模型选择：预设 + 用户添加，所有服务商通用 */}
+          {!customModelInput ? (
+            <div className="ai-custom-model-group">
+              <select
+                className="ai-config-select ai-config-model"
+                value={config.model}
+                onChange={e => {
+                  if (e.target.value === '__new__') {
+                    setCustomModelInput(true);
+                    setCustomModelDraft('');
+                  } else {
+                    updateConfig({ model: e.target.value });
+                  }
+                }}
+                title="选择模型"
+              >
+                {/* 当前值不在列表中时也要显示 */}
+                {!allModels.includes(config.model) && config.model && (
+                  <option value={config.model}>{config.model}</option>
+                )}
+                {allModels.map(m => (
+                  <option key={m} value={m}>
+                    {m}{providerCustomModels.includes(m) ? ' ★' : ''}
+                  </option>
+                ))}
+                <option value="__new__">+ 输入新模型</option>
+              </select>
+              {/* 仅用户添加的模型可删除 */}
+              {providerCustomModels.includes(config.model) && (
+                <button
+                  className="ai-icon-btn ai-custom-model-del"
+                  title="删除当前自定义模型"
+                  onClick={() => {
+                    removeCustomModel(config.model);
+                    const fallback = presetModels[0] || providerCustomModels.filter(m => m !== config.model)[0] || '';
+                    updateConfig({ model: fallback });
+                  }}
+                  style={{ width: 26, height: 26, fontSize: 14 }}
+                >
+                  <IonIcon icon={closeCircleOutline} />
+                </button>
+              )}
+            </div>
           ) : (
-            <select
-              className="ai-config-select ai-config-model"
-              value={config.model}
-              onChange={e => updateConfig({ model: e.target.value })}
-              title="选择模型"
-            >
-              {currentProvider?.models.map(m => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
+            <div className="ai-custom-model-group">
+              <input
+                className="ai-config-input ai-config-model"
+                type="text"
+                value={customModelDraft}
+                onChange={e => setCustomModelDraft(e.target.value)}
+                placeholder="输入模型名称，回车保存"
+                title="模型"
+                autoFocus
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && customModelDraft.trim()) {
+                    addCustomModel(customModelDraft.trim());
+                    updateConfig({ model: customModelDraft.trim() });
+                    setCustomModelInput(false);
+                    setCustomModelDraft('');
+                  } else if (e.key === 'Escape') {
+                    setCustomModelInput(false);
+                    setCustomModelDraft('');
+                  }
+                }}
+              />
+              <button
+                className="ai-icon-btn ai-custom-model-save"
+                title="保存模型"
+                onClick={() => {
+                  if (customModelDraft.trim()) {
+                    addCustomModel(customModelDraft.trim());
+                    updateConfig({ model: customModelDraft.trim() });
+                    setCustomModelInput(false);
+                    setCustomModelDraft('');
+                  }
+                }}
+                style={{ width: 26, height: 26, fontSize: 14 }}
+              >
+                <IonIcon icon={addOutline} />
+              </button>
+              <button
+                className="ai-icon-btn"
+                title="取消"
+                onClick={() => { setCustomModelInput(false); setCustomModelDraft(''); }}
+                style={{ width: 26, height: 26, fontSize: 14 }}
+              >
+                <IonIcon icon={closeCircleOutline} />
+              </button>
+            </div>
           )}
         </div>
         <div className="ai-header-actions">

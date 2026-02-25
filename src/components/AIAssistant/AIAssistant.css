@@ -732,3 +732,158 @@ details[open] .ai-thinking-summary::before {
   overflow-y: auto;
   background: hsl(var(--muted) / 0.15);
 }
+
+/* ── 自定义模型选择器（头部紧凑版） ────────────────────── */
+.ai-custom-model-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  min-width: 100px;
+  max-width: 260px;
+}
+
+.ai-custom-model-group .ai-config-model {
+  flex: 1;
+  min-width: 0;
+  max-width: none;
+}
+
+.ai-custom-model-del,
+.ai-custom-model-save {
+  flex-shrink: 0;
+  color: hsl(var(--muted-foreground));
+}
+
+.ai-custom-model-del:hover {
+  color: hsl(var(--destructive, 0 84% 60%));
+}
+
+.ai-custom-model-save:hover {
+  color: hsl(var(--primary));
+}
+
+/* ── 自定义模型管理（设置弹窗版） ────────────────────── */
+.ai-custom-models-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ai-custom-model-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: hsl(var(--secondary));
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 13px;
+  color: hsl(var(--foreground));
+}
+
+.ai-custom-model-chip:hover {
+  background: hsl(var(--accent));
+}
+
+.ai-custom-model-chip.active {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  font-weight: 500;
+}
+
+.ai-custom-model-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.ai-custom-model-chip-del {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 14px;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.ai-custom-model-chip-del:hover {
+  color: hsl(var(--destructive, 0 84% 60%));
+  background: hsl(var(--destructive, 0 84% 60%) / 0.1);
+}
+
+.ai-custom-model-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ai-custom-model-add input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  border-radius: 8px;
+  font-size: 13px;
+  color: hsl(var(--foreground));
+  outline: none;
+  font-family: inherit;
+}
+
+.ai-custom-model-add input:focus {
+  border-color: hsl(var(--primary) / 0.5);
+}
+
+.ai-custom-model-add input::placeholder {
+  color: hsl(var(--muted-foreground) / 0.5);
+}
+
+.ai-custom-model-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 14px;
+  border: 1px solid hsl(var(--primary) / 0.3);
+  background: hsl(var(--primary) / 0.08);
+  border-radius: 8px;
+  font-size: 13px;
+  color: hsl(var(--primary));
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.ai-custom-model-add-btn:hover:not(:disabled) {
+  background: hsl(var(--primary) / 0.15);
+}
+
+.ai-custom-model-add-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ai-custom-model-add-btn ion-icon {
+  font-size: 16px;
+}
+
+.ai-field-sublabel {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+  margin-top: 8px;
+  margin-bottom: 2px;
+  font-weight: 500;
+}

@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { IonIcon } from '@ionic/react';
-import { closeOutline, chevronDownOutline, chevronForwardOutline } from 'ionicons/icons';
+import { closeOutline, chevronDownOutline, chevronForwardOutline, addOutline, trashOutline } from 'ionicons/icons';
 import { useAIStore } from '../../stores/aiStore';
 import { AI_PROVIDERS } from '../../services/ai/providers';
 
@@ -14,11 +14,14 @@ interface AISettingsProps {
 }
 
 export const AISettings: React.FC<AISettingsProps> = ({ onClose }) => {
-  const { config, providerConfigs, updateConfig, setProvider } = useAIStore();
+  const { config, providerConfigs, customModels, updateConfig, setProvider, addCustomModel, removeCustomModel } = useAIStore();
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [newModelName, setNewModelName] = useState('');
 
   const currentProvider = AI_PROVIDERS.find(p => p.id === config.providerId);
-  const isCustom = config.providerId === 'custom';
+  /** 当前 provider 的用户自定义模型 */
+  const providerCustomModels = customModels[config.providerId] || [];
+  const presetModels = currentProvider?.models || [];
 
   const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setProvider(e.target.value);
@@ -71,23 +74,85 @@ export const AISettings: React.FC<AISettingsProps> = ({ onClose }) => {
         {/* 模型选择 */}
         <div className="ai-field">
           <label className="ai-field-label">模型</label>
-          {isCustom || (currentProvider?.models.length === 0) ? (
-            <input
-              type="text"
-              value={config.model}
-              onChange={e => updateConfig({ model: e.target.value })}
-              placeholder="输入模型名称"
-            />
-          ) : (
+          {/* 预设模型（如有） */}
+          {presetModels.length > 0 && (
             <select
-              value={config.model}
-              onChange={e => updateConfig({ model: e.target.value })}
+              value={presetModels.includes(config.model) ? config.model : ''}
+              onChange={e => {
+                if (e.target.value) updateConfig({ model: e.target.value });
+              }}
             >
-              {currentProvider?.models.map(m => (
+              {!presetModels.includes(config.model) && (
+                <option value="" disabled>预设模型</option>
+              )}
+              {presetModels.map(m => (
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
           )}
+          {/* 用户添加的自定义模型列表 */}
+          {providerCustomModels.length > 0 && (
+            <>
+              <div className="ai-field-sublabel">自定义模型</div>
+              <div className="ai-custom-models-list">
+                {providerCustomModels.map(m => (
+                  <div
+                    key={m}
+                    className={`ai-custom-model-chip ${m === config.model ? 'active' : ''}`}
+                    onClick={() => updateConfig({ model: m })}
+                  >
+                    <span className="ai-custom-model-chip-name">{m}</span>
+                    <button
+                      className="ai-custom-model-chip-del"
+                      onClick={e => {
+                        e.stopPropagation();
+                        removeCustomModel(m);
+                        if (m === config.model) {
+                          const fallback = presetModels[0] || providerCustomModels.filter(x => x !== m)[0] || '';
+                          if (fallback) updateConfig({ model: fallback });
+                        }
+                      }}
+                      title="删除"
+                    >
+                      <IonIcon icon={trashOutline} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          {/* 输入新模型名称 */}
+          <div className="ai-custom-model-add">
+            <input
+              type="text"
+              value={newModelName}
+              onChange={e => setNewModelName(e.target.value)}
+              placeholder="输入模型名称并保存"
+              onKeyDown={e => {
+                if (e.key === 'Enter' && newModelName.trim()) {
+                  addCustomModel(newModelName.trim());
+                  updateConfig({ model: newModelName.trim() });
+                  setNewModelName('');
+                }
+              }}
+            />
+            <button
+              className="ai-custom-model-add-btn"
+              onClick={() => {
+                if (newModelName.trim()) {
+                  addCustomModel(newModelName.trim());
+                  updateConfig({ model: newModelName.trim() });
+                  setNewModelName('');
+                }
+              }}
+              title="保存模型"
+              disabled={!newModelName.trim()}
+            >
+              <IonIcon icon={addOutline} />
+              保存
+            </button>
+          </div>
+          <div className="ai-field-hint">添加自定义模型后可在下拉列表中快速切换</div>
         </div>
 
         {/* 高级设置 */}
