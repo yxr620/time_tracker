@@ -19,7 +19,7 @@ export const ExportPage: React.FC = () => {
   const { isDark, setDark } = useDarkMode();
   const [importStrategy, setImportStrategy] = useState<typeof ImportStrategy.MERGE | typeof ImportStrategy.REPLACE>(ImportStrategy.MERGE);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [presentToast] = useIonToast();
+  const [presentToast, dismissToast] = useIonToast();
   const [presentAlert] = useIonAlert();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,16 +31,28 @@ export const ExportPage: React.FC = () => {
     presentToast({ message, duration, position: 'top', color });
   };
 
+  const showLoadingToast = async (message: string) => {
+    await dismissToast().catch(() => undefined);
+    await presentToast({ message, duration: 0, position: 'top', color: 'warning' });
+  };
+
+  const hideLoadingToast = async () => {
+    await dismissToast().catch(() => undefined);
+  };
+
   const handleExportFullJSON = async () => {
     try {
       setIsLoading(true);
-      showToast('正在导出全量数据...', 'warning', 0);
+      await showLoadingToast('正在导出全量数据...');
       await exportFullJSON();
+      await hideLoadingToast();
       showToast('全量导出成功', 'success');
     } catch (error) {
+      await hideLoadingToast();
       showToast('导出失败，请重试', 'danger');
       console.error('Export Full JSON failed:', error);
     } finally {
+      await hideLoadingToast();
       setIsLoading(false);
     }
   };
@@ -48,13 +60,16 @@ export const ExportPage: React.FC = () => {
   const handleExportIncrementalJSON = async () => {
     try {
       setIsLoading(true);
-      showToast('正在导出增量数据...', 'warning', 0);
+      await showLoadingToast('正在导出增量数据...');
       await exportIncrementalJSON();
+      await hideLoadingToast();
       showToast('增量导出成功', 'success');
     } catch (error) {
+      await hideLoadingToast();
       showToast('导出失败，请重试', 'danger');
       console.error('Export Incremental JSON failed:', error);
     } finally {
+      await hideLoadingToast();
       setIsLoading(false);
     }
   };
@@ -124,9 +139,11 @@ export const ExportPage: React.FC = () => {
 
     try {
       setIsLoading(true);
-      showToast('正在导入数据...', 'warning', 0);
+      await showLoadingToast('正在导入数据...');
 
       const result = await importFromJSON(file, importStrategy);
+
+      await hideLoadingToast();
 
       if (result.success) {
         showToast(result.message, 'success', 3000);
@@ -168,9 +185,11 @@ ${result.details.errors.length > 0 ? `\n⚠️ ${result.details.errors.length} �
         }
       }
     } catch (error) {
+      await hideLoadingToast();
       showToast('导入失败，请重试', 'danger');
       console.error('Import failed:', error);
     } finally {
+      await hideLoadingToast();
       setIsLoading(false);
       e.target.value = '';
     }

@@ -6,6 +6,7 @@
 
 import { create } from 'zustand';
 import { AI_PROVIDERS } from '../services/ai/providers';
+import { resolveAIDefaultConfig } from '../services/ai/envDefaults';
 
 export interface ChatMessage {
   id: string;
@@ -73,14 +74,16 @@ interface AIStore {
 }
 
 const STORAGE_KEY = 'ai-config';
+const ENV_DEFAULT_CONFIG = resolveAIDefaultConfig(import.meta.env as Record<string, unknown>, AI_PROVIDERS);
 
 /** 为指定 provider 生成默认配置 */
 function defaultProviderConfig(providerId: string): ProviderConfig {
   const provider = AI_PROVIDERS.find(p => p.id === providerId);
+  const useEnv = providerId === ENV_DEFAULT_CONFIG.providerId;
   return {
-    apiKey: '',
-    model: provider?.models[0] || '',
-    baseURL: provider?.baseURL || '',
+    apiKey: useEnv ? ENV_DEFAULT_CONFIG.apiKey : '',
+    model: (useEnv ? ENV_DEFAULT_CONFIG.model : '') || provider?.models[0] || '',
+    baseURL: (useEnv ? ENV_DEFAULT_CONFIG.baseURL : '') || provider?.baseURL || '',
   };
 }
 
@@ -124,7 +127,10 @@ function loadStorage(): AIConfigStorage {
 }
 
 function resolveConfig(storage: AIConfigStorage): AIConfig {
-  const id = storage.activeProviderId;
+  const fallbackId = ENV_DEFAULT_CONFIG.providerId || AI_PROVIDERS[0].id;
+  const id = AI_PROVIDERS.some(p => p.id === storage.activeProviderId)
+    ? storage.activeProviderId
+    : fallbackId;
   const pc = storage.providers[id] || defaultProviderConfig(id);
   return { providerId: id, baseURL: pc.baseURL, apiKey: pc.apiKey, model: pc.model };
 }
@@ -148,7 +154,31 @@ function migrateCustomModels(storage: AIConfigStorage): Record<string, string[]>
   return {};
 }
 
-const initialStorage = loadStorage();
+function normalizeStorage(storage: AIConfigStorage): AIConfigStorage {
+  const fallbackId = ENV_DEFAULT_CONFIG.providerId || AI_PROVIDERS[0].id;
+  const activeProviderId = AI_PROVIDERS.some(p => p.id === storage.activeProviderId)
+    ? storage.activeProviderId
+    : fallbackId;
+
+  const providers: Record<string, ProviderConfig> = {};
+  for (const p of AI_PROVIDERS) {
+    const fromStorage = storage.providers[p.id];
+    const defaults = defaultProviderConfig(p.id);
+    providers[p.id] = {
+      apiKey: fromStorage?.apiKey ?? defaults.apiKey,
+      model: fromStorage?.model || defaults.model,
+      baseURL: fromStorage?.baseURL || defaults.baseURL,
+    };
+  }
+
+  return {
+    activeProviderId,
+    providers,
+    customModels: storage.customModels,
+  };
+}
+
+const initialStorage = normalizeStorage(loadStorage());
 
 export const useAIStore = create<AIStore>((set, get) => ({
   config: resolveConfig(initialStorage),

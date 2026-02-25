@@ -69,6 +69,50 @@ src/stores/
 
 ---
 
+## 2.1 配置来源与优先级（UI + CLI 统一）
+
+AI 配置支持统一从 `.env` 提供默认值，并允许用户后续覆盖。
+
+### 环境变量
+
+优先读取以下变量（CLI 同时兼容无 `VITE_` 前缀的同名变量）：
+
+- `VITE_AI_PROVIDER_ID`（或 `VITE_AI_PROVIDER`）
+- `VITE_AI_MODEL`
+- `VITE_AI_BASE_URL`
+- `VITE_AI_API_KEY`
+
+### 生效规则
+
+1. **UI 首次默认值**：从 `.env` 读取
+2. **用户在 UI 修改后**：保存到 `localStorage(ai-config)`，后续优先使用用户值
+3. **CLI 调试**：直接读取 `.env`（可被命令行参数覆盖）
+
+这让 Web/Electron UI 与命令行调试保持同一套默认配置，避免重复维护。
+
+---
+
+## 2.2 CLI 调试入口
+
+新增脚本：
+
+```bash
+npm run ai:debug -- [options]
+```
+
+常用参数：
+
+- `--provider <id>`
+- `--model <name>`
+- `--base-url <url>`
+- `--api-key <key>`
+- `--data <file>`（加载导出的 JSON 数据）
+- `--verbose`（显示完整调试日志）
+
+CLI 会打印每轮 `phase`、`tool call`、工具参数与结果摘要，以及最终回答流式输出，便于调试 prompt / tool-use 行为。
+
+---
+
 ## 3. 工具定义 (`toolDefinitions.ts`)
 
 ### 3.1 工具列表

@@ -217,6 +217,28 @@ npm run dev
 
 在浏览器中打开显示的 URL，即可开始开发和测试。
 
+### 🤖 AI 助手默认配置（UI + CLI）
+
+可在 `.env` 中配置 AI 助手默认值：
+
+```dotenv
+VITE_AI_PROVIDER_ID=qwen
+VITE_AI_MODEL=qwen3.5-plus
+VITE_AI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+VITE_AI_API_KEY=
+```
+
+- UI 会把这些变量作为初始默认值（用户后续在设置页修改后，使用本地保存值）
+- CLI 调试也读取同一套变量（并兼容 `AI_*` 前缀）
+
+AI CLI 调试：
+
+```bash
+npm run ai:debug -- --data ./path/to/export.json --verbose
+```
+
+详细参数见 `npm run ai:debug -- --help`。
+
 ---
 
 ## 📱 Android 开发和部署

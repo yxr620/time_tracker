@@ -1,12 +1,19 @@
 /**
  * 工具调用循环引擎
- * 替代原 contextBuilder 的核心编排角色
  *
- * 流程：
- * 1. 构建 system prompt + tools 发起首次 LLM 请求（非流式）
- * 2. 如果 LLM 返回 tool_calls → 本地执行 → 结果回填 → 再次请求
- * 3. 循环直到 LLM 返回纯文本回答（或达到最大轮次）
- * 4. 最终回答以流式输出
+ * 阶段设计（每个阶段对应 UI/CLI 中的一行指示器）：
+ *
+ *   [preparing]  构建 system prompt（纯本地，无模型调用）
+ *   [thinking]   非流式调用 LLM（带 tools 声明）
+ *     ├─ 返回 tool_calls → 进入 [toolCall] 本地执行 → 结果回填 → 回到 [thinking]
+ *     ├─ 返回文本内容   → 直接输出，流程结束（无额外 answering 阶段）
+ *     └─ 返回空 / 异常  → 跳到 [answering]
+ *   [toolCall]   本地执行工具函数（查询 IndexedDB 等）
+ *   [answering]  流式调用 LLM 兜底（仅当 thinking 循环未产出文本时触发）
+ *
+ * 关键原则：一次模型调用 = 一个阶段。
+ * thinking 阶段的模型调用如果直接返回了回答，就不会产生 answering 阶段，
+ * 避免「同一内容看起来经历了两个阶段」的困惑。
  */
 
 import dayjs from 'dayjs';
@@ -98,29 +105,25 @@ export async function runToolCallLoop(
         signal?.throwIfAborted();
 
         // 将当前发送给模型的消息列表作为 debugInfo
+        const thinkingLabel = round === 1 ? '分析问题' : '综合分析';
         const thinkingDebug = formatMessagesDebug(messages);
-        callbacks.onPhase('thinking', round === 1 ? '分析问题' : '综合分析', thinkingDebug);
+        callbacks.onPhase('thinking', thinkingLabel, thinkingDebug);
 
         try {
             // 非流式调用（带 tools）
             const response = await chatWithTools(config, messages, TOOL_DEFINITIONS, signal);
 
-            // 如果没有 tool_calls → LLM 直接给出了回答
+            // 没有 tool_calls → 本轮 thinking 的模型调用已经给出了最终回答
             if (!response.tool_calls || response.tool_calls.length === 0) {
-                // 如果有内容，以流式方式重新生成最终回答
-                // （直接使用非流式结果也可以，但流式体验更好）
                 if (response.content) {
-                    // 直接输出非流式结果
-                    const directDebug = formatMessagesDebug(messages);
-                    callbacks.onPhase('answering', undefined, directDebug);
-                    // 传递 thinking 内容（如有）
+                    // 内容由本轮 thinking 直接产出，无需额外 answering 阶段
                     if (response.thinking) {
                         callbacks.onThinking?.(response.thinking);
                     }
                     callbacks.onChunk(response.content);
                     return { content: response.content, thinking: response.thinking };
                 }
-                // 万一空内容，做一次流式请求
+                // 空内容 → 跳出循环，由下方 answering 兜底流式生成
                 break;
             }
 
@@ -167,17 +170,18 @@ export async function runToolCallLoop(
                 } as any);
             }
         } catch (err: any) {
-            // 如果是 function calling 不支持的错误，fallback 到流式直接回答
+            // function calling 不支持 → 跳出循环，由 answering 兜底
             if (isFunctionCallingUnsupported(err)) {
+                callbacks.onPhase('thinking', thinkingLabel + '（不支持工具调用，切换为直接对话）');
                 break;
             }
             throw err;
         }
     }
 
-    // 3. 最终流式输出
+    // 3. 兜底：流式输出（仅当 thinking 循环未产出内容时到达此处）
     const answeringDebug = formatMessagesDebug(messages);
-    callbacks.onPhase('answering', undefined, answeringDebug);
+    callbacks.onPhase('answering', '流式生成', answeringDebug);
     signal?.throwIfAborted();
 
     let accumulated = '';

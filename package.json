@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "ai:debug": "tsx scripts/ai-debug-cli.ts"
   },
   "dependencies": {
     "@capacitor-community/electron": "^5.0.1",
@@ -47,10 +48,13 @@
     "@types/react-dom": "^18.3.7",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^5.0.4",
+    "dotenv": "^17.3.1",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.22",
+    "fake-indexeddb": "^6.2.5",
     "globals": "^16.4.0",
+    "tsx": "^4.21.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.45.0",
     "vite": "^7.1.7",
