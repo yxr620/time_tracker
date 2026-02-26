@@ -4,7 +4,6 @@ import {
   IonContent,
   IonButton,
   IonInput,
-  IonDatetime,
   useIonToast,
   useIonAlert,
   IonCard,
@@ -32,6 +31,7 @@ import dayjs from 'dayjs';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import type { Goal } from '../../services/db';
 import { suggestGoals } from '../../services/goalSuggester';
+import { TimeInjectionMatrix } from './TimeInjectionMatrix';
 
 dayjs.extend(isSameOrBefore);
 
@@ -44,7 +44,8 @@ export const GoalManager: React.FC = () => {
   const [newGoalName, setNewGoalName] = useState('');
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [editGoalName, setEditGoalName] = useState('');
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [matrixExpanded, setMatrixExpanded] = useState(false);
+  const [injectionMode, setInjectionMode] = useState<'relative' | 'absolute'>('relative');
   const [present] = useIonToast();
   const [presentAlert] = useIonAlert();
 
@@ -219,6 +220,26 @@ export const GoalManager: React.FC = () => {
 
   const isToday = currentDate === dayjs().format('YYYY-MM-DD');
 
+  // 注入矩阵：月份导航
+  const matrixMonth = dayjs(currentDate).format('YYYY-MM');
+  const canGoNextMonth = matrixMonth < dayjs().format('YYYY-MM');
+  const canGoPrevMonth = !earliestDate || matrixMonth > dayjs(earliestDate).format('YYYY-MM');
+
+  const handlePrevMonth = () => {
+    const target = dayjs(currentDate).subtract(1, 'month');
+    setSelectedDate(target.format('YYYY-MM-DD'));
+  };
+
+  const handleNextMonth = () => {
+    const target = dayjs(currentDate).add(1, 'month');
+    const today = dayjs();
+    if (target.isAfter(today, 'day')) {
+      setSelectedDate(today.format('YYYY-MM-DD'));
+    } else {
+      setSelectedDate(target.format('YYYY-MM-DD'));
+    }
+  };
+
   return (
     <div
       style={{
@@ -227,7 +248,7 @@ export const GoalManager: React.FC = () => {
         minHeight: '100%'
       }}
     >
-      {/* 日期选择器 */}
+      {/* 日期 + 时间 + 时间注入矩阵 */}
       <IonCard
         style={{
           margin: 0,
@@ -239,149 +260,93 @@ export const GoalManager: React.FC = () => {
           border: isDark ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(148, 163, 184, 0.12)'
         }}
       >
-        <IonCardContent style={{ paddingTop: '1rem', paddingBottom: '1rem' }}>
+        <IonCardContent style={{ padding: '10px 12px' }}>
+          {/* Compact header: ◀ date · time ▶ ▽ */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '8px'
+              gap: '2px'
             }}
           >
             <IonButton
-              fill="clear"
-              color="medium"
-              onClick={handlePrevDay}
-              disabled={isEarliestDay}
-              style={{
-                '--padding-start': '6px',
-                '--padding-end': '6px',
-                '--padding-top': '6px',
-                '--padding-bottom': '6px'
-              }}
+              fill="clear" color="medium" size="small"
+              onClick={handlePrevDay} disabled={isEarliestDay}
+              style={{ '--padding-start': '4px', '--padding-end': '4px', height: '32px', minHeight: '32px' }}
             >
-              <IonIcon icon={chevronBackOutline} slot="icon-only" />
+              <IonIcon icon={chevronBackOutline} slot="icon-only" style={{ fontSize: '16px' }} />
             </IonButton>
 
             <div
               style={{
                 flex: 1,
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '6px',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                padding: '4px 0',
+                userSelect: 'none'
               }}
-              onClick={() => setShowDatePicker(true)}
+              onClick={() => setMatrixExpanded(v => !v)}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '20px',
-                  fontWeight: 700,
-                  color: isDark ? '#f1f5f9' : '#0f172a'
-                }}
-              >
-                <IonIcon
-                  icon={calendarOutline}
-                  style={{ fontSize: '18px' }}
-                />
-                <span>{getDateDisplayText()}</span>
-              </div>
+              <IonIcon icon={calendarOutline} style={{ fontSize: '15px', color: isDark ? '#94a3b8' : '#64748b' }} />
+              <span style={{
+                fontSize: '15px', fontWeight: 700,
+                color: isDark ? '#f1f5f9' : '#0f172a'
+              }}>
+                {getDateDisplayText()}
+              </span>
+              <span style={{ color: isDark ? '#475569' : '#cbd5e1', fontSize: '14px' }}>·</span>
+              <span style={{
+                fontSize: '15px', fontWeight: 600,
+                color: '#3b82f6'
+              }}>
+                {formatDuration(totalDuration)}
+              </span>
             </div>
 
             <IonButton
-              fill="clear"
-              color="medium"
+              fill="clear" color="medium" size="small"
               onClick={handleNextDay}
-              style={{
-                '--padding-start': '6px',
-                '--padding-end': '6px',
-                '--padding-top': '6px',
-                '--padding-bottom': '6px'
-              }}
+              style={{ '--padding-start': '4px', '--padding-end': '4px', height: '32px', minHeight: '32px' }}
             >
-              <IonIcon icon={chevronForwardOutline} slot="icon-only" />
+              <IonIcon icon={chevronForwardOutline} slot="icon-only" style={{ fontSize: '16px' }} />
             </IonButton>
+
           </div>
 
-          {!isToday && (
-            <IonButton
-              expand="block"
-              size="default"
-              fill="outline"
-              color="primary"
-              onClick={handleToday}
-              style={{
-                marginTop: '16px',
-                '--border-radius': '16px',
-                '--padding-top': '10px',
-                '--padding-bottom': '10px',
-                fontWeight: 600
-              }}
-            >
-              回到今天
-            </IonButton>
+          {/* Expandable injection matrix */}
+          {matrixExpanded && (
+            <div>
+              {!isToday && (
+                <div style={{ textAlign: 'center', marginTop: '6px' }}>
+                  <IonButton
+                    fill="clear" size="small" color="primary"
+                    onClick={handleToday}
+                    style={{ fontSize: '13px', fontWeight: 600, height: '26px', minHeight: '26px' }}
+                  >
+                    回到今天
+                  </IonButton>
+                </div>
+              )}
+              <TimeInjectionMatrix
+                entries={entries}
+                month={matrixMonth}
+                selectedDate={currentDate}
+                injectionMode={injectionMode}
+                onInjectionModeChange={setInjectionMode}
+                onSelectDate={(date) => setSelectedDate(date)}
+                onPrevMonth={handlePrevMonth}
+                onNextMonth={handleNextMonth}
+                canGoNextMonth={canGoNextMonth}
+                canGoPrevMonth={canGoPrevMonth}
+                isDark={isDark}
+              />
+            </div>
           )}
         </IonCardContent>
       </IonCard>
-
-      {/* 日期选择弹窗 */}
-      <IonModal
-        isOpen={showDatePicker}
-        onDidDismiss={() => setShowDatePicker(false)}
-        initialBreakpoint={0.55}
-        breakpoints={[0, 0.55, 0.7]}
-      >
-        <IonContent className="ion-padding">
-          <IonDatetime
-            presentation="date"
-            value={currentDate}
-            min={earliestDate || undefined}
-            max={dayjs().format('YYYY-MM-DD')}
-            locale="zh-CN"
-            firstDayOfWeek={1}
-            onIonChange={(e) => {
-              const value = e.detail.value;
-              if (value) {
-                const dateStr = typeof value === 'string' ? value : value[0];
-                setSelectedDate(dateStr);
-              }
-              setShowDatePicker(false);
-            }}
-            style={{ width: '100%', margin: '0 auto' }}
-          />
-        </IonContent>
-      </IonModal>
-
-      {/* 统计信息 */}
-      {todayGoals.length > 0 && (
-        <IonCard
-          style={{
-            margin: 0,
-            marginBottom: '1rem',
-            borderRadius: '24px',
-            background: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255,255,255,0.95)',
-            boxShadow: isDark ? '0 12px 28px rgba(0, 0, 0, 0.3)' : '0 12px 28px rgba(15, 23, 42, 0.08)',
-            border: isDark ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(148, 163, 184, 0.12)'
-          }}
-        >
-          <IonCardContent style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
-            <div
-              style={{
-                textAlign: 'center',
-                fontSize: '34px',
-                fontWeight: 700,
-                color: isDark ? '#f1f5f9' : '#0f172a'
-              }}
-            >
-              {formatDuration(totalDuration)}
-            </div>
-          </IonCardContent>
-        </IonCard>
-      )}
 
       {/* 目标列表 */}
       <IonCard
