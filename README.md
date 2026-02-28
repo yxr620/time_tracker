@@ -1,4 +1,4 @@
-# 时间追踪工具 (Time Tracker)
+# Chrono (Time Tracker)
 
 一个基于 React + TypeScript + Capacitor 开发的个人时间追踪应用，支持 Web 和 Android 平台。
 
@@ -365,7 +365,7 @@ npm run electron:build
 - 直接双击安装即可使用。
 
 **数据存储说明**：
-- 桌面应用的数据存储在 macOS 的 `~/Library/Application Support/时间追踪工具/` 目录下。
+- 桌面应用的数据存储在 macOS 的 `~/Library/Application Support/Chrono/` 目录下。
 - 即使更新应用（只要 App ID 不变），数据也会自动保留。
 
 ---
@@ -468,7 +468,7 @@ npm run lint        # 运行 ESLint 检查代码
 **数据位置**：
 - **Web 端**：浏览器的 IndexedDB
 - **Android 端**：应用的 WebView 存储
-- **macOS 端**：`~/Library/Application Support/时间追踪工具/` 目录
+- **macOS 端**：`~/Library/Application Support/Chrono/` 目录
 
 **数据持久化**：
 - 数据保存在本地，不会丢失
@@ -601,7 +601,7 @@ Build → Rebuild Project
 - 浏览器开发者工具 → Application → Storage → Clear Site Data
 
 **Android 端**：
-- 设置 → 应用 → 时间追踪工具 → 清除数据
+- 设置 → 应用 → Chrono → 清除数据
 
 ### Q6: 如何在新设备上恢复数据？
 

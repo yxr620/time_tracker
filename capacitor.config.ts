@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.yxr.timetracker',
-  appName: '时间追踪工具',
+  appName: 'Chrono',
   webDir: 'dist',
   android: {
     allowMixedContent: true,

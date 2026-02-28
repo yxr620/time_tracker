@@ -14,8 +14,8 @@ export default defineConfig(({ mode }) => ({
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
       },
       manifest: {
-        name: '时间追踪工具',
-        short_name: '时间追踪',
+        name: 'Chrono',
+        short_name: 'Chrono',
         description: '个人时间追踪与管理工具',
         theme_color: '#1677ff',
         background_color: '#ffffff',
