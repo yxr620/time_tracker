@@ -54,9 +54,8 @@ src/services/ai/
 ├── toolCallEngine.ts    # 工具调用循环引擎（核心编排）
 ├── toolDefinitions.ts   # 工具 schema 定义 + 本地执行函数
 ├── llmClient.ts         # LLM 网络层（流式/非流式/工具调用）
-├── providers.ts         # 服务商预设配置
-├── contextBuilder.ts    # [遗留] 旧版上下文构建器（已弃用）
-└── intentParser.ts      # [遗留] 旧版正则时间解析（已弃用）
+├── envDefaults.ts       # .env 环境变量默认配置解析
+└── providers.ts         # 服务商预设配置
 
 src/components/AIAssistant/
 ├── AIAssistant.tsx      # 对话界面主组件

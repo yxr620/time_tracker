@@ -1,0 +1,25 @@
+/* ─── GoalManager responsive layout ─── */
+
+/* Desktop: dual-column body (left = goals, right = calendar) */
+@media (min-width: 1024px) {
+  .goal-manager-body {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  .goal-manager-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .goal-manager-right {
+    width: 320px;
+    flex-shrink: 0;
+  }
+
+  /* Widen the desktop-content max-width for GoalManager */
+  .goal-manager-root {
+    max-width: 960px !important;
+  }
+}

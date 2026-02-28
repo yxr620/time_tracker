@@ -32,6 +32,7 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import type { Goal } from '../../services/db';
 import { suggestGoals } from '../../services/goalSuggester';
 import { TimeInjectionMatrix } from './TimeInjectionMatrix';
+import './GoalManager.css';
 
 dayjs.extend(isSameOrBefore);
 
@@ -46,6 +47,14 @@ export const GoalManager: React.FC = () => {
   const [editGoalName, setEditGoalName] = useState('');
   const [matrixExpanded, setMatrixExpanded] = useState(false);
   const [injectionMode, setInjectionMode] = useState<'relative' | 'absolute'>('relative');
+
+  // Desktop breakpoint detection (same as App.tsx)
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [present] = useIonToast();
   const [presentAlert] = useIonAlert();
 
@@ -240,381 +249,401 @@ export const GoalManager: React.FC = () => {
     }
   };
 
+  // ─── Shared sub-components ────────────────────────────────────────
+
+  const dateHeaderContent = (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '2px'
+      }}
+    >
+      <IonButton
+        fill="clear" color="medium" size="small"
+        onClick={handlePrevDay} disabled={isEarliestDay}
+        style={{ '--padding-start': '4px', '--padding-end': '4px', height: '32px', minHeight: '32px' }}
+      >
+        <IonIcon icon={chevronBackOutline} slot="icon-only" style={{ fontSize: '16px' }} />
+      </IonButton>
+
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          cursor: isDesktop ? 'default' : 'pointer',
+          padding: '4px 0',
+          userSelect: 'none'
+        }}
+        onClick={isDesktop ? undefined : () => setMatrixExpanded(v => !v)}
+      >
+        <IonIcon icon={calendarOutline} style={{ fontSize: '15px', color: isDark ? '#94a3b8' : '#64748b' }} />
+        <span style={{
+          fontSize: '15px', fontWeight: 700,
+          color: isDark ? '#f1f5f9' : '#0f172a'
+        }}>
+          {getDateDisplayText()}
+        </span>
+        <span style={{ color: isDark ? '#475569' : '#cbd5e1', fontSize: '14px' }}>·</span>
+        <span style={{
+          fontSize: '15px', fontWeight: 600,
+          color: '#3b82f6'
+        }}>
+          {formatDuration(totalDuration)}
+        </span>
+      </div>
+
+      <IonButton
+        fill="clear" color="medium" size="small"
+        onClick={handleNextDay}
+        style={{ '--padding-start': '4px', '--padding-end': '4px', height: '32px', minHeight: '32px' }}
+      >
+        <IonIcon icon={chevronForwardOutline} slot="icon-only" style={{ fontSize: '16px' }} />
+      </IonButton>
+    </div>
+  );
+
+  const backToTodayButton = !isToday ? (
+    <div style={{ textAlign: 'center', marginTop: '6px' }}>
+      <IonButton
+        fill="clear" size="small" color="primary"
+        onClick={handleToday}
+        style={{ fontSize: '13px', fontWeight: 600, height: '26px', minHeight: '26px' }}
+      >
+        回到今天
+      </IonButton>
+    </div>
+  ) : null;
+
+  const matrixContent = (
+    <TimeInjectionMatrix
+      entries={entries}
+      month={matrixMonth}
+      selectedDate={currentDate}
+      injectionMode={injectionMode}
+      onInjectionModeChange={setInjectionMode}
+      onSelectDate={(date) => setSelectedDate(date)}
+      onPrevMonth={handlePrevMonth}
+      onNextMonth={handleNextMonth}
+      canGoNextMonth={canGoNextMonth}
+      canGoPrevMonth={canGoPrevMonth}
+      isDark={isDark}
+    />
+  );
+
+  const cardStyle = {
+    margin: 0,
+    borderRadius: '24px',
+    backdropFilter: 'blur(8px)',
+    background: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255,255,255,0.92)',
+    boxShadow: isDark ? '0 12px 28px rgba(0, 0, 0, 0.3)' : '0 12px 28px rgba(15, 23, 42, 0.08)',
+    border: isDark ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(148, 163, 184, 0.12)'
+  };
+
   return (
     <div
+      className="goal-manager-root"
       style={{
         padding: '16px',
         paddingBottom: '80px',
         minHeight: '100%'
       }}
     >
-      {/* 日期 + 时间 + 时间注入矩阵 */}
-      <IonCard
-        style={{
-          margin: 0,
-          marginBottom: '1rem',
-          borderRadius: '24px',
-          backdropFilter: 'blur(8px)',
-          background: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255,255,255,0.92)',
-          boxShadow: isDark ? '0 12px 28px rgba(0, 0, 0, 0.3)' : '0 12px 28px rgba(15, 23, 42, 0.08)',
-          border: isDark ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(148, 163, 184, 0.12)'
-        }}
-      >
+      {/* 日期切换头部 — 始终全宽 */}
+      <IonCard style={{ ...cardStyle, marginBottom: '1rem' }}>
         <IonCardContent style={{ padding: '10px 12px' }}>
-          {/* Compact header: ◀ date · time ▶ ▽ */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '2px'
-            }}
-          >
-            <IonButton
-              fill="clear" color="medium" size="small"
-              onClick={handlePrevDay} disabled={isEarliestDay}
-              style={{ '--padding-start': '4px', '--padding-end': '4px', height: '32px', minHeight: '32px' }}
-            >
-              <IonIcon icon={chevronBackOutline} slot="icon-only" style={{ fontSize: '16px' }} />
-            </IonButton>
+          {dateHeaderContent}
 
-            <div
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                cursor: 'pointer',
-                padding: '4px 0',
-                userSelect: 'none'
-              }}
-              onClick={() => setMatrixExpanded(v => !v)}
-            >
-              <IonIcon icon={calendarOutline} style={{ fontSize: '15px', color: isDark ? '#94a3b8' : '#64748b' }} />
-              <span style={{
-                fontSize: '15px', fontWeight: 700,
-                color: isDark ? '#f1f5f9' : '#0f172a'
-              }}>
-                {getDateDisplayText()}
-              </span>
-              <span style={{ color: isDark ? '#475569' : '#cbd5e1', fontSize: '14px' }}>·</span>
-              <span style={{
-                fontSize: '15px', fontWeight: 600,
-                color: '#3b82f6'
-              }}>
-                {formatDuration(totalDuration)}
-              </span>
-            </div>
-
-            <IonButton
-              fill="clear" color="medium" size="small"
-              onClick={handleNextDay}
-              style={{ '--padding-start': '4px', '--padding-end': '4px', height: '32px', minHeight: '32px' }}
-            >
-              <IonIcon icon={chevronForwardOutline} slot="icon-only" style={{ fontSize: '16px' }} />
-            </IonButton>
-
-          </div>
-
-          {/* Expandable injection matrix */}
-          {matrixExpanded && (
+          {/* Mobile: expandable injection matrix (inside header card) */}
+          {!isDesktop && matrixExpanded && (
             <div>
-              {!isToday && (
-                <div style={{ textAlign: 'center', marginTop: '6px' }}>
-                  <IonButton
-                    fill="clear" size="small" color="primary"
-                    onClick={handleToday}
-                    style={{ fontSize: '13px', fontWeight: 600, height: '26px', minHeight: '26px' }}
-                  >
-                    回到今天
-                  </IonButton>
-                </div>
-              )}
-              <TimeInjectionMatrix
-                entries={entries}
-                month={matrixMonth}
-                selectedDate={currentDate}
-                injectionMode={injectionMode}
-                onInjectionModeChange={setInjectionMode}
-                onSelectDate={(date) => setSelectedDate(date)}
-                onPrevMonth={handlePrevMonth}
-                onNextMonth={handleNextMonth}
-                canGoNextMonth={canGoNextMonth}
-                canGoPrevMonth={canGoPrevMonth}
-                isDark={isDark}
-              />
+              {backToTodayButton}
+              {matrixContent}
             </div>
           )}
         </IonCardContent>
       </IonCard>
 
-      {/* 目标列表 */}
-      <IonCard
-        style={{
-          margin: 0,
-          borderRadius: '24px',
-          background: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255,255,255,0.95)',
-          boxShadow: isDark ? '0 12px 28px rgba(0, 0, 0, 0.3)' : '0 12px 28px rgba(15, 23, 42, 0.08)',
-          border: isDark ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(148, 163, 184, 0.12)'
-        }}
-      >
-        <IonCardContent style={{ paddingBottom: 0 }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '12px'
-            }}
-          >
-            <IonText>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>
-                目标列表 ({todayGoals.length})
-              </h3>
-            </IonText>
-            <IonButton
-              size="small"
-              fill="clear"
-              color="medium"
-              onClick={() => setShowAddGoal(true)}
-              style={{
-                '--padding-start': '8px',
-                '--padding-end': '8px',
-                '--padding-top': '6px',
-                '--padding-bottom': '6px',
-                height: '32px',
-                fontSize: '16px',
-                fontWeight: 'bold'
-              }}
-            >
-              <IonIcon icon={addOutline} slot="start" style={{ fontSize: '18px' }} />
-              添加目标
-            </IonButton>
-          </div>
+      {/* ── Body: dual-column on desktop, stacked on mobile ── */}
+      <div className="goal-manager-body">
 
-          {todayGoals.length === 0 ? (
-            <div
-              style={{
-                padding: '32px 16px',
-                textAlign: 'center',
-                color: isDark ? '#94a3b8' : '#9ca3af'
-              }}
-            >
-              {!showSuggestions ? (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-                  <div>暂无目标，点击上方按钮添加</div>
-                  {isToday && (
-                    <IonButton
-                      fill="outline"
-                      size="small"
-                      color="primary"
-                      disabled={loadingSuggestions}
-                      onClick={async () => {
-                        setLoadingSuggestions(true);
-                        try {
-                          const result = await suggestGoals(todayGoals.map(g => g.name));
-                          if (result.length === 0) {
-                            present({ message: '暂无历史目标可推荐', duration: 1500, position: 'top', color: 'warning' });
-                          } else {
-                            setSuggestions(result);
-                            setSelectedSuggestions(new Set(result));
-                            setShowSuggestions(true);
-                          }
-                        } finally {
-                          setLoadingSuggestions(false);
-                        }
-                      }}
-                      style={{
-                        '--border-radius': '16px',
+        {/* ── Left: 目标列表 ── */}
+        <div className="goal-manager-left">
+          <IonCard style={cardStyle}>
+            <IonCardContent style={{ paddingBottom: 0 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '12px'
+                }}
+              >
+                <IonText>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>
+                    目标列表 ({todayGoals.length})
+                  </h3>
+                </IonText>
+                <IonButton
+                  size="small"
+                  fill="clear"
+                  color="medium"
+                  onClick={() => setShowAddGoal(true)}
+                  style={{
+                    '--padding-start': '8px',
+                    '--padding-end': '8px',
+                    '--padding-top': '6px',
+                    '--padding-bottom': '6px',
+                    height: '32px',
+                    fontSize: '16px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  <IonIcon icon={addOutline} slot="start" style={{ fontSize: '18px' }} />
+                  添加目标
+                </IonButton>
+              </div>
+
+              {todayGoals.length === 0 ? (
+                <div
+                  style={{
+                    padding: '32px 16px',
+                    textAlign: 'center',
+                    color: isDark ? '#94a3b8' : '#9ca3af'
+                  }}
+                >
+                  {!showSuggestions ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                      <div>暂无目标，点击上方按钮添加</div>
+                      {isToday && (
+                        <IonButton
+                          fill="outline"
+                          size="small"
+                          color="primary"
+                          disabled={loadingSuggestions}
+                          onClick={async () => {
+                            setLoadingSuggestions(true);
+                            try {
+                              const result = await suggestGoals(todayGoals.map(g => g.name));
+                              if (result.length === 0) {
+                                present({ message: '暂无历史目标可推荐', duration: 1500, position: 'top', color: 'warning' });
+                              } else {
+                                setSuggestions(result);
+                                setSelectedSuggestions(new Set(result));
+                                setShowSuggestions(true);
+                              }
+                            } finally {
+                              setLoadingSuggestions(false);
+                            }
+                          }}
+                          style={{
+                            '--border-radius': '16px',
+                            fontWeight: 600,
+                            fontSize: '14px'
+                          }}
+                        >
+                          {loadingSuggestions ? '加载中...' : '🪄 建议今日目标'}
+                        </IonButton>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'left' }}>
+                      <div style={{
+                        fontSize: '14px',
                         fontWeight: 600,
-                        fontSize: '14px'
-                      }}
-                    >
-                      {loadingSuggestions ? '加载中...' : '🪄 建议今日目标'}
-                    </IonButton>
+                        color: isDark ? '#e2e8f0' : '#334155',
+                        marginBottom: '12px',
+                        textAlign: 'center'
+                      }}>
+                        根据历史记录推荐
+                      </div>
+                      {suggestions.map(name => {
+                        const isChecked = selectedSuggestions.has(name);
+                        return (
+                          <div
+                            key={name}
+                            onClick={() => {
+                              const next = new Set(selectedSuggestions);
+                              if (isChecked) next.delete(name);
+                              else next.add(name);
+                              setSelectedSuggestions(next);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                              padding: '10px 12px',
+                              borderRadius: '12px',
+                              cursor: 'pointer',
+                              background: isChecked
+                                ? (isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)')
+                                : 'transparent',
+                              transition: 'background 0.15s',
+                              marginBottom: '4px'
+                            }}
+                          >
+                            <span style={{
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '6px',
+                              border: isChecked ? '2px solid #3b82f6' : `2px solid ${isDark ? '#475569' : '#cbd5e1'}`,
+                              background: isChecked ? '#3b82f6' : 'transparent',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                              fontSize: '12px',
+                              color: '#fff',
+                              transition: 'all 0.15s'
+                            }}>
+                              {isChecked && '✓'}
+                            </span>
+                            <span style={{
+                              fontSize: '15px',
+                              fontWeight: 500,
+                              color: isDark ? '#e2e8f0' : '#1e293b'
+                            }}>
+                              {name}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '12px', justifyContent: 'center' }}>
+                        <IonButton
+                          fill="clear"
+                          size="small"
+                          color="medium"
+                          onClick={() => {
+                            setShowSuggestions(false);
+                            setSuggestions([]);
+                            setSelectedSuggestions(new Set());
+                          }}
+                        >
+                          取消
+                        </IonButton>
+                        <IonButton
+                          size="small"
+                          disabled={selectedSuggestions.size === 0}
+                          onClick={async () => {
+                            for (const name of selectedSuggestions) {
+                              await addGoal({ name, date: currentDate, color: '#1677ff' });
+                            }
+                            present({
+                              message: `已添加 ${selectedSuggestions.size} 个目标`,
+                              duration: 1500,
+                              position: 'top',
+                              color: 'success'
+                            });
+                            setShowSuggestions(false);
+                            setSuggestions([]);
+                            setSelectedSuggestions(new Set());
+                          }}
+                          style={{ '--border-radius': '12px', fontWeight: 600 }}
+                        >
+                          添加 {selectedSuggestions.size} 个目标
+                        </IonButton>
+                      </div>
+                    </div>
                   )}
                 </div>
               ) : (
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: isDark ? '#e2e8f0' : '#334155',
-                    marginBottom: '12px',
-                    textAlign: 'center'
-                  }}>
-                    根据历史记录推荐
-                  </div>
-                  {suggestions.map(name => {
-                    const isChecked = selectedSuggestions.has(name);
+                <IonList
+                  style={{
+                    background: 'transparent',
+                    borderRadius: '16px',
+                    padding: 0
+                  }}
+                >
+                  {todayGoals.map((goal, index) => {
+                    const duration = calculateGoalDuration(goal.id!);
                     return (
-                      <div
-                        key={name}
-                        onClick={() => {
-                          const next = new Set(selectedSuggestions);
-                          if (isChecked) next.delete(name);
-                          else next.add(name);
-                          setSelectedSuggestions(next);
-                        }}
+                      <IonItem
+                        key={goal.id}
+                        lines={index === todayGoals.length - 1 ? 'none' : 'inset'}
                         style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          padding: '10px 12px',
-                          borderRadius: '12px',
-                          cursor: 'pointer',
-                          background: isChecked
-                            ? (isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)')
-                            : 'transparent',
-                          transition: 'background 0.15s',
-                          marginBottom: '4px'
+                          '--padding-start': '16px',
+                          '--padding-end': '12px',
+                          '--inner-padding-end': '0px',
+                          '--min-height': '68px',
+                          '--border-color': isDark ? 'rgba(71, 85, 105, 0.4)' : 'rgba(226, 232, 240, 0.8)',
+                          '--background': 'transparent'
                         }}
                       >
-                        <span style={{
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: '6px',
-                          border: isChecked ? '2px solid #3b82f6' : `2px solid ${isDark ? '#475569' : '#cbd5e1'}`,
-                          background: isChecked ? '#3b82f6' : 'transparent',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          fontSize: '12px',
-                          color: '#fff',
-                          transition: 'all 0.15s'
-                        }}>
-                          {isChecked && '✓'}
-                        </span>
-                        <span style={{
-                          fontSize: '15px',
-                          fontWeight: 500,
-                          color: isDark ? '#e2e8f0' : '#1e293b'
-                        }}>
-                          {name}
-                        </span>
-                      </div>
+                        <IonLabel>
+                          <h2
+                            style={{
+                              fontSize: '16px',
+                              fontWeight: 'bold',
+                              margin: '0 0 6px 0'
+                            }}
+                          >
+                            {goal.name}
+                          </h2>
+                          <p
+                            style={{
+                              fontSize: '15px',
+                              fontWeight: 600,
+                              color: '#1476ff',
+                              margin: 0
+                            }}
+                          >
+                            {formatDuration(duration)}
+                          </p>
+                        </IonLabel>
+                        <div slot="end" style={{ display: 'flex', gap: '2px' }}>
+                          <IonButton
+                            fill="clear"
+                            size="small"
+                            color="medium"
+                            onClick={() => handleEditGoal(goal)}
+                            style={{
+                              '--padding-start': '6px',
+                              '--padding-end': '6px',
+                              margin: 0,
+                              height: '34px'
+                            }}
+                          >
+                            <IonIcon icon={createOutline} style={{ fontSize: '18px' }} />
+                          </IonButton>
+                          <IonButton
+                            fill="clear"
+                            size="small"
+                            color="danger"
+                            onClick={() => handleDeleteGoal(goal)}
+                            style={{
+                              '--padding-start': '6px',
+                              '--padding-end': '6px',
+                              margin: 0,
+                              height: '34px'
+                            }}
+                          >
+                            <IonIcon icon={trashOutline} style={{ fontSize: '18px' }} />
+                          </IonButton>
+                        </div>
+                      </IonItem>
                     );
                   })}
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px', justifyContent: 'center' }}>
-                    <IonButton
-                      fill="clear"
-                      size="small"
-                      color="medium"
-                      onClick={() => {
-                        setShowSuggestions(false);
-                        setSuggestions([]);
-                        setSelectedSuggestions(new Set());
-                      }}
-                    >
-                      取消
-                    </IonButton>
-                    <IonButton
-                      size="small"
-                      disabled={selectedSuggestions.size === 0}
-                      onClick={async () => {
-                        for (const name of selectedSuggestions) {
-                          await addGoal({ name, date: currentDate, color: '#1677ff' });
-                        }
-                        present({
-                          message: `已添加 ${selectedSuggestions.size} 个目标`,
-                          duration: 1500,
-                          position: 'top',
-                          color: 'success'
-                        });
-                        setShowSuggestions(false);
-                        setSuggestions([]);
-                        setSelectedSuggestions(new Set());
-                      }}
-                      style={{ '--border-radius': '12px', fontWeight: 600 }}
-                    >
-                      添加 {selectedSuggestions.size} 个目标
-                    </IonButton>
-                  </div>
-                </div>
+                </IonList>
               )}
-            </div>
-          ) : (
-            <IonList
-              style={{
-                background: 'transparent',
-                borderRadius: '16px',
-                padding: 0
-              }}
-            >
-              {todayGoals.map((goal, index) => {
-                const duration = calculateGoalDuration(goal.id!);
-                return (
-                  <IonItem
-                    key={goal.id}
-                    lines={index === todayGoals.length - 1 ? 'none' : 'inset'}
-                    style={{
-                      '--padding-start': '16px',
-                      '--padding-end': '12px',
-                      '--inner-padding-end': '0px',
-                      '--min-height': '68px',
-                      '--border-color': isDark ? 'rgba(71, 85, 105, 0.4)' : 'rgba(226, 232, 240, 0.8)',
-                      '--background': 'transparent'
-                    }}
-                  >
-                    <IonLabel>
-                      <h2
-                        style={{
-                          fontSize: '16px',
-                          fontWeight: 'bold',
-                          margin: '0 0 6px 0'
-                        }}
-                      >
-                        {goal.name}
-                      </h2>
-                      <p
-                        style={{
-                          fontSize: '15px',
-                          fontWeight: 600,
-                          color: '#1476ff',
-                          margin: 0
-                        }}
-                      >
-                        {formatDuration(duration)}
-                      </p>
-                    </IonLabel>
-                    <div slot="end" style={{ display: 'flex', gap: '2px' }}>
-                      <IonButton
-                        fill="clear"
-                        size="small"
-                        color="medium"
-                        onClick={() => handleEditGoal(goal)}
-                        style={{
-                          '--padding-start': '6px',
-                          '--padding-end': '6px',
-                          margin: 0,
-                          height: '34px'
-                        }}
-                      >
-                        <IonIcon icon={createOutline} style={{ fontSize: '18px' }} />
-                      </IonButton>
-                      <IonButton
-                        fill="clear"
-                        size="small"
-                        color="danger"
-                        onClick={() => handleDeleteGoal(goal)}
-                        style={{
-                          '--padding-start': '6px',
-                          '--padding-end': '6px',
-                          margin: 0,
-                          height: '34px'
-                        }}
-                      >
-                        <IonIcon icon={trashOutline} style={{ fontSize: '18px' }} />
-                      </IonButton>
-                    </div>
-                  </IonItem>
-                );
-              })}
-            </IonList>
-          )}
-        </IonCardContent>
-      </IonCard>
+            </IonCardContent>
+          </IonCard>
+        </div>
+
+        {/* ── Right: 日历矩阵 (desktop only, always visible) ── */}
+        {isDesktop && (
+          <div className="goal-manager-right">
+            <IonCard style={cardStyle}>
+              <IonCardContent style={{ padding: '10px 12px' }}>
+                {backToTodayButton}
+                {matrixContent}
+              </IonCardContent>
+            </IonCard>
+          </div>
+        )}
+      </div>  {/* end goal-manager-body */}
 
       {/* 添加目标弹窗 (Ionic Sheet Modal) */}
       <IonModal
