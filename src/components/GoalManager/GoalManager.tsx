@@ -357,10 +357,11 @@ export const GoalManager: React.FC = () => {
         <IonCardContent style={{ padding: '10px 12px' }}>
           {dateHeaderContent}
 
+          {!isDesktop && backToTodayButton}
+
           {/* Mobile: expandable injection matrix (inside header card) */}
           {!isDesktop && matrixExpanded && (
             <div>
-              {backToTodayButton}
               {matrixContent}
             </div>
           )}
