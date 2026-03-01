@@ -31,7 +31,7 @@ export function useDarkMode() {
   useEffect(() => {
     const root = document.documentElement;
     const body = document.body;
-    
+
     if (isDark) {
       root.classList.add('dark');
       body.classList.add('dark');
@@ -39,18 +39,18 @@ export function useDarkMode() {
       root.classList.remove('dark');
       body.classList.remove('dark');
     }
-    
+
     // 保存偏好到 localStorage
     localStorage.setItem('darkMode', String(isDark));
 
     // 更新状态栏样式（仅在原生平台）
     if (Capacitor.isNativePlatform()) {
       try {
-        StatusBar.setStyle({ 
-          style: isDark ? Style.Dark : Style.Light 
+        StatusBar.setStyle({
+          style: isDark ? Style.Dark : Style.Light
         });
-        StatusBar.setBackgroundColor({ 
-          color: isDark ? '#0a0f1a' : '#ffffff' 
+        StatusBar.setBackgroundColor({
+          color: isDark ? '#020817' : '#ffffff'
         });
       } catch (error) {
         console.error('[DarkMode] 状态栏更新失败:', error);

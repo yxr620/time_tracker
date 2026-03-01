@@ -6,6 +6,31 @@ class MainViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(IOSWheelDateTimePickerPlugin())
     }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        updateWebViewBackground()
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            updateWebViewBackground()
+        }
+    }
+
+    private func updateWebViewBackground() {
+        // Match the CSS dark mode background: hsl(222.2, 84%, 4.9%) = #020817
+        let darkColor = UIColor(red: CGFloat(2)/CGFloat(255), green: CGFloat(8)/CGFloat(255), blue: CGFloat(23)/CGFloat(255), alpha: 1)
+        let lightColor = UIColor.white
+
+        let bgColor = traitCollection.userInterfaceStyle == .dark ? darkColor : lightColor
+
+        view.backgroundColor = bgColor
+        webView?.backgroundColor = bgColor
+        webView?.scrollView.backgroundColor = bgColor
+        webView?.isOpaque = false
+    }
 }
 
 @objc(IOSWheelDateTimePickerPlugin)

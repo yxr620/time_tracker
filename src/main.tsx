@@ -41,14 +41,14 @@ if (Capacitor.isNativePlatform()) {
   try {
     // 检查用户偏好或系统偏好
     const savedDarkMode = localStorage.getItem('darkMode');
-    const prefersDark = savedDarkMode === 'true' || 
+    const prefersDark = savedDarkMode === 'true' ||
       (savedDarkMode === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    
-    StatusBar.setStyle({ 
-      style: prefersDark ? Style.Dark : Style.Light 
+
+    StatusBar.setStyle({
+      style: prefersDark ? Style.Dark : Style.Light
     });
-    StatusBar.setBackgroundColor({ 
-      color: prefersDark ? '#0a0f1a' : '#ffffff' 
+    StatusBar.setBackgroundColor({
+      color: prefersDark ? '#020817' : '#ffffff'
     });
     StatusBar.setOverlaysWebView({ overlay: false });
   } catch (error) {
