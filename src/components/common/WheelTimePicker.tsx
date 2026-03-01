@@ -32,17 +32,13 @@ const MINUTES: readonly { value: string; label: string }[] = Array.from({ length
 const generateDateItems = (): { value: string; label: string }[] => {
   const today = dayjs();
   const todayStr = today.format('YYYY-MM-DD');
-  const yesterdayStr = today.subtract(1, 'day').format('YYYY-MM-DD');
-  const tomorrowStr = today.add(1, 'day').format('YYYY-MM-DD');
 
   return Array.from({ length: 31 }, (_, i) => {
     const d = today.add(i - 15, 'day');
     const dateStr = d.format('YYYY-MM-DD');
-    let label: string;
-    if (dateStr === todayStr) label = `今天 ${d.format('MM/DD')}`;
-    else if (dateStr === yesterdayStr) label = `昨天 ${d.format('MM/DD')}`;
-    else if (dateStr === tomorrowStr) label = `明天 ${d.format('MM/DD')}`;
-    else label = d.format('MM/DD ddd');
+    const label = dateStr === todayStr
+      ? `Today ${d.format('MM/DD')}`
+      : `${d.format('ddd')} ${d.format('MM/DD')}`;
     return { value: dateStr, label };
   });
 };

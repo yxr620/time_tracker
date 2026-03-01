@@ -227,12 +227,12 @@ private final class WheelDateTimePickerViewController: UIViewController, UIPicke
 
         let fallbackLabelFormatter = DateFormatter()
         fallbackLabelFormatter.calendar = calendar
-        fallbackLabelFormatter.locale = Locale.current
-        fallbackLabelFormatter.dateFormat = "MM/dd EEE"
+        fallbackLabelFormatter.locale = Locale(identifier: "en_US")
+        fallbackLabelFormatter.dateFormat = "EEE MM/dd"
 
         let shortDateFormatter = DateFormatter()
         shortDateFormatter.calendar = calendar
-        shortDateFormatter.locale = Locale.current
+        shortDateFormatter.locale = Locale(identifier: "en_US")
         shortDateFormatter.dateFormat = "MM/dd"
 
         var generated: [DateItem] = []
@@ -246,11 +246,7 @@ private final class WheelDateTimePickerViewController: UIViewController, UIPicke
             let label: String
 
             if calendar.isDate(date, inSameDayAs: today) {
-                label = "今天 \(shortDateFormatter.string(from: date))"
-            } else if let yesterday = calendar.date(byAdding: .day, value: -1, to: today), calendar.isDate(date, inSameDayAs: yesterday) {
-                label = "昨天 \(shortDateFormatter.string(from: date))"
-            } else if let tomorrow = calendar.date(byAdding: .day, value: 1, to: today), calendar.isDate(date, inSameDayAs: tomorrow) {
-                label = "明天 \(shortDateFormatter.string(from: date))"
+                label = "Today \(shortDateFormatter.string(from: date))"
             } else {
                 label = fallbackLabelFormatter.string(from: date)
             }
