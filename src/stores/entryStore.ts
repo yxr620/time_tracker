@@ -10,7 +10,7 @@ interface EntryStore {
   currentEntry: TimeEntry | null;
   nextStartTime: Date | null;
   nextEndTime: Date | null;
-  
+
   // 操作方法
   loadEntries: (date?: string) => Promise<void>;
   startTracking: (activity: string, goalId?: string, startTime?: Date, categoryId?: string) => Promise<void>;
@@ -33,20 +33,20 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
 
   loadEntries: async (_date?: string) => {
     const allEntries = await db.entries.toArray();
-    
+
     // 过滤掉软删除的记录
     const validEntries = allEntries.filter(e => !e.deleted);
-    
+
     // 手动按 startTime 降序排序（最新的在前）
     const entries = validEntries.sort((a, b) => {
       const timeA = new Date(a.startTime).getTime();
       const timeB = new Date(b.startTime).getTime();
       return timeB - timeA; // 降序
     });
-    
+
     // 找出进行中的记录
     const current = entries.find(e => e.endTime === null);
-    
+
     set({ entries, currentEntry: current || null });
   },
 
@@ -65,6 +65,7 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
     await syncDb.entries.add(entry);
     set({ currentEntry: entry });
     await get().loadEntries();
+    autoPush('开始计时后');
   },
 
   stopTracking: async () => {
@@ -123,12 +124,12 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
     // 找到最近的已完成记录（有结束时间的）
     const completedEntries = entries.filter(e => e.endTime !== null);
     if (completedEntries.length === 0) return null;
-    
+
     // 按结束时间排序，取最新的
-    const sortedByEndTime = completedEntries.sort((a, b) => 
+    const sortedByEndTime = completedEntries.sort((a, b) =>
       new Date(b.endTime!).getTime() - new Date(a.endTime!).getTime()
     );
-    
+
     return sortedByEndTime[0].endTime;
   },
 
@@ -136,7 +137,7 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
     const { entries } = get();
     const dayStart = dayjs(date).startOf('day');
     const dayEnd = dayjs(date).endOf('day');
-    
+
     // 筛选该日期内的已完成记录
     const dateEntries = entries.filter(e => {
       if (!e.endTime) return false;
@@ -144,14 +145,14 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
       // 记录的开始时间在当天范围内
       return entryStart.isAfter(dayStart) && entryStart.isBefore(dayEnd);
     });
-    
+
     if (dateEntries.length === 0) return null;
-    
+
     // 按结束时间排序，取最新的
-    const sortedByEndTime = dateEntries.sort((a, b) => 
+    const sortedByEndTime = dateEntries.sort((a, b) =>
       new Date(b.endTime!).getTime() - new Date(a.endTime!).getTime()
     );
-    
+
     return sortedByEndTime[0].endTime;
   },
 
@@ -159,11 +160,11 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
   getEarliestEntryDate: () => {
     const { entries } = get();
     if (entries.length === 0) return null;
-    
-    const sorted = [...entries].sort((a, b) => 
+
+    const sorted = [...entries].sort((a, b) =>
       new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
     );
-    
+
     return dayjs(sorted[0].startTime).format('YYYY-MM-DD');
   }
 }));

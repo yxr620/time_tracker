@@ -263,42 +263,6 @@ export const TimeInjectionMatrix: React.FC<Props> = ({
           })}
         </div>
 
-        {/* ── Legend ── */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-          gap: '3px', marginTop: '8px', paddingBottom: '2px',
-          fontSize: '10px',
-          color: isDark ? '#475569' : '#94a3b8'
-        }}>
-          <span>少</span>
-          {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
-            <div key={i} style={{
-              width: '10px',
-              height: '10px',
-              borderRadius: '2px',
-              background: cellBaseBg,
-              border: `1px solid ${cellStroke}`,
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              {ratio > 0 && (
-                <div style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  height: `${ratio * 100}%`,
-                  background: injectionColor,
-                  opacity: 0.28 + ratio * 0.62
-                }} />
-              )}
-            </div>
-          ))}
-          <span>多</span>
-          <span style={{ marginLeft: '4px' }}>
-            {injectionMode === 'relative' ? '按月相对' : '按绝对时长'}
-          </span>
-        </div>
       </div>
     </div>
   );
