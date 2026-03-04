@@ -219,168 +219,154 @@ export const SyncManagementPage: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* 自动同步设置 */}
+    <div className="sync-management-page">
+      <div className="sync-panel sync-panel--hero">
+        <div>
+          <div className="sync-panel-title">云端同步中心</div>
+          <div className="sync-panel-desc">统一管理 OSS 配置、自动同步与数据恢复操作</div>
+        </div>
+        <span className={`sync-status-pill ${isConfigured ? 'is-ok' : 'is-warning'}`}>
+          {isConfigured ? '已连接 OSS' : '未配置 OSS'}
+        </span>
+      </div>
+
       {isConfigured && !showOSSForm && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: 'hsl(var(--card))', borderRadius: '12px', border: '1px solid hsl(var(--border))' }}>
+        <div className="sync-panel sync-panel--toggle">
           <div>
-            <div style={{ fontSize: '15px', color: 'hsl(var(--foreground))', fontWeight: '500' }}>自动同步</div>
-            <div style={{ fontSize: '12px', color: 'hsl(var(--muted-foreground))', marginTop: '4px' }}>数据变更自动推送，启动时自动拉取</div>
+            <div className="sync-panel-title">自动同步</div>
+            <div className="sync-panel-desc">数据变更自动推送，启动时自动拉取</div>
           </div>
           <IonToggle checked={autoSyncEnabled} onIonChange={(e) => setAutoSyncEnabled(e.detail.checked)} />
         </div>
       )}
 
-      {/* OSS 配置区域 */}
       {(!isConfigured || showOSSForm) && (
-        <div>
-          <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px', color: 'hsl(var(--foreground))' }}>
-            {isConfigured ? '修改 OSS 配置' : 'OSS 配置'}
-          </div>
+        <div className="sync-panel">
+          <div className="sync-panel-title">{isConfigured ? '修改 OSS 配置' : 'OSS 配置'}</div>
           {!isConfigured && (
-            <div style={{ fontSize: '12px', color: 'hsl(var(--muted-foreground))', marginBottom: '8px', lineHeight: '1.3' }}>
-              请输入阿里云 OSS 配置信息以启用同步功能
-            </div>
+            <div className="sync-panel-desc">请输入阿里云 OSS 配置信息以启用同步功能</div>
           )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div>
-              <label style={{ fontSize: '12px', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '3px' }}>Region</label>
+
+          <div className="sync-form-grid">
+            <div className="sync-form-item">
+              <label className="sync-form-label">Region</label>
               <input
+                className="sync-form-input"
                 type="text"
                 value={ossForm.region}
                 onChange={(e) => setOSSForm(f => ({ ...f, region: e.target.value }))}
                 placeholder="oss-cn-hangzhou"
-                style={{
-                  width: '100%', padding: '8px 10px', fontSize: '13px',
-                  borderRadius: '8px', border: '1px solid hsl(var(--border))',
-                  backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))',
-                  boxSizing: 'border-box',
-                }}
               />
             </div>
-            <div>
-              <label style={{ fontSize: '12px', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '3px' }}>Bucket</label>
+            <div className="sync-form-item">
+              <label className="sync-form-label">Bucket</label>
               <input
+                className="sync-form-input"
                 type="text"
                 value={ossForm.bucket}
                 onChange={(e) => setOSSForm(f => ({ ...f, bucket: e.target.value }))}
                 placeholder="your-bucket-name"
-                style={{
-                  width: '100%', padding: '8px 10px', fontSize: '13px',
-                  borderRadius: '8px', border: '1px solid hsl(var(--border))',
-                  backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))',
-                  boxSizing: 'border-box',
-                }}
               />
             </div>
-            <div>
-              <label style={{ fontSize: '12px', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '3px' }}>AccessKey ID</label>
+            <div className="sync-form-item">
+              <label className="sync-form-label">AccessKey ID</label>
               <input
+                className="sync-form-input"
                 type="password"
                 value={ossForm.accessKeyId}
                 onChange={(e) => setOSSForm(f => ({ ...f, accessKeyId: e.target.value }))}
                 placeholder="your-access-key-id"
-                style={{
-                  width: '100%', padding: '8px 10px', fontSize: '13px',
-                  borderRadius: '8px', border: '1px solid hsl(var(--border))',
-                  backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))',
-                  boxSizing: 'border-box',
-                }}
               />
             </div>
-            <div>
-              <label style={{ fontSize: '12px', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '3px' }}>AccessKey Secret</label>
+            <div className="sync-form-item">
+              <label className="sync-form-label">AccessKey Secret</label>
               <input
+                className="sync-form-input"
                 type="password"
                 value={ossForm.accessKeySecret}
                 onChange={(e) => setOSSForm(f => ({ ...f, accessKeySecret: e.target.value }))}
                 placeholder="your-access-key-secret"
-                style={{
-                  width: '100%', padding: '8px 10px', fontSize: '13px',
-                  borderRadius: '8px', border: '1px solid hsl(var(--border))',
-                  backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))',
-                  boxSizing: 'border-box',
-                }}
               />
             </div>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-              <IonButton
-                expand="block"
-                onClick={() => {
-                  if (!ossForm.bucket || !ossForm.accessKeyId || !ossForm.accessKeySecret) {
-                    showToast('请填写 Bucket、AccessKey ID 和 AccessKey Secret', 'danger');
-                    return;
-                  }
-                  const config: OSSConfig = {
-                    region: ossForm.region || 'oss-cn-hangzhou',
-                    bucket: ossForm.bucket,
-                    accessKeyId: ossForm.accessKeyId,
-                    accessKeySecret: ossForm.accessKeySecret,
-                  };
-                  persistOSSConfig(config);
-                  setIsConfigured(true);
-                  setShowOSSForm(false);
-                  checkConfig();
-                  loadStats();
-                  showToast('OSS 配置已保存', 'success');
-                }}
-                style={{ '--border-radius': '10px', height: '42px', margin: '0', flex: 1 }}
-              >
-                💾 保存配置
-              </IonButton>
-              {isConfigured && (
-                <IonButton
-                  fill="outline"
-                  onClick={() => setShowOSSForm(false)}
-                  style={{ '--border-radius': '10px', height: '42px', margin: '0' }}
-                >
-                  取消
-                </IonButton>
-              )}
-            </div>
+          </div>
+
+          <div className="sync-inline-actions">
+            <IonButton
+              expand="block"
+              onClick={() => {
+                if (!ossForm.bucket || !ossForm.accessKeyId || !ossForm.accessKeySecret) {
+                  showToast('请填写 Bucket、AccessKey ID 和 AccessKey Secret', 'danger');
+                  return;
+                }
+                const config: OSSConfig = {
+                  region: ossForm.region || 'oss-cn-hangzhou',
+                  bucket: ossForm.bucket,
+                  accessKeyId: ossForm.accessKeyId,
+                  accessKeySecret: ossForm.accessKeySecret,
+                };
+                persistOSSConfig(config);
+                setIsConfigured(true);
+                setShowOSSForm(false);
+                checkConfig();
+                loadStats();
+                showToast('OSS 配置已保存', 'success');
+              }}
+              style={{ '--border-radius': '10px', height: '42px', margin: '0', flex: 1 }}
+            >
+              💾 保存配置
+            </IonButton>
             {isConfigured && (
               <IonButton
-                expand="block"
                 fill="outline"
-                color="danger"
-                onClick={() => {
-                  presentAlert({
-                    header: '清除 OSS 配置',
-                    message: '清除后将回退到 .env 环境变量配置。如果 .env 中没有配置，同步功能将被禁用。确定继续？',
-                    buttons: [
-                      { text: '取消', role: 'cancel' },
-                      {
-                        text: '确定清除',
-                        handler: () => {
-                          removeOSSConfig();
-                          setOSSForm({ region: '', bucket: '', accessKeyId: '', accessKeySecret: '' });
-                          const nowConfigured = isOSSConfigured();
-                          setIsConfigured(nowConfigured);
-                          if (!nowConfigured) setShowOSSForm(true);
-                          checkConfig();
-                          showToast('OSS 配置已清除', 'success');
-                        }
-                      }
-                    ]
-                  });
-                }}
+                onClick={() => setShowOSSForm(false)}
                 style={{ '--border-radius': '10px', height: '42px', margin: '0' }}
               >
-                🗑️ 清除应用内配置
+                取消
               </IonButton>
             )}
           </div>
+
+          {isConfigured && (
+            <IonButton
+              expand="block"
+              fill="outline"
+              color="danger"
+              onClick={() => {
+                presentAlert({
+                  header: '清除 OSS 配置',
+                  message: '清除后将回退到 .env 环境变量配置。如果 .env 中没有配置，同步功能将被禁用。确定继续？',
+                  buttons: [
+                    { text: '取消', role: 'cancel' },
+                    {
+                      text: '确定清除',
+                      handler: () => {
+                        removeOSSConfig();
+                        setOSSForm({ region: '', bucket: '', accessKeyId: '', accessKeySecret: '' });
+                        const nowConfigured = isOSSConfigured();
+                        setIsConfigured(nowConfigured);
+                        if (!nowConfigured) setShowOSSForm(true);
+                        checkConfig();
+                        showToast('OSS 配置已清除', 'success');
+                      }
+                    }
+                  ]
+                });
+              }}
+              style={{ '--border-radius': '10px', height: '42px', margin: '12px 0 0' }}
+            >
+              🗑️ 清除应用内配置
+            </IonButton>
+          )}
         </div>
       )}
 
       {isConfigured && !showOSSForm && (
         <>
-          {/* 增量同步 */}
-          <div>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px', color: 'hsl(var(--foreground))' }}>
-              增量同步（推荐）
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div className="sync-panel">
+            <div className="sync-panel-title">增量同步（推荐）</div>
+            <div className="sync-panel-desc">建议优先使用增量同步来降低冲突与耗时</div>
+
+            <div className="sync-action-group">
               <IonButton
                 expand="block"
                 onClick={handleIncrementalSync}
@@ -389,9 +375,8 @@ export const SyncManagementPage: React.FC = () => {
               >
                 {loading ? <IonSpinner name="dots" /> : '🔄 增量同步 (Push + Pull)'}
               </IonButton>
-              <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px', marginBottom: '2px' }}>
-                同步本地和云端的增量数据
-              </div>
+              <div className="sync-action-hint">同步本地和云端的增量数据</div>
+
               <IonButton
                 expand="block"
                 fill="outline"
@@ -401,9 +386,8 @@ export const SyncManagementPage: React.FC = () => {
               >
                 ⬆️ 增量 Push
               </IonButton>
-              <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px', marginBottom: '2px' }}>
-                上传本地未同步的数据到云端
-              </div>
+              <div className="sync-action-hint">上传本地未同步的数据到云端</div>
+
               <IonButton
                 expand="block"
                 fill="outline"
@@ -413,79 +397,63 @@ export const SyncManagementPage: React.FC = () => {
               >
                 ⬇️ 增量 Pull
               </IonButton>
-              <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px' }}>
-                下载云端的增量数据到本地
-              </div>
+              <div className="sync-action-hint">下载云端的增量数据到本地</div>
             </div>
           </div>
 
-          <div style={{ marginTop: '16px' }}></div>
-
-          {/* 同步状态 */}
-          <div>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px', color: 'hsl(var(--foreground))' }}>
-              同步状态
-            </div>
+          <div className="sync-panel">
+            <div className="sync-panel-title">同步状态</div>
             {stats ? (
-              <div className="sync-stats" style={{ fontSize: '13px', color: 'hsl(var(--muted-foreground))', lineHeight: '1.4' }}>
-                <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
-                  <span className="stat-label" style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>OSS 配置:</span>
-                  <span
-                    className="stat-value"
-                    style={{ fontWeight: '500', color: 'hsl(210 80% 55%)', cursor: 'pointer' }}
-                    onClick={() => setShowOSSForm(true)}
-                  >✅ 已配置（点击修改）</span>
+              <div className="sync-stats">
+                <div className="stat-item">
+                  <span className="stat-label">OSS 配置:</span>
+                  <span className="stat-value stat-value--link" onClick={() => setShowOSSForm(true)}>
+                    ✅ 已配置（点击修改）
+                  </span>
                 </div>
-                <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
-                  <span className="stat-label" style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>设备 ID:</span>
-                  <span className="stat-value" style={{ fontWeight: '500', fontFamily: 'monospace', fontSize: '12px', color: 'hsl(var(--foreground))' }}>{stats.deviceId.substring(0, 8)}...</span>
+                <div className="stat-item">
+                  <span className="stat-label">设备 ID:</span>
+                  <span className="stat-value stat-value--mono">{stats.deviceId.substring(0, 8)}...</span>
                 </div>
-                <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
-                  <span className="stat-label" style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>未同步操作:</span>
-                  <span className="stat-value" style={{ fontWeight: '500', color: stats.pendingOps > 0 ? 'hsl(var(--destructive))' : 'hsl(34 89% 52%)' }}>{stats.pendingOps} 条</span>
+                <div className="stat-item">
+                  <span className="stat-label">未同步操作:</span>
+                  <span className={`stat-value ${stats.pendingOps > 0 ? 'is-danger' : 'is-warning'}`}>{stats.pendingOps} 条</span>
                 </div>
-                <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
-                  <span className="stat-label" style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>已同步操作:</span>
-                  <span className="stat-value" style={{ fontWeight: '500', color: 'hsl(var(--foreground))' }}>{stats.syncedOps} 条</span>
+                <div className="stat-item">
+                  <span className="stat-label">已同步操作:</span>
+                  <span className="stat-value">{stats.syncedOps} 条</span>
                 </div>
-                <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
-                  <span className="stat-label" style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>数据记录:</span>
-                  <span className="stat-value" style={{ fontWeight: '500', color: 'hsl(var(--foreground))' }}>
+                <div className="stat-item">
+                  <span className="stat-label">数据记录:</span>
+                  <span className="stat-value">
                     {stats.totalEntries} 条目 / {stats.totalGoals} 目标 / {stats.totalCategories} 分类
                   </span>
                 </div>
-                <div className="stat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
-                  <span className="stat-label" style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>已删除记录:</span>
-                  <span className="stat-value" style={{ fontWeight: '500', color: (stats.deletedEntries + stats.deletedGoals + stats.deletedCategories) > 0 ? 'hsl(var(--destructive))' : 'hsl(var(--foreground))' }}>
+                <div className="stat-item">
+                  <span className="stat-label">已删除记录:</span>
+                  <span className={`stat-value ${(stats.deletedEntries + stats.deletedGoals + stats.deletedCategories) > 0 ? 'is-danger' : ''}`}>
                     {stats.deletedEntries + stats.deletedGoals + stats.deletedCategories} 条
                   </span>
                 </div>
               </div>
             ) : (
-              <div style={{ textAlign: 'center', padding: '12px' }}>
+              <div className="sync-loading-wrap">
                 <IonSpinner />
               </div>
             )}
           </div>
 
-          {/* 高级与危险操作 (折叠面板) */}
-          <div style={{ marginTop: '16px' }}>
+          <div className="sync-panel">
             <IonAccordionGroup>
               <IonAccordion value="advanced" style={{ background: 'transparent' }}>
                 <IonItem slot="header" style={{ '--border-radius': '8px', '--padding-start': '0', '--background': 'transparent' }}>
                   <IonLabel style={{ fontWeight: 'bold', color: 'hsl(var(--foreground))' }}>高级与数据恢复操作</IonLabel>
                 </IonItem>
-                <div className="ion-padding" slot="content" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '12px 0' }}>
-
-                  {/* 强制全量同步 */}
+                <div className="sync-advanced" slot="content">
                   <div>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px', color: 'hsl(var(--foreground))' }}>
-                      强制全量同步（数据恢复）
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'hsl(var(--muted-foreground))', marginBottom: '8px', lineHeight: '1.3' }}>
-                      ⚠️ 适用于数据恢复或重建同步状态的场景
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div className="sync-subsection-title">强制全量同步（数据恢复）</div>
+                    <div className="sync-subsection-desc">⚠️ 适用于数据恢复或重建同步状态的场景</div>
+                    <div className="sync-action-group">
                       <IonButton
                         expand="block"
                         color="warning"
@@ -495,9 +463,8 @@ export const SyncManagementPage: React.FC = () => {
                       >
                         ⚠️ 强制全量同步 (Push + Pull)
                       </IonButton>
-                      <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px', marginBottom: '2px' }}>
-                        重新上传并拉取所有数据
-                      </div>
+                      <div className="sync-action-hint">重新上传并拉取所有数据</div>
+
                       <IonButton
                         expand="block"
                         fill="outline"
@@ -508,9 +475,8 @@ export const SyncManagementPage: React.FC = () => {
                       >
                         强制全量 Push ⚠️
                       </IonButton>
-                      <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px', marginBottom: '2px' }}>
-                        重新上传所有本地数据到云端
-                      </div>
+                      <div className="sync-action-hint">重新上传所有本地数据到云端</div>
+
                       <IonButton
                         expand="block"
                         fill="outline"
@@ -521,18 +487,13 @@ export const SyncManagementPage: React.FC = () => {
                       >
                         强制全量 Pull ⚠️
                       </IonButton>
-                      <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px' }}>
-                        拉取并合并所有远程数据
-                      </div>
+                      <div className="sync-action-hint">拉取并合并所有远程数据</div>
                     </div>
                   </div>
 
-                  {/* 高级操作 */}
-                  <div style={{ borderTop: '1px solid hsl(var(--border))', paddingTop: '12px' }}>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '6px', color: 'hsl(var(--foreground))' }}>
-                      高级维护
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div className="sync-maintenance">
+                    <div className="sync-subsection-title">高级维护</div>
+                    <div className="sync-action-group">
                       <IonButton
                         expand="block"
                         fill="outline"
@@ -542,9 +503,8 @@ export const SyncManagementPage: React.FC = () => {
                       >
                         🔄 重置同步状态
                       </IonButton>
-                      <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px', marginBottom: '2px' }}>
-                        清空时间戳，下次 Pull 会重新拉取所有文件
-                      </div>
+                      <div className="sync-action-hint">清空时间戳，下次 Pull 会重新拉取所有文件</div>
+
                       <IonButton
                         expand="block"
                         fill="outline"
@@ -554,9 +514,8 @@ export const SyncManagementPage: React.FC = () => {
                       >
                         🗑️ 清理操作日志
                       </IonButton>
-                      <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px', marginBottom: '2px' }}>
-                        删除 7 天前的已同步操作日志
-                      </div>
+                      <div className="sync-action-hint">删除 7 天前的已同步操作日志</div>
+
                       <IonButton
                         expand="block"
                         fill="outline"
@@ -566,9 +525,7 @@ export const SyncManagementPage: React.FC = () => {
                       >
                         🗑️ 清理已删除数据
                       </IonButton>
-                      <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', paddingLeft: '6px' }}>
-                        物理删除 30 天前已软删除的记录
-                      </div>
+                      <div className="sync-action-hint">物理删除 30 天前已软删除的记录</div>
                     </div>
                   </div>
                 </div>
@@ -576,36 +533,30 @@ export const SyncManagementPage: React.FC = () => {
             </IonAccordionGroup>
           </div>
 
-          {/* 同步结果 */}
           {lastResult && (
-            <div style={{ marginTop: '8px', borderTop: '1px solid hsl(var(--border))', paddingTop: '10px' }}>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px', color: 'hsl(var(--foreground))' }}>
-                最近同步结果
-              </div>
-              <div className="sync-result" style={{ fontSize: '13px', color: 'hsl(var(--muted-foreground))', lineHeight: '1.4' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
-                  <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>状态:</span>
-                  <span style={{
-                    fontWeight: '500',
-                    color: lastResult.status === 'success' ? 'hsl(142 76% 36%)' : 'hsl(var(--destructive))'
-                  }}>
+            <div className="sync-panel">
+              <div className="sync-panel-title">最近同步结果</div>
+              <div className="sync-result">
+                <div className="result-item">
+                  <span className="result-label">状态:</span>
+                  <span className={`result-value ${lastResult.status === 'success' ? 'is-success' : 'is-danger'}`}>
                     {lastResult.status === 'success' ? '✅ 成功' : '❌ 失败'}
                   </span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
-                  <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>消息:</span>
-                  <span style={{ fontWeight: '500', fontSize: '13px', color: 'hsl(var(--foreground))' }}>{lastResult.message}</span>
+                <div className="result-item">
+                  <span className="result-label">消息:</span>
+                  <span className="result-value">{lastResult.message}</span>
                 </div>
                 {lastResult.pushedCount !== undefined && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid hsl(var(--border))' }}>
-                    <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>上传:</span>
-                    <span style={{ fontWeight: '500', color: 'hsl(var(--foreground))' }}>↑ {lastResult.pushedCount} 条</span>
+                  <div className="result-item">
+                    <span className="result-label">上传:</span>
+                    <span className="result-value">↑ {lastResult.pushedCount} 条</span>
                   </div>
                 )}
                 {lastResult.pulledCount !== undefined && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
-                    <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '13px' }}>下载:</span>
-                    <span style={{ fontWeight: '500', color: 'hsl(var(--foreground))' }}>↓ {lastResult.pulledCount} 条</span>
+                  <div className="result-item">
+                    <span className="result-label">下载:</span>
+                    <span className="result-value">↓ {lastResult.pulledCount} 条</span>
                   </div>
                 )}
               </div>
