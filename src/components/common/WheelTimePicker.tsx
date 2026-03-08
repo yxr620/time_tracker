@@ -106,8 +106,8 @@ const ScrollColumn = forwardRef<ScrollColumnHandle, ScrollColumnProps>(({
       return;
     }
 
-    // 值被外部修改时，同步滚动位置（避免干扰用户正在进行的滚动）
-    if (Math.abs(el.scrollTop - target) > ITEM_HEIGHT * 0.5) {
+    // 值被外部修改时，同步滚动位置（避免干扰用户正在进行的滚动或点击触发的平滑滚动）
+    if (!programmaticRef.current && Math.abs(el.scrollTop - target) > ITEM_HEIGHT * 0.5) {
       programmaticRef.current = true;
       el.scrollTop = target;
       requestAnimationFrame(() => { programmaticRef.current = false; });
@@ -170,9 +170,17 @@ const ScrollColumn = forwardRef<ScrollColumnHandle, ScrollColumnProps>(({
       } as React.CSSProperties}
     >
       <div style={{ height: `${SCROLL_PADDING}px`, flexShrink: 0 }} />
-      {items.map((item) => (
+      {items.map((item, index) => (
         <div
           key={item.value}
+          onClick={() => {
+            const el = scrollRef.current;
+            if (!el || item.value === selectedValue) return;
+            programmaticRef.current = true;
+            el.scrollTo({ top: index * ITEM_HEIGHT, behavior: 'smooth' });
+            onChange(item.value);
+            setTimeout(() => { programmaticRef.current = false; }, 300);
+          }}
           style={{
             height: `${ITEM_HEIGHT}px`,
             scrollSnapAlign: 'center',
@@ -186,6 +194,7 @@ const ScrollColumn = forwardRef<ScrollColumnHandle, ScrollColumnProps>(({
             transition: 'color 0.15s, font-weight 0.15s',
             flexShrink: 0,
             userSelect: 'none',
+            cursor: 'pointer',
           }}
         >
           {item.label}
@@ -262,8 +271,8 @@ export const WheelTimePicker = forwardRef<WheelTimePickerHandle, WheelTimePicker
       <div style={{
         position: 'absolute',
         top: '50%',
-        left: '8px',
-        right: '8px',
+        left: '2px',
+        right: '2px',
         height: `${ITEM_HEIGHT}px`,
         transform: 'translateY(-50%)',
         background: isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(241, 245, 249, 0.8)',
