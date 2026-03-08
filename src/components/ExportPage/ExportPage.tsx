@@ -198,10 +198,6 @@ ${result.details.errors.length > 0 ? `\n⚠️ ${result.details.errors.length} �
   return (
     <div className="page-content-wrapper export-page">
       <div className="export-page-sections">
-        <section className="export-overview">
-          <h2 className="export-overview-title">设置中心</h2>
-          <p className="export-overview-desc">集中管理同步、主题与数据导入导出</p>
-        </section>
 
         {/* 同步管理 */}
         <section className="export-section">
@@ -214,10 +210,10 @@ ${result.details.errors.length > 0 ? `\n⚠️ ${result.details.errors.length} �
         {/* 通用设置 */}
         <section className="export-section">
           <h3 className="export-section-title">通用设置</h3>
-          <div className="export-setting-row">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'hsl(var(--card))', borderRadius: '12px', border: '1px solid hsl(var(--border))' }}>
             <div>
-              <div className="export-setting-title">深色模式</div>
-              <div className="export-setting-desc">切换应用主题外观</div>
+              <div style={{ fontSize: '15px', color: 'hsl(var(--foreground))', fontWeight: '500' }}>深色模式</div>
+              <div style={{ fontSize: '12px', color: 'hsl(var(--muted-foreground))', marginTop: '4px' }}>切换应用主题外观</div>
             </div>
             <IonToggle checked={isDark} onIonChange={(e) => setDark(e.detail.checked)} />
           </div>
