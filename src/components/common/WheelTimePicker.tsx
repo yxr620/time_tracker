@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useRef, useEffect, useCallback, useMemo, useImperativeHandle, forwardRef } from 'react';
 import dayjs from 'dayjs';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
@@ -45,6 +45,10 @@ const generateDateItems = (): { value: string; label: string }[] => {
 
 // ============ ScrollColumn（原生 scroll-snap 滚轮列）============
 
+export interface ScrollColumnHandle {
+  getCurrentValue: () => string;
+}
+
 interface ScrollColumnProps {
   items: readonly { value: string; label: string }[];
   selectedValue: string;
@@ -54,10 +58,10 @@ interface ScrollColumnProps {
   fontFamily?: string;
 }
 
-const ScrollColumn: React.FC<ScrollColumnProps> = React.memo(({
+const ScrollColumn = forwardRef<ScrollColumnHandle, ScrollColumnProps>(({
   items, selectedValue, onChange, isDark,
   fontSize = 18, fontFamily,
-}) => {
+}, ref) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const programmaticRef = useRef(false);
   const initializedRef = useRef(false);
@@ -70,6 +74,17 @@ const ScrollColumn: React.FC<ScrollColumnProps> = React.memo(({
     () => Math.max(0, items.findIndex(i => i.value === selectedValue)),
     [items, selectedValue]
   );
+
+  // 暴露 getCurrentValue：直接从 scrollTop 计算当前选中值
+  useImperativeHandle(ref, () => ({
+    getCurrentValue: () => {
+      const el = scrollRef.current;
+      if (!el) return selectedValue;
+      const idx = Math.round(el.scrollTop / ITEM_HEIGHT);
+      const clamped = Math.max(0, Math.min(idx, items.length - 1));
+      return items[clamped].value;
+    },
+  }), [items, selectedValue]);
 
   // 同步滚动位置到选中值
   useEffect(() => {
@@ -185,21 +200,44 @@ ScrollColumn.displayName = 'ScrollColumn';
 
 // ============ WheelTimePicker ============
 
+export interface WheelTimePickerHandle {
+  getCurrentValue: () => Date;
+}
+
 interface WheelTimePickerProps {
   value: Date;
   onChange: (date: Date) => void;
   isDark: boolean;
 }
 
-export const WheelTimePicker: React.FC<WheelTimePickerProps> = ({ value, onChange, isDark }) => {
+export const WheelTimePicker = forwardRef<WheelTimePickerHandle, WheelTimePickerProps>(({ value, onChange, isDark }, ref) => {
   const dateItems = useMemo(() => generateDateItems(), []);
   // 用 ref 持有最新 value，使回调函数引用稳定
   const valueRef = useRef(value);
   valueRef.current = value;
 
+  const dateColRef = useRef<ScrollColumnHandle>(null);
+  const hourColRef = useRef<ScrollColumnHandle>(null);
+  const minuteColRef = useRef<ScrollColumnHandle>(null);
+
   const dateVal = dayjs(value).format('YYYY-MM-DD');
   const hourVal = dayjs(value).format('HH');
   const minuteVal = dayjs(value).format('mm');
+
+  // 暴露 getCurrentValue：从三列的 scrollTop 实时计算当前值
+  useImperativeHandle(ref, () => ({
+    getCurrentValue: () => {
+      const dateStr = dateColRef.current?.getCurrentValue() ?? dateVal;
+      const hourStr = hourColRef.current?.getCurrentValue() ?? hourVal;
+      const minuteStr = minuteColRef.current?.getCurrentValue() ?? minuteVal;
+      return dayjs(dateStr)
+        .hour(parseInt(hourStr, 10))
+        .minute(parseInt(minuteStr, 10))
+        .second(0)
+        .millisecond(0)
+        .toDate();
+    },
+  }), [dateVal, hourVal, minuteVal]);
 
   const updateDate = useCallback((v: string) => {
     const cur = dayjs(valueRef.current);
@@ -244,6 +282,7 @@ export const WheelTimePicker: React.FC<WheelTimePickerProps> = ({ value, onChang
         WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)',
       }}>
         <ScrollColumn
+          ref={dateColRef}
           items={dateItems}
           selectedValue={dateVal}
           onChange={updateDate}
@@ -251,6 +290,7 @@ export const WheelTimePicker: React.FC<WheelTimePickerProps> = ({ value, onChang
           fontSize={16}
         />
         <ScrollColumn
+          ref={hourColRef}
           items={HOURS}
           selectedValue={hourVal}
           onChange={updateHour}
@@ -259,6 +299,7 @@ export const WheelTimePicker: React.FC<WheelTimePickerProps> = ({ value, onChang
           fontFamily="Monaco, Menlo, monospace"
         />
         <ScrollColumn
+          ref={minuteColRef}
           items={MINUTES}
           selectedValue={minuteVal}
           onChange={updateMinute}
@@ -283,4 +324,6 @@ export const WheelTimePicker: React.FC<WheelTimePickerProps> = ({ value, onChang
       }}>:</div>
     </div>
   );
-};
+});
+
+WheelTimePicker.displayName = 'WheelTimePicker';

@@ -288,12 +288,17 @@ private final class WheelDateTimePickerViewController: UIViewController, UIPicke
             return
         }
 
+        // 直接从 pickerView 读取当前选中行（惯性滚动中也能返回正确值）
+        let dateRow = min(max(pickerView.selectedRow(inComponent: 0), 0), dateItems.count - 1)
+        let hourRow = min(max(pickerView.selectedRow(inComponent: 1), 0), 23)
+        let minuteRow = min(max(pickerView.selectedRow(inComponent: 2), 0), 59)
+
         let calendar = Calendar.current
-        let baseDate = dateItems[selectedDateIndex].date
+        let baseDate = dateItems[dateRow].date
 
         var components = calendar.dateComponents([.year, .month, .day], from: baseDate)
-        components.hour = selectedHour
-        components.minute = selectedMinute
+        components.hour = hourRow
+        components.minute = minuteRow
         components.second = 0
         components.nanosecond = 0
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import type { WheelTimePickerHandle } from '../common/WheelTimePicker';
 import {
   IonButton,
   IonInput,
@@ -146,6 +147,8 @@ export const TimeEntryForm: React.FC = () => {
   const [endPickerVisible, setEndPickerVisible] = useState(false);
   const [startDraftValue, setStartDraftValue] = useState<Date>(() => new Date());
   const [endDraftValue, setEndDraftValue] = useState<Date>(() => new Date());
+  const startPickerRef = useRef<WheelTimePickerHandle>(null);
+  const endPickerRef = useRef<WheelTimePickerHandle>(null);
   const [elapsed, setElapsed] = useState('00:00:00');
   const [present] = useIonToast();
 
@@ -673,8 +676,9 @@ export const TimeEntryForm: React.FC = () => {
               <IonButton
                 fill="clear"
                 onClick={() => {
-                  setStartTime(startDraftValue);
-                  setSelectedDate(dayjs(startDraftValue).format('YYYY-MM-DD'));
+                  const liveValue = startPickerRef.current?.getCurrentValue() ?? startDraftValue;
+                  setStartTime(liveValue);
+                  setSelectedDate(dayjs(liveValue).format('YYYY-MM-DD'));
                   setStartPickerVisible(false);
                 }}
               >
@@ -682,6 +686,7 @@ export const TimeEntryForm: React.FC = () => {
               </IonButton>
             </div>
             <WheelTimePicker
+              ref={startPickerRef}
               value={startDraftValue}
               onChange={setStartDraftValue}
               isDark={isDark}
@@ -705,7 +710,8 @@ export const TimeEntryForm: React.FC = () => {
               <IonButton
                 fill="clear"
                 onClick={() => {
-                  setEndTime(endDraftValue);
+                  const liveValue = endPickerRef.current?.getCurrentValue() ?? endDraftValue;
+                  setEndTime(liveValue);
                   setEndPickerVisible(false);
                 }}
               >
@@ -713,6 +719,7 @@ export const TimeEntryForm: React.FC = () => {
               </IonButton>
             </div>
             <WheelTimePicker
+              ref={endPickerRef}
               value={endDraftValue}
               onChange={setEndDraftValue}
               isDark={isDark}
