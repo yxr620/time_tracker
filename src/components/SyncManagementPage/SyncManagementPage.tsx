@@ -11,7 +11,7 @@ import {
   IonLabel
 } from '@ionic/react';
 import { syncEngine, type SyncStats, type SyncResult } from '../../services/syncEngine';
-import { isOSSConfigured } from '../../services/oss';
+import { isOSSConfigured, getOSSConfig } from '../../services/oss';
 import { useSyncStore } from '../../stores/syncStore';
 import {
   getSavedOSSConfig,
@@ -31,6 +31,7 @@ export const SyncManagementPage: React.FC = () => {
   const [ossForm, setOSSForm] = useState<OSSConfig>({
     region: '', bucket: '', accessKeyId: '', accessKeySecret: ''
   });
+  const [configSource, setConfigSource] = useState<'manual' | 'env' | 'none'>('none');
   const [presentAlert] = useIonAlert();
   const [presentToast] = useIonToast();
 
@@ -40,10 +41,24 @@ export const SyncManagementPage: React.FC = () => {
     setIsConfigured(configured);
     // 如果未配置，自动显示配置表单
     if (!configured) setShowOSSForm(true);
-    // 加载已保存的配置到表单
+    // 加载已保存的配置到表单，优先手动配置，降级到 env 配置
     const saved = getSavedOSSConfig();
     if (saved) {
       setOSSForm(saved);
+      setConfigSource('manual');
+    } else {
+      // 没有手动配置时，从 env 读取有效配置显示
+      const envConfig = getOSSConfig();
+      const hasEnv = !!(envConfig.accessKeyId || envConfig.bucket || envConfig.region !== 'oss-cn-hangzhou');
+      if (hasEnv) {
+        setOSSForm({
+          region: envConfig.region,
+          bucket: envConfig.bucket,
+          accessKeyId: envConfig.accessKeyId,
+          accessKeySecret: envConfig.accessKeySecret,
+        });
+        setConfigSource('env');
+      }
     }
   }, []);
 
@@ -237,7 +252,25 @@ export const SyncManagementPage: React.FC = () => {
           <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '6px', color: 'hsl(var(--foreground))' }}>
             {isConfigured ? '修改 OSS 配置' : 'OSS 配置'}
           </div>
-          {!isConfigured && (
+          {configSource === 'env' && (
+            <div style={{
+              fontSize: '12px', color: 'hsl(210 80% 55%)', marginBottom: '8px', lineHeight: '1.3',
+              padding: '6px 10px', backgroundColor: 'hsl(210 80% 55% / 0.1)',
+              borderRadius: '6px', border: '1px solid hsl(210 80% 55% / 0.2)',
+            }}>
+              📋 当前使用 .env 环境变量配置，修改后将保存为应用内配置
+            </div>
+          )}
+          {configSource === 'manual' && isConfigured && (
+            <div style={{
+              fontSize: '12px', color: 'hsl(142 76% 36%)', marginBottom: '8px', lineHeight: '1.3',
+              padding: '6px 10px', backgroundColor: 'hsl(142 76% 36% / 0.1)',
+              borderRadius: '6px', border: '1px solid hsl(142 76% 36% / 0.2)',
+            }}>
+              ✅ 当前使用应用内手动配置
+            </div>
+          )}
+          {!isConfigured && configSource === 'none' && (
             <div style={{ fontSize: '12px', color: 'hsl(var(--muted-foreground))', marginBottom: '8px', lineHeight: '1.3' }}>
               请输入阿里云 OSS 配置信息以启用同步功能
             </div>
@@ -320,6 +353,7 @@ export const SyncManagementPage: React.FC = () => {
                   persistOSSConfig(config);
                   setIsConfigured(true);
                   setShowOSSForm(false);
+                  setConfigSource('manual');
                   checkConfig();
                   loadStats();
                   showToast('OSS 配置已保存', 'success');
@@ -353,12 +387,26 @@ export const SyncManagementPage: React.FC = () => {
                         text: '确定清除',
                         handler: () => {
                           removeOSSConfig();
-                          setOSSForm({ region: '', bucket: '', accessKeyId: '', accessKeySecret: '' });
+                          // 清除后，重新从 env 加载配置显示
+                          const envConfig = getOSSConfig();
+                          const hasEnv = !!(envConfig.accessKeyId || envConfig.bucket);
+                          if (hasEnv) {
+                            setOSSForm({
+                              region: envConfig.region,
+                              bucket: envConfig.bucket,
+                              accessKeyId: envConfig.accessKeyId,
+                              accessKeySecret: envConfig.accessKeySecret,
+                            });
+                            setConfigSource('env');
+                          } else {
+                            setOSSForm({ region: '', bucket: '', accessKeyId: '', accessKeySecret: '' });
+                            setConfigSource('none');
+                          }
                           const nowConfigured = isOSSConfigured();
                           setIsConfigured(nowConfigured);
                           if (!nowConfigured) setShowOSSForm(true);
                           checkConfig();
-                          showToast('OSS 配置已清除', 'success');
+                          showToast('OSS 配置已清除，已回退到 .env 配置', 'success');
                         }
                       }
                     ]

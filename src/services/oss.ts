@@ -18,7 +18,7 @@ import { getSavedOSSConfig } from './syncConfig';
  * 优先从 localStorage 读取用户在 APP 内保存的配置，
  * 降级到 .env 构建时注入的环境变量。
  */
-function getOSSConfig() {
+export function getOSSConfig() {
   const saved = getSavedOSSConfig();
   return {
     region: saved?.region || import.meta.env.VITE_OSS_REGION || 'oss-cn-hangzhou',
