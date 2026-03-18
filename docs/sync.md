@@ -320,6 +320,8 @@ VITE_OSS_ACCESS_KEY_SECRET=your-access-key-secret
 
 > **优先级**：应用内配置（localStorage）> .env 环境变量
 
+**传输加速**：如需跨地域加速访问，在阿里云控制台开启 Bucket 的「传输加速」功能，然后将 `VITE_OSS_REGION` 改为 `oss-accelerate` 即可，无需修改代码。
+
 ---
 
 ## 使用方法
