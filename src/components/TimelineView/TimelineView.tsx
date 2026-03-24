@@ -217,7 +217,14 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
       {/* 日期导航 + 统计信息：合并一行 */}
       <div className="timeline-header">
         <div className="timeline-header-left">
-          <button onClick={goToPreviousDay} className="date-nav-btn" disabled={isEarliestDay}>‹</button>
+          <button
+            onClick={goToPreviousDay}
+            className="date-nav-btn date-nav-btn-prev"
+            disabled={isEarliestDay}
+            aria-label="上一天"
+          >
+            <span className="date-nav-glyph">‹</span>
+          </button>
           <div
             className="date-display date-display-clickable"
             onClick={() => setDatePickerVisible(true)}
@@ -232,7 +239,14 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
               </button>
             )}
           </div>
-          <button onClick={goToNextDay} className="date-nav-btn" disabled={isToday}>›</button>
+          <button
+            onClick={goToNextDay}
+            className="date-nav-btn date-nav-btn-next"
+            disabled={isToday}
+            aria-label="下一天"
+          >
+            <span className="date-nav-glyph">›</span>
+          </button>
         </div>
 
         <div className="timeline-header-stats">

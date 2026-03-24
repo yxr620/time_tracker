@@ -43,18 +43,54 @@
 }
 
 .date-nav-btn {
-  background: transparent;
-  border: none;
-  padding: 2px 6px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: hsl(var(--secondary));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  padding: 0;
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
   color: hsl(var(--muted-foreground));
-  transition: color 0.15s, opacity 0.15s;
+  transition: color 0.15s, opacity 0.15s, background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.date-nav-glyph {
+  display: block;
+  line-height: 1;
+  font-size: 18px;
+  transform: translateY(-1px);
+}
+
+.date-nav-btn-prev .date-nav-glyph {
+  transform: translate(1px, -1px);
+}
+
+.date-nav-btn-next .date-nav-glyph {
+  transform: translate(-1px, -1px);
 }
 
 .date-nav-btn:hover:not(:disabled) {
+  background: hsl(var(--accent));
   color: hsl(var(--foreground));
+}
+
+.date-nav-btn:focus {
+  outline: none;
+}
+
+.date-nav-btn:focus-visible {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.35);
+}
+
+.date-nav-btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .date-nav-btn:disabled {
