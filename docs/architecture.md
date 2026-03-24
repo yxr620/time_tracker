@@ -2,7 +2,7 @@
 
 ## 项目简介
 
-**Chrono** 是一款本地优先的多平台时间追踪应用，使用相同的 Web 代码库同时支持 Web、Android、macOS 三个平台。
+**Chrono** 是一款本地优先的多平台时间追踪应用，使用相同的 Web 代码库同时支持 Web、Android、macOS、IOS 四个平台。
 
 ## 技术栈
 
@@ -23,9 +23,10 @@
 |---|---|---|
 | Web | Vite dev server / 静态部署 | 浏览器 IndexedDB |
 | Android | Capacitor Android | App data 目录 |
+| iOS | Capacitor iOS | App data 目录 |
 | macOS | Electron（`electron/` 目录） | `~/Library/Application Support/Chrono/` |
 
-三个平台共享同一份 `src/` 代码，差异仅在 Capacitor plugin 调用层。
+四个平台共享同一份 `src/` 代码，差异仅在 Capacitor plugin 调用层。
 
 ## 响应式布局
 
@@ -44,18 +45,18 @@ window.innerWidth  < 1024 → MobileLayout（底部 tab 栏）
 | goals | `GoalManager` | 目标管理 |
 | export | `ExportPage` | 数据导出 / 同步配置 / AI 设置 |
 
-### Desktop 布局（侧边栏，8 个导航项）
+### Desktop 布局（侧边栏，6 个导航项）
 
 | Key | 组件 | 说明 |
 |---|---|---|
 | records | `RecordsPage` | 同移动端 |
 | goals | `GoalManager` | 同移动端 |
 | dashboard | `Dashboard` | 数据统计总览（仅桌面端） |
-| trend | `TrendPage` | 时间趋势分析（仅桌面端） |
-| goalAnalysis | `GoalAnalysisPage` | 目标完成分析（仅桌面端） |
 | ai | `AIAssistant` | AI 助手（仅桌面端） |
 | maintenance | `MaintenancePage` | 数据维护（仅桌面端） |
 | export | `ExportPage` | 设置与数据管理 |
+
+`TrendPage` 和 `GoalAnalysisPage` 是 Dashboard 内的二级页面，由 Dashboard 内的按钮跳转进入，并有返回 Dashboard 的按钮，不出现在侧边栏导航中。
 
 ## 目录结构
 
@@ -83,6 +84,8 @@ src/
 │   ├── syncDebugTools.ts      # 控制台调试工具（window.syncDebug）
 │   ├── oss.ts                 # 阿里云 OSS 操作封装
 │   ├── export.ts              # JSON 导入导出
+│   ├── goalSuggester.ts       # 晨间目标智能建议（未完成 + 高频目标，Top 5）
+│   ├── metadataPredictor.ts   # 录入时自动预测类别和目标（精确/子串匹配，纯本地）
 │   ├── ai/                    # AI 助手（见 ai-assistant.md）
 │   └── analysis/              # 数据分析处理器
 │       ├── processor.ts       # 数据加载 + 转换管道
@@ -141,9 +144,10 @@ npm run lint         # ESLint 检查（项目唯一的代码质量检查）
 npm run preview      # 预览生产构建
 npm run ai:debug     # AI 助手 CLI 调试
 
-# Android
-npm run build && npx cap copy    # 同步 Web 构建到 Android
+# Android && IOS
+npm run build && npx cap copy    # 同步 Web 构建到 Android & IOS
 npx cap open android             # 在 Android Studio 中打开
+npx cap open ios
 
 # macOS Electron
 npm run build && npx cap sync @capacitor-community/electron
