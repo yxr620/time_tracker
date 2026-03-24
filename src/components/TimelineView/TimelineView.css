@@ -1,40 +1,41 @@
 .timeline-view {
-  padding: 8px 16px;
+  padding: 10px 16px 8px;
   background: hsl(var(--card));
   margin-bottom: 12px;
-  /* 移动端保持裁切，防止与底部 TabBar 冲突 */
-  overflow: hidden;
   width: 100%;
-  max-width: 100%;
+  /* 不设 overflow:hidden，tooltip 向下展开不会被裁切 */
 }
 
-/* 日期选择器 */
+/* ── Header：日期导航 + 统计信息 合并一行 ── */
 .timeline-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid hsl(var(--border));
+}
+
+.timeline-header-left {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .date-display {
-  font-size: 15px;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  color: hsl(var(--foreground));
+  letter-spacing: 0.01em;
 }
 
 .date-display-clickable {
   cursor: pointer;
-  padding: 4px 12px;
-  border-radius: 8px;
-  transition: background 0.2s;
-}
-
-.date-display-clickable:hover {
-  background: hsl(var(--accent));
+  padding: 3px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+  user-select: none;
 }
 
 .date-display-clickable:active {
@@ -44,19 +45,20 @@
 .date-nav-btn {
   background: transparent;
   border: none;
-  padding: 4px 8px;
-  font-size: 20px;
+  padding: 2px 6px;
+  font-size: 18px;
+  line-height: 1;
   cursor: pointer;
-  transition: opacity 0.2s;
-  color: hsl(var(--foreground));
+  color: hsl(var(--muted-foreground));
+  transition: color 0.15s, opacity 0.15s;
 }
 
 .date-nav-btn:hover:not(:disabled) {
-  opacity: 0.7;
+  color: hsl(var(--foreground));
 }
 
 .date-nav-btn:disabled {
-  opacity: 0.3;
+  opacity: 0.2;
   cursor: not-allowed;
 }
 
@@ -65,195 +67,201 @@
   color: white;
   border: none;
   border-radius: 4px;
-  padding: 2px 8px;
-  font-size: 12px;
+  padding: 1px 7px;
+  font-size: 11px;
   cursor: pointer;
-  margin-left: 8px;
+  font-weight: 500;
 }
 
-/* 时间轴容器 */
-.timeline-container {
-  position: relative;
-  padding-top: 14px;
-  padding-bottom: 4px;
-  overflow: visible;
-  width: 100%;
-  max-width: 100%;
+.today-btn:active {
+  background: #1565d8;
 }
 
-/* 时间刻度 */
-.timeline-labels {
-  position: relative;
-  height: 14px;
-  margin-bottom: 4px;
-}
-
-.timeline-label {
-  position: absolute;
-  transform: translateX(-50%);
-  font-size: 10px;
+.timeline-header-stats {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
   color: hsl(var(--muted-foreground));
 }
 
-/* 第一个标签（0）左对齐 */
-.timeline-label-start {
-  transform: translateX(0) !important;
-  left: 0 !important;
+.timeline-header-stats .stat-sep {
+  opacity: 0.4;
 }
 
-/* 最后一个标签（24）右对齐 */
-.timeline-label-end {
-  transform: translateX(-100%) !important;
-  left: 100% !important;
+/* ── Timeline container ── */
+.timeline-container {
+  position: relative;
+  width: 100%;
 }
 
-/* 时间轴条 - 进度条样式 */
+/* ── Timeline bar ── */
 .timeline-bar {
   position: relative;
-  height: 14px;
+  height: 10px;
   background: hsl(var(--secondary));
   border-radius: 9999px;
-  overflow: visible;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  overflow: hidden; /* 在 bar 内部裁切色块，保持圆角 */
 }
 
-/* 空白时间段（间隙，可点击） */
+/* 间隙时间段（可点击） */
 .timeline-gap-block {
   position: absolute;
   top: 0;
   height: 100%;
   background: transparent;
   cursor: pointer;
-  transition: background 0.2s;
   z-index: 0;
+  transition: background 0.15s;
 }
 
 .timeline-gap-block:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.06);
 }
 
-/* 活动时间段 - 进度条片段样式 */
+/* 活动时间段 */
 .timeline-block {
   position: absolute;
   top: 0;
   height: 100%;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border: none;
-  overflow: visible;
   z-index: 1;
-}
-
-/* 第一个块添加左圆角 */
-.timeline-block-first {
-  border-top-left-radius: 9999px;
-  border-bottom-left-radius: 9999px;
-}
-
-/* 最后一个块添加右圆角 */
-.timeline-block-last {
-  border-top-right-radius: 9999px;
-  border-bottom-right-radius: 9999px;
+  transition: filter 0.15s, opacity 0.15s;
 }
 
 .timeline-block:hover {
-  opacity: 0.9;
-  transform: scaleY(1.3);
-  z-index: 10;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  border-radius: 9999px;
+  filter: brightness(1.15);
 }
 
-/* 当前时间指示线 */
+.timeline-block:active {
+  opacity: 0.85;
+}
+
+/* 当前时间指示线 — 相对于 .timeline-container 绝对定位 */
 .timeline-current-time {
   position: absolute;
-  top: -6px;
-  bottom: -6px;
+  top: 0;
+  height: 10px; /* 与 bar 同高 */
   width: 2px;
   background: #ff4d4f;
-  z-index: 100;
+  z-index: 20;
   pointer-events: none;
   border-radius: 9999px;
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.18);
 }
 
 .timeline-current-time::before {
   content: '';
   position: absolute;
-  top: -2px;
+  top: -3px;
   left: 50%;
   transform: translateX(-50%);
   width: 6px;
   height: 6px;
   background: #ff4d4f;
   border-radius: 50%;
-  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.25);
 }
 
-/* 统计信息 */
-.timeline-stats {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid hsl(var(--border));
-  font-size: 12px;
+/* ── 时间刻度 — 放在 bar 下方 ── */
+.timeline-labels {
+  position: relative;
+  height: 14px;
+  margin-top: 3px;
+}
+
+.timeline-label {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 9px;
   color: hsl(var(--muted-foreground));
+  opacity: 0.5;
+  line-height: 1;
 }
 
-/* Tooltip 跟随时间块位置 */
+.timeline-label-start {
+  transform: translateX(0) !important;
+  left: 0 !important;
+}
+
+.timeline-label-end {
+  transform: translateX(-100%) !important;
+  left: 100% !important;
+}
+
+/* ── Tooltip — 出现在 bar+labels 下方，无裁切问题 ── */
+.timeline-tooltip-area {
+  position: relative;
+  width: 100%;
+  height: 0;
+}
+
 .timeline-tooltip {
   position: absolute;
-  top: 16px;
-  transform: translate(-50%, -100%);
+  top: 4px;
+  transform: translateX(-50%);
   background: hsl(var(--popover));
   color: hsl(var(--popover-foreground));
-  padding: 8px 12px;
+  padding: 6px 11px;
   border-radius: 8px;
   font-size: 12px;
   white-space: nowrap;
-  z-index: 1000;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), 0 1px 4px rgba(0, 0, 0, 0.08);
   border: 1px solid hsl(var(--border));
   pointer-events: none;
-  max-width: 90%;
+  max-width: 85vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 向上的小三角 */
+.timeline-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 7px solid hsl(var(--border));
 }
 
 .timeline-tooltip::after {
   content: '';
   position: absolute;
-  bottom: -7px;
+  top: -5px;
   left: 50%;
   transform: translateX(-50%);
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-top: 7px solid #ffffff;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.05));
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid hsl(var(--popover));
 }
 
-/* 左边缘对齐 - 当时间块在左侧时 */
 .timeline-tooltip.tooltip-align-left {
-  transform: translate(-10%, -100%);
+  transform: translateX(-8%);
 }
 
+.timeline-tooltip.tooltip-align-left::before,
 .timeline-tooltip.tooltip-align-left::after {
-  left: 10%;
+  left: 12%;
 }
 
-/* 右边缘对齐 - 当时间块在右侧时 */
 .timeline-tooltip.tooltip-align-right {
-  transform: translate(-90%, -100%);
+  transform: translateX(-92%);
 }
 
+.timeline-tooltip.tooltip-align-right::before,
 .timeline-tooltip.tooltip-align-right::after {
-  left: 90%;
+  left: 88%;
 }
 
 .tooltip-activity {
   font-weight: 600;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
+  max-width: 220px;
   color: hsl(var(--foreground));
 }
 
@@ -262,111 +270,79 @@
   color: hsl(var(--muted-foreground));
 }
 
-/* 移动端优化 */
+/* ── Mobile ── */
 @media (max-width: 768px) {
   .timeline-view {
-    padding: 10px 12px;
+    padding: 8px 12px 6px;
   }
 
   .timeline-bar {
-    height: 12px;
+    height: 10px;
   }
 
-  .timeline-labels {
+  .date-nav-btn {
+    font-size: 16px;
+    padding: 2px 5px;
+  }
+
+  .date-display {
+    font-size: 14px;
+  }
+
+  .timeline-header-stats {
+    font-size: 11px;
+  }
+}
+
+/* ── Desktop ── */
+@media (min-width: 1024px) {
+  .timeline-view {
+    padding: 14px 20px 10px;
+    margin-bottom: 0;
+  }
+
+  .timeline-bar {
     height: 14px;
   }
 
-  .timeline-label {
-    font-size: 9px;
-  }
-
-  .date-nav-btn {
-    padding: 3px 8px;
-    font-size: 14px;
-  }
-
-  .date-display {
-    font-size: 14px;
-  }
-
-  .timeline-block:hover {
-    transform: scaleY(1.5);
-  }
-
-  .timeline-stats {
-    font-size: 11px;
-    margin-top: 6px;
-    padding-top: 6px;
-  }
-
-  .timeline-header {
-    margin-bottom: 8px;
-    padding-bottom: 5px;
-  }
-
-  .timeline-container {
-    padding-top: 12px;
-    padding-bottom: 3px;
-  }
-}
-
-/* 桌面端优化 */
-@media (min-width: 1024px) {
-  .timeline-view {
-    padding: 16px 20px;
-    margin-bottom: 0;
-    /* 桌面端允许装饰元素（时间指示线、按钮阴影）外溢 */
-    overflow: visible;
-  }
-
-  .timeline-bar {
-    height: 18px;
+  .timeline-current-time {
+    height: 14px;
   }
 
   .timeline-labels {
-    height: 20px;
-    margin-bottom: 8px;
+    height: 16px;
+    margin-top: 4px;
   }
 
   .timeline-label {
-    font-size: 11px;
-  }
-
-  .date-nav-btn {
-    padding: 6px 12px;
-    font-size: 15px;
-  }
-
-  .date-nav-btn:hover:not(:disabled) {
-    background: #d0d0d0;
-  }
-
-  .today-btn:hover {
-    background: #1565d8;
+    font-size: 10px;
+    opacity: 0.6;
   }
 
   .date-display {
-    font-size: 16px;
+    font-size: 15px;
   }
 
-  .timeline-stats {
+  .date-nav-btn {
+    font-size: 20px;
+    padding: 2px 8px;
+  }
+
+  .today-btn {
+    font-size: 12px;
+    padding: 2px 8px;
+  }
+
+  .timeline-header-stats {
     font-size: 13px;
-    margin-top: 12px;
-    padding-top: 12px;
   }
 
   .timeline-header {
-    margin-bottom: 14px;
-    padding-bottom: 10px;
-  }
-
-  .timeline-container {
-    padding-top: 20px;
-    padding-bottom: 8px;
+    margin-bottom: 10px;
   }
 }
 
-/* 日期选择器 Modal 样式 */
+/* ── Date picker modal ── */
 ion-modal ion-datetime {
   --background: var(--ion-background-color);
   max-width: 400px;

@@ -37,13 +37,9 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const [gapBlocks, setGapBlocks] = useState<GapBlock[]>([]);
   const [datePickerVisible, setDatePickerVisible] = useState(false);
-  const [popoverState, setPopoverState] = useState<{ isOpen: boolean; block: TimeBlock | null; positionPercent: number }>({
-    isOpen: false,
-    block: null,
-    positionPercent: 50
-  });
+  const [tooltip, setTooltip] = useState<{ block: TimeBlock; positionPercent: number } | null>(null);
   const datetimeRef = useRef<HTMLIonDatetimeElement>(null);
-  const timelineContainerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadEntries();
@@ -54,61 +50,46 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
   // 点击外部关闭 tooltip
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (popoverState.isOpen && timelineContainerRef.current) {
+      if (tooltip && containerRef.current) {
         const target = e.target as HTMLElement;
-        if (!timelineContainerRef.current.contains(target)) {
-          setPopoverState({ isOpen: false, block: null, positionPercent: 50 });
+        if (!containerRef.current.contains(target)) {
+          setTooltip(null);
         }
       }
     };
-
     document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [popoverState.isOpen]);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [tooltip]);
 
   useEffect(() => {
     processTimelineData();
   }, [entries, selectedDate]);
 
-  // 计算时间在24小时轴上的百分比位置（基于选定日期的开始）
   const getTimePercent = (time: Date, dayStart: Date): number => {
     const diff = dayjs(time).diff(dayjs(dayStart), 'minute');
     return (diff / (24 * 60)) * 100;
   };
 
-  // 处理时间轴数据
   const processTimelineData = () => {
-    // 获取选定日期的开始和结束时间（00:00 到 23:59:59）
     const dayStart = dayjs(selectedDate).startOf('day').toDate();
     const dayEnd = dayjs(selectedDate).endOf('day').toDate();
 
-    // 筛选选定日期范围内的记录（包括跨天的记录）
     const relevantEntries = entries.filter(entry => {
-      if (!entry.endTime) return false; // 排除进行中的记录
-      
+      if (!entry.endTime) return false;
       const entryStart = dayjs(entry.startTime);
       const entryEnd = dayjs(entry.endTime);
-      const start = dayjs(dayStart);
-      const end = dayjs(dayEnd);
-
-      // 记录与选定日期有交集
-      return entryStart.isBefore(end) && entryEnd.isAfter(start);
+      return entryStart.isBefore(dayEnd) && entryEnd.isAfter(dayStart);
     });
 
-    // 按开始时间排序
-    const sortedEntries = relevantEntries.sort((a, b) => 
+    const sortedEntries = relevantEntries.sort((a, b) =>
       dayjs(a.startTime).valueOf() - dayjs(b.startTime).valueOf()
     );
 
-    // 生成时间块
     const blocks: TimeBlock[] = [];
-    
+
     sortedEntries.forEach(entry => {
       if (!entry.endTime) return;
 
-      // 裁剪到当天范围内
       const entryStart = dayjs(entry.startTime);
       const entryEnd = dayjs(entry.endTime);
       const start = entryStart.isBefore(dayStart) ? dayjs(dayStart) : entryStart;
@@ -118,10 +99,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
       const endPercent = getTimePercent(end.toDate(), dayStart);
       const widthPercent = endPercent - startPercent;
 
-      // 获取类别颜色（从配置文件读取）
       const color = getCategoryColor(entry.categoryId);
-
-      // 获取目标名称
       const goal = goals.find(g => g.id === entry.goalId);
       const goalText = goal ? ` [${goal.name}]` : '';
 
@@ -137,39 +115,35 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
 
     setTimeBlocks(blocks);
 
-    // 计算时间间隙（未记录的时间段）
     const gaps: GapBlock[] = [];
-    
-    // 如果有记录，找出记录之间的间隙
+
     if (blocks.length > 0) {
-      // 检查第一个记录之前是否有间隙
       if (blocks[0].startPercent > 0) {
         gaps.push({
-          id: `gap-start`,
+          id: 'gap-start',
           startPercent: 0,
           widthPercent: blocks[0].startPercent,
           startTime: dayStart,
-          endTime: dayjs(blocks[0].entry.startTime).isBefore(dayStart) 
-            ? dayStart 
+          endTime: dayjs(blocks[0].entry.startTime).isBefore(dayStart)
+            ? dayStart
             : blocks[0].entry.startTime
         });
       }
 
-      // 检查记录之间的间隙
       for (let i = 0; i < blocks.length - 1; i++) {
-        const currentBlock = blocks[i];
-        const nextBlock = blocks[i + 1];
-        const gapStart = currentBlock.startPercent + currentBlock.widthPercent;
-        const gapWidth = nextBlock.startPercent - gapStart;
-        
-        if (gapWidth > 0.1) { // 只显示明显的间隙（> 0.1%）
-          const gapStartTime = dayjs(currentBlock.entry.endTime!).isAfter(dayEnd)
+        const cur = blocks[i];
+        const next = blocks[i + 1];
+        const gapStart = cur.startPercent + cur.widthPercent;
+        const gapWidth = next.startPercent - gapStart;
+
+        if (gapWidth > 0.1) {
+          const gapStartTime = dayjs(cur.entry.endTime!).isAfter(dayEnd)
             ? dayEnd
-            : currentBlock.entry.endTime!;
-          const gapEndTime = dayjs(nextBlock.entry.startTime).isBefore(dayStart)
+            : cur.entry.endTime!;
+          const gapEndTime = dayjs(next.entry.startTime).isBefore(dayStart)
             ? dayStart
-            : nextBlock.entry.startTime;
-          
+            : next.entry.startTime;
+
           gaps.push({
             id: `gap-${i}`,
             startPercent: gapStart,
@@ -180,22 +154,18 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
         }
       }
 
-      // 检查最后一个记录之后是否有间隙
-      const lastBlock = blocks[blocks.length - 1];
-      const lastBlockEnd = lastBlock.startPercent + lastBlock.widthPercent;
-      if (lastBlockEnd < 100) {
+      const last = blocks[blocks.length - 1];
+      const lastEnd = last.startPercent + last.widthPercent;
+      if (lastEnd < 100) {
         gaps.push({
-          id: `gap-end`,
-          startPercent: lastBlockEnd,
-          widthPercent: 100 - lastBlockEnd,
-          startTime: dayjs(lastBlock.entry.endTime!).isAfter(dayEnd)
-            ? dayEnd
-            : lastBlock.entry.endTime!,
+          id: 'gap-end',
+          startPercent: lastEnd,
+          widthPercent: 100 - lastEnd,
+          startTime: dayjs(last.entry.endTime!).isAfter(dayEnd) ? dayEnd : last.entry.endTime!,
           endTime: dayEnd
         });
       }
     } else {
-      // 如果没有任何记录，整天都是间隙
       gaps.push({
         id: 'gap-full-day',
         startPercent: 0,
@@ -208,25 +178,28 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
     setGapBlocks(gaps);
   };
 
-  // 格式化时长
   const formatDuration = (start: Date, end: Date | null) => {
     if (!end) return '进行中';
-    
     const diff = dayjs(end).diff(dayjs(start), 'minute');
     const hours = Math.floor(diff / 60);
     const minutes = diff % 60;
-    
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
+    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
   };
 
-  // 生成时间刻度标签
+  const totalHours = Math.round(
+    timeBlocks.reduce((sum, b) => {
+      return sum + dayjs(b.entry.endTime).diff(dayjs(b.entry.startTime), 'minute');
+    }, 0) / 60 * 10
+  ) / 10;
+
   const timeLabels = [0, 6, 12, 18, 24];
 
-  // 日期导航
-  const isEarliestDay = earliestDate ? dayjs(selectedDate).isSame(dayjs(earliestDate), 'day') || dayjs(selectedDate).isBefore(dayjs(earliestDate), 'day') : false;
+  const earliestDayJs = earliestDate ? dayjs(earliestDate) : null;
+  const isEarliestDay = earliestDayJs
+    ? dayjs(selectedDate).isSame(earliestDayJs, 'day') || dayjs(selectedDate).isBefore(earliestDayJs, 'day')
+    : false;
+
+  const isToday = dayjs(selectedDate).isSame(dayjs(), 'day');
 
   const goToPreviousDay = () => {
     if (isEarliestDay) return;
@@ -237,38 +210,41 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
     onDateChange(dayjs(selectedDate).add(1, 'day').toDate());
   };
 
-  const goToToday = () => {
-    onDateChange(new Date());
-  };
-
-  const isToday = dayjs(selectedDate).isSame(dayjs(), 'day');
+  const goToToday = () => onDateChange(new Date());
 
   return (
     <div className="timeline-view">
-      {/* 日期选择器 */}
+      {/* 日期导航 + 统计信息：合并一行 */}
       <div className="timeline-header">
-        <button onClick={goToPreviousDay} className="date-nav-btn" disabled={isEarliestDay}>←</button>
-        <div 
-          className="date-display date-display-clickable"
-          onClick={() => setDatePickerVisible(true)}
-        >
-          {dayjs(selectedDate).format('YYYY-MM-DD')}
-          {!isToday && (
-            <button onClick={(e) => { e.stopPropagation(); goToToday(); }} className="today-btn">今天</button>
-          )}
+        <div className="timeline-header-left">
+          <button onClick={goToPreviousDay} className="date-nav-btn" disabled={isEarliestDay}>‹</button>
+          <div
+            className="date-display date-display-clickable"
+            onClick={() => setDatePickerVisible(true)}
+          >
+            {dayjs(selectedDate).format('YYYY-MM-DD')}
+            {!isToday && (
+              <button
+                onClick={(e) => { e.stopPropagation(); goToToday(); }}
+                className="today-btn"
+              >
+                今天
+              </button>
+            )}
+          </div>
+          <button onClick={goToNextDay} className="date-nav-btn" disabled={isToday}>›</button>
         </div>
-        <button 
-          onClick={goToNextDay} 
-          className="date-nav-btn"
-          disabled={isToday}
-        >
-          →
-        </button>
+
+        <div className="timeline-header-stats">
+          <span>{timeBlocks.length} 项</span>
+          <span className="stat-sep">·</span>
+          <span>{totalHours}h</span>
+        </div>
       </div>
 
       {/* 日期选择弹窗 */}
-      <IonModal 
-        isOpen={datePickerVisible} 
+      <IonModal
+        isOpen={datePickerVisible}
         onDidDismiss={() => setDatePickerVisible(false)}
         initialBreakpoint={0.55}
         breakpoints={[0, 0.55, 0.7]}
@@ -295,22 +271,63 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
         </IonContent>
       </IonModal>
 
-      {/* 24小时时间轴 */}
-      <div 
-        ref={timelineContainerRef}
-        className="timeline-container" 
+      {/* 时间轴 */}
+      <div
+        ref={containerRef}
+        className="timeline-container"
         onClick={(e) => {
-          // 点击非时间块区域时关闭 popover
           if (!(e.target as HTMLElement).closest('.timeline-block')) {
-            setPopoverState({ isOpen: false, block: null, positionPercent: 50 });
+            setTooltip(null);
           }
         }}
       >
-        {/* 时间刻度 */}
+        {/* 时间轴条 */}
+        <div className="timeline-bar">
+          {gapBlocks.map((gap) => (
+            <div
+              key={gap.id}
+              className="timeline-gap-block"
+              style={{ left: `${gap.startPercent}%`, width: `${gap.widthPercent}%` }}
+              onClick={() => setTimeRange(gap.startTime, gap.endTime)}
+              title={`${dayjs(gap.startTime).format('HH:mm')} - ${dayjs(gap.endTime).format('HH:mm')}`}
+            />
+          ))}
+
+          {timeBlocks.map((block) => (
+            <div
+              key={block.id}
+              className="timeline-block"
+              style={{
+                left: `${block.startPercent}%`,
+                width: `${block.widthPercent}%`,
+                backgroundColor: block.color
+              }}
+              title={block.label}
+              onClick={() => {
+                const centerPercent = block.startPercent + block.widthPercent / 2;
+                setTooltip({ block, positionPercent: centerPercent });
+                if (block.entry.endTime) {
+                  setNextStartTime(block.entry.endTime);
+                }
+              }}
+            />
+          ))}
+
+        </div>
+
+        {/* 当前时间指示线 — 覆盖在 bar+labels 上，不受 bar overflow:hidden 约束 */}
+        {isToday && (
+          <div
+            className="timeline-current-time"
+            style={{ left: `${getTimePercent(new Date(), dayjs().startOf('day').toDate())}%` }}
+          />
+        )}
+
+        {/* 时间刻度 — bar 下方 */}
         <div className="timeline-labels">
           {timeLabels.map(hour => (
-            <div 
-              key={hour} 
+            <div
+              key={hour}
               className={`timeline-label ${hour === 0 ? 'timeline-label-start' : hour === 24 ? 'timeline-label-end' : ''}`}
               style={{ left: `${(hour / 24) * 100}%` }}
             >
@@ -319,81 +336,25 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
           ))}
         </div>
 
-        {/* 时间轴条 */}
-        <div className="timeline-bar">
-          {/* 间隙时间段（灰色，可点击） */}
-          {gapBlocks.map((gap) => (
+        {/* Tooltip — 出现在 labels 下方，不会被裁切 */}
+        <div className="timeline-tooltip-area">
+          {tooltip && (
             <div
-              key={gap.id}
-              className="timeline-gap-block"
-              style={{
-                left: `${gap.startPercent}%`,
-                width: `${gap.widthPercent}%`
-              }}
-              onClick={() => {
-                setTimeRange(gap.startTime, gap.endTime);
-              }}
-              title={`${dayjs(gap.startTime).format('HH:mm')} - ${dayjs(gap.endTime).format('HH:mm')}`}
-            />
-          ))}
-          
-          {/* 活动时间段（彩色） */}
-          {timeBlocks.map((block, index) => (
-            <div
-              key={block.id}
-              className={`timeline-block ${index === 0 ? 'timeline-block-first' : ''} ${index === timeBlocks.length - 1 ? 'timeline-block-last' : ''}`}
-              style={{
-                left: `${block.startPercent}%`,
-                width: `${block.widthPercent}%`,
-                backgroundColor: block.color
-              }}
-              title={block.label}
-              onClick={() => {
-                // 计算时间块中心位置的百分比
-                const centerPercent = block.startPercent + block.widthPercent / 2;
-                setPopoverState({ isOpen: true, block, positionPercent: centerPercent });
-                if (block.entry.endTime) {
-                  setNextStartTime(block.entry.endTime);
-                }
-              }}
-            />
-          ))}
-          
-        </div>
-
-        {/* 跟随时间块的 Tooltip */}
-        {popoverState.isOpen && popoverState.block && (
-          <div 
-            className={`timeline-tooltip ${popoverState.positionPercent < 15 ? 'tooltip-align-left' : popoverState.positionPercent > 85 ? 'tooltip-align-right' : ''}`}
-            style={{ left: `${Math.max(5, Math.min(95, popoverState.positionPercent))}%` }}
-          >
-            <div className="tooltip-activity">{popoverState.block.entry.activity}</div>
-            <div className="tooltip-time">
-              {dayjs(popoverState.block.entry.startTime).format('HH:mm')} - {dayjs(popoverState.block.entry.endTime).format('HH:mm')} ({formatDuration(popoverState.block.entry.startTime, popoverState.block.entry.endTime)})
+              className={`timeline-tooltip ${
+                tooltip.positionPercent < 15 ? 'tooltip-align-left' :
+                tooltip.positionPercent > 85 ? 'tooltip-align-right' : ''
+              }`}
+              style={{ left: `${Math.max(5, Math.min(95, tooltip.positionPercent))}%` }}
+            >
+              <div className="tooltip-activity">{tooltip.block.entry.activity}</div>
+              <div className="tooltip-time">
+                {dayjs(tooltip.block.entry.startTime).format('HH:mm')} –{' '}
+                {dayjs(tooltip.block.entry.endTime).format('HH:mm')}{' '}
+                ({formatDuration(tooltip.block.entry.startTime, tooltip.block.entry.endTime)})
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* 当前时间指示线（只在今天显示） */}
-        {isToday && (
-          <div 
-            className="timeline-current-time"
-            style={{
-              left: `${getTimePercent(new Date(), dayjs().startOf('day').toDate())}%`
-            }}
-          />
-        )}
-      </div>
-
-      {/* 统计信息 */}
-      <div className="timeline-stats">
-        <span>已记录: {timeBlocks.length} 项</span>
-        <span>
-          总时长: {Math.round(timeBlocks.reduce((sum, block) => {
-            const duration = dayjs(block.entry.endTime).diff(dayjs(block.entry.startTime), 'minute');
-            return sum + duration;
-          }, 0) / 60 * 10) / 10}h
-        </span>
+          )}
+        </div>
       </div>
     </div>
   );
