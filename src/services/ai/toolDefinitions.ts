@@ -6,6 +6,7 @@
 
 import dayjs from 'dayjs';
 import { db } from '../db';
+import { dataService } from '../dataService';
 import { loadRawData, processEntries, formatDuration } from '../analysis/processor';
 
 // ── OpenAI tools 格式的工具声明 ──────────────────────────────────────────
@@ -230,7 +231,7 @@ ${entriesText}`;
  * 列出所有类别
  */
 async function listCategories(): Promise<string> {
-    const categories = await db.categories.toArray();
+    const categories = await dataService.categories.list();
     if (categories.length === 0) return '当前没有任何类别。';
     return `可用类别：\n${categories.map(c => `- ${c.name}`).join('\n')}`;
 }
@@ -246,11 +247,9 @@ async function listGoals(args: Record<string, unknown>): Promise<string> {
         return '错误：需要提供 start_date 和 end_date 参数';
     }
 
-    const goals = await db.goals.toArray();
-    // 目标的 date 字段格式为 YYYY-MM-DD，直接字符串比较
-    const filtered = goals.filter(g => {
-        if (g.deleted) return false;
-        return g.date >= startDate && g.date <= endDate;
+    const filtered = await dataService.goals.query({
+        startDate,
+        endDate,
     });
 
     if (filtered.length === 0) {

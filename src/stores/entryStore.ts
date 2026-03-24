@@ -1,8 +1,7 @@
 import { create } from 'zustand';
-import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
 import { db, type TimeEntry } from '../services/db';
-import { syncDb } from '../services/syncDb';
+import { dataService } from '../services/dataService';
 import { autoPush } from '../utils/autoPush';
 
 interface EntryStore {
@@ -51,19 +50,15 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
   },
 
   startTracking: async (activity: string, goalId?: string, startTime?: Date, categoryId?: string) => {
-    const entry: TimeEntry = {
-      id: uuidv4(),
+    const id = await dataService.entries.add({
       startTime: startTime || new Date(),
       endTime: null,
       activity,
       categoryId: categoryId || null,
       goalId: goalId || null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    await syncDb.entries.add(entry);
-    set({ currentEntry: entry });
+    });
+    const entry = await db.entries.get(id);
+    set({ currentEntry: entry || null });
     await get().loadEntries();
     autoPush('开始计时后');
   },
@@ -72,10 +67,8 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
     const { currentEntry } = get();
     if (!currentEntry?.id) return;
 
-    const endTime = new Date();
-    await syncDb.entries.update(currentEntry.id, {
-      endTime,
-      updatedAt: new Date()
+    await dataService.entries.update(currentEntry.id, {
+      endTime: new Date(),
     });
 
     set({ currentEntry: null });
@@ -84,29 +77,19 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
   },
 
   addEntry: async (entry) => {
-    const newEntry: TimeEntry = {
-      ...entry,
-      id: uuidv4(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    await syncDb.entries.add(newEntry);
+    await dataService.entries.add(entry);
     await get().loadEntries();
     autoPush('添加记录后');
   },
 
   updateEntry: async (id, updates) => {
-    await syncDb.entries.update(id, {
-      ...updates,
-      updatedAt: new Date()
-    });
+    await dataService.entries.update(id, updates);
     await get().loadEntries();
     autoPush('更新记录后');
   },
 
   deleteEntry: async (id) => {
-    await syncDb.entries.delete(id);
+    await dataService.entries.delete(id);
     await get().loadEntries();
     autoPush('删除记录后');
   },

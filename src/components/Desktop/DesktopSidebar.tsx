@@ -1,9 +1,10 @@
 import React from 'react';
 import { IonIcon } from '@ionic/react';
-import { 
-  checkmarkDoneOutline, 
+import {
+  checkmarkDoneOutline,
   barChartOutline,
   sparklesOutline,
+  constructOutline,
   settingsOutline
 } from 'ionicons/icons';
 import recordsIcon from '../../assets/recordsIcon.png';
@@ -27,6 +28,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ activeTab, onTab
     { key: 'records', icon: recordsIcon, label: '记录', isImage: true },
     { key: 'goals', icon: checkmarkDoneOutline, label: '目标' },
     { key: 'ai', icon: sparklesOutline, label: 'AI' },
+    { key: 'maintenance', icon: constructOutline, label: '维护' },
     { key: 'export', icon: settingsOutline, label: '设置' },
   ];
 

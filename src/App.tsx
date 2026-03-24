@@ -11,6 +11,7 @@ import { Dashboard } from './components/Dashboard/Dashboard';
 import { TrendPage } from './components/TrendPage/TrendPage';
 import { GoalAnalysisPage } from './components/GoalAnalysisPage/GoalAnalysisPage';
 import { ExportPage } from './components/ExportPage/ExportPage';
+import { MaintenancePage } from './components/MaintenancePage/MaintenancePage';
 import { AIAssistant } from './components/AIAssistant/AIAssistant';
 import recordsIcon from './assets/recordsIcon.png';
 import { GoalManager } from './components/GoalManager/GoalManager';
@@ -166,6 +167,8 @@ function App() {
         return <GoalManager />;
       case 'ai':
         return <AIAssistant />;
+      case 'maintenance':
+        return <MaintenancePage />;
       case 'export':
         return <ExportPage />;
       default:

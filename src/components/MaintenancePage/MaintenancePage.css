@@ -1,0 +1,234 @@
+.maintenance-page {
+  padding: 16px;
+}
+
+.maintenance-tab-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.maintenance-tab-btn {
+  padding: 8px 20px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.maintenance-tab-btn.active {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+}
+
+.maintenance-tab-btn:hover:not(.active) {
+  background: hsl(var(--accent));
+}
+
+/* Sleep Backfill */
+
+.sleep-config {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.sleep-config label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: hsl(var(--foreground));
+}
+
+.sleep-config input {
+  padding: 6px 10px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-size: 14px;
+}
+
+.sleep-config .config-row {
+  display: flex;
+  gap: 12px;
+}
+
+.sleep-config .config-row label {
+  flex: 1;
+}
+
+.maintenance-btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.maintenance-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.maintenance-btn-primary {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.maintenance-btn-danger {
+  background: hsl(0 84% 60%);
+  color: white;
+}
+
+.maintenance-btn-secondary {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+/* Candidate list */
+
+.candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 12px 0;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.candidate-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: monospace;
+  color: hsl(var(--foreground));
+  transition: background 0.15s;
+}
+
+.candidate-item:hover {
+  background: hsl(var(--accent));
+}
+
+.candidate-item.full-day-empty {
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--accent) / 0.5);
+}
+
+.candidate-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.candidate-summary {
+  font-size: 14px;
+  color: hsl(var(--muted-foreground));
+  margin: 8px 0;
+}
+
+.candidate-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Data Validation */
+
+.validation-section {
+  margin-bottom: 24px;
+}
+
+.validation-section-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: hsl(var(--foreground));
+}
+
+.validation-item {
+  padding: 12px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.validation-item-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: hsl(0 84% 60%);
+  margin-bottom: 4px;
+}
+
+.validation-item-detail {
+  font-size: 13px;
+  color: hsl(var(--muted-foreground));
+  font-family: monospace;
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.validation-item-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.validation-item-actions button {
+  padding: 4px 12px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
+  background: transparent;
+  color: hsl(var(--foreground));
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.validation-item-actions button:hover {
+  background: hsl(var(--accent));
+}
+
+.validation-item-actions button.btn-trim {
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
+}
+
+.validation-item-actions button.btn-delete {
+  border-color: hsl(0 84% 60%);
+  color: hsl(0 84% 60%);
+}
+
+.validation-success {
+  font-size: 16px;
+  color: hsl(142 71% 45%);
+  padding: 20px;
+  text-align: center;
+}
+
+.maintenance-loading {
+  font-size: 14px;
+  color: hsl(var(--muted-foreground));
+  padding: 12px 0;
+}
+
+.maintenance-done {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.maintenance-done p {
+  font-size: 16px;
+  color: hsl(142 71% 45%);
+  margin-bottom: 12px;
+}

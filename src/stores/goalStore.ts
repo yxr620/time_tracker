@@ -1,7 +1,6 @@
 import { create } from 'zustand';
-import { v4 as uuidv4 } from 'uuid';
 import { db, type Goal } from '../services/db';
-import { syncDb } from '../services/syncDb';
+import { dataService } from '../services/dataService';
 import { autoPush } from '../utils/autoPush';
 
 interface GoalStore {
@@ -25,28 +24,19 @@ export const useGoalStore = create<GoalStore>((set, get) => ({
   },
 
   addGoal: async (goal) => {
-    const newGoal: Goal = {
-      ...goal,
-      id: uuidv4(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    await syncDb.goals.add(newGoal);
+    await dataService.goals.add(goal);
     await get().loadGoals();
     autoPush('添加目标后');
   },
 
   updateGoal: async (id, updates) => {
-    await syncDb.goals.update(id, {
-      ...updates,
-      updatedAt: new Date()
-    });
+    await dataService.goals.update(id, updates);
     await get().loadGoals();
     autoPush('更新目标后');
   },
 
   deleteGoal: async (id) => {
-    await syncDb.goals.delete(id);
+    await dataService.goals.delete(id);
     await get().loadGoals();
     autoPush('删除目标后');
   },
