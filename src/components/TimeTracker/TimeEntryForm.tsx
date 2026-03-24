@@ -48,24 +48,13 @@ const getCardStyle = (isDark: boolean): React.CSSProperties => ({
   border: isDark ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(148, 163, 184, 0.12)'
 });
 
-const getSectionLabelStyle = (isDark: boolean): React.CSSProperties => ({
-  marginBottom: '10px',
-  fontWeight: '600',
-  fontSize: '12px',
-  color: isDark ? '#94a3b8' : '#999',
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-  display: 'flex',
-  alignItems: 'center',
-  gap: '6px'
-});
 
 const TIME_DISPLAY_STYLE: React.CSSProperties = {
   fontSize: '24px',
   fontWeight: '700',
   lineHeight: 1.2,
   fontFamily: 'Monaco, Menlo, monospace',
-  marginBottom: '10px'
+  marginBottom: '6px'
 };
 
 const TIME_BADGE_STYLE: React.CSSProperties = {
@@ -486,91 +475,84 @@ export const TimeEntryForm: React.FC = () => {
         </IonCardContent>
       </IonCard>
 
-      {/* 类别选择 */}
+      {/* 类别 + 目标选择（合并为一个卡片，节约纵向空间） */}
       <IonCard style={{ ...getCardStyle(isDark), marginBottom: '0.5rem' }}>
-        <IonCardContent style={{ padding: '14px 20px' }}>
-          <div style={getSectionLabelStyle(isDark)}>
-            <IonIcon icon={pricetagOutline} style={{ fontSize: '14px' }} />
-            类别
-          </div>
-          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-            <div style={{
-              display: 'flex',
-              flexWrap: 'nowrap',
-              gap: '8px',
-              alignItems: 'center',
-              whiteSpace: 'nowrap',
-              paddingRight: '8px'
-            }}>
-              {categories.map((c, index) => (
-                <React.Fragment key={c.id}>
-                  {index > 0 && renderSeparator()}
-                  {renderSelectableItem(
-                    c.id,
-                    c.name,
-                    c.id === selectedCategoryId,
-                    '#3b82f6',
-                    '#666',
-                    () => { userPickedCategoryRef.current = true; setSelectedCategoryId(c.id === selectedCategoryId ? '' : c.id); }
-                  )}
-                </React.Fragment>
-              ))}
+        <IonCardContent style={{ padding: '10px 16px' }}>
+          {/* 类别行：图标标签 + 横向滚动内容 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, color: isDark ? '#94a3b8' : '#999', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase' as const, letterSpacing: '0.5px' }}>
+              <IonIcon icon={pricetagOutline} style={{ fontSize: '13px' }} />
+            </div>
+            <div style={{ flex: 1, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '8px', alignItems: 'center', whiteSpace: 'nowrap', paddingRight: '4px' }}>
+                {categories.map((c, index) => (
+                  <React.Fragment key={c.id}>
+                    {index > 0 && renderSeparator()}
+                    {renderSelectableItem(
+                      c.id,
+                      c.name,
+                      c.id === selectedCategoryId,
+                      '#3b82f6',
+                      '#666',
+                      () => { userPickedCategoryRef.current = true; setSelectedCategoryId(c.id === selectedCategoryId ? '' : c.id); }
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
           </div>
-        </IonCardContent>
-      </IonCard>
-
-      {/* 目标选择 */}
-      <IonCard style={{ ...getCardStyle(isDark), marginBottom: '0.5rem' }}>
-        <IonCardContent style={{ padding: '14px 20px' }}>
-          <div style={getSectionLabelStyle(isDark)}>
-            <IonIcon icon={flagOutline} style={{ fontSize: '14px' }} />
-            关联目标
-          </div>
-          <div style={{ height: '56px', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-            {availableGoals.length > 0 ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', paddingRight: '8px' }}>
-                {currentGoals.map((g, index) => (
-                  <React.Fragment key={g.id}>
-                    {index > 0 && renderSeparator()}
-                    {renderSelectableItem(
-                      g.id!,
-                      g.name,
-                      g.id === selectedGoalId,
-                      '#f59e0b',
-                      '#666',
-                      () => { userPickedGoalRef.current = true; setSelectedGoalId(g.id === selectedGoalId ? null : g.id!); }
-                    )}
-                  </React.Fragment>
-                ))}
-                {currentGoals.length > 0 && filteredPrevGoals.length > 0 && renderSeparator()}
-                {filteredPrevGoals.map((g, index) => (
-                  <React.Fragment key={g.id}>
-                    {index > 0 && renderSeparator()}
-                    {renderSelectableItem(
-                      g.id!,
-                      g.name,
-                      g.id === selectedGoalId,
-                      '#f59e0b',
-                      '#999',
-                      () => { userPickedGoalRef.current = true; setSelectedGoalId(g.id === selectedGoalId ? null : g.id!); },
-                      '*'
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-            ) : (
-              <div style={{ color: isDark ? '#475569' : '#bbb', fontSize: '14px', height: '100%', display: 'flex', alignItems: 'center' }}>
-                该日期暂无目标
-              </div>
-            )}
+          {/* 分隔线 */}
+          <div style={{ height: '1px', background: isDark ? 'rgba(71, 85, 105, 0.3)' : 'rgba(148, 163, 184, 0.2)', margin: '8px 0' }} />
+          {/* 目标行：图标标签 + 横向滚动内容 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, color: isDark ? '#94a3b8' : '#999', fontSize: '12px', fontWeight: '600' }}>
+              <IonIcon icon={flagOutline} style={{ fontSize: '13px' }} />
+            </div>
+            <div style={{ height: '56px', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              {availableGoals.length > 0 ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', paddingRight: '4px' }}>
+                  {currentGoals.map((g, index) => (
+                    <React.Fragment key={g.id}>
+                      {index > 0 && renderSeparator()}
+                      {renderSelectableItem(
+                        g.id!,
+                        g.name,
+                        g.id === selectedGoalId,
+                        '#f59e0b',
+                        '#666',
+                        () => { userPickedGoalRef.current = true; setSelectedGoalId(g.id === selectedGoalId ? null : g.id!); }
+                      )}
+                    </React.Fragment>
+                  ))}
+                  {currentGoals.length > 0 && filteredPrevGoals.length > 0 && renderSeparator()}
+                  {filteredPrevGoals.map((g, index) => (
+                    <React.Fragment key={g.id}>
+                      {index > 0 && renderSeparator()}
+                      {renderSelectableItem(
+                        g.id!,
+                        g.name,
+                        g.id === selectedGoalId,
+                        '#f59e0b',
+                        '#999',
+                        () => { userPickedGoalRef.current = true; setSelectedGoalId(g.id === selectedGoalId ? null : g.id!); },
+                        '*'
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ color: isDark ? '#475569' : '#bbb', fontSize: '14px' }}>
+                  该日期暂无目标
+                </div>
+              )}
+            </div>
           </div>
         </IonCardContent>
       </IonCard>
 
       {/* 时间选择卡片 */}
       <IonCard style={{ ...getCardStyle(isDark), marginBottom: '0.5rem' }}>
-        <IonCardContent style={{ padding: '16px 20px' }}>
+        <IonCardContent style={{ padding: '12px 20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
             {/* 开始时间 */}
             <div
