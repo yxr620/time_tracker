@@ -1,5 +1,5 @@
 .entry-list-container {
-  margin-top: 16px;
+  padding-top: 16px;
 }
 
 .entry-list-empty {
@@ -12,6 +12,7 @@
 .entry-list-container ion-list {
   background: transparent;
   --ion-item-background: transparent;
+  margin: 0;
   padding: 0;
 }
 
@@ -19,11 +20,6 @@
 .swipeable-item-container {
   position: relative;
   overflow: hidden;
-  border-bottom: 1px solid hsl(var(--border));
-}
-
-.swipeable-item-container:last-child {
-  border-bottom: none;
 }
 
 .swipeable-actions {
@@ -58,8 +54,22 @@
 .swipeable-content {
   position: relative;
   z-index: 1;
-  background-color: hsl(var(--background));
+  background-color: hsl(var(--card));
   will-change: transform;
+}
+
+.swipeable-content::after {
+  content: '';
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 0;
+  height: 1px;
+  background: hsl(var(--border));
+}
+
+.swipeable-item-container:last-child .swipeable-content::after {
+  display: none;
 }
 
 .entry-item {

@@ -48,5 +48,6 @@
   .records-section .entry-list-container {
     border-radius: 12px;
     overflow: hidden; /* 列表内容较多，保留裁切 */
+    padding-top: 0; /* 桌面端卡片间距由 records-page gap 提供，不需要内部上边距 */
   }
 }

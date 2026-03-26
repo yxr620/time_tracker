@@ -129,11 +129,11 @@ html {
   /* 桌面端 RecordsPage 样式 */
   .desktop-layout .timeline-view,
   .desktop-layout .entry-list-container {
-    background: hsl(var(--card));
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    margin-bottom: 16px;
-    /* timeline-view 允许装饰元素外溢，entry-list 保持裁切 */
+    background: transparent;
+    border-radius: inherit;
+    box-shadow: none;
+    margin-bottom: 0;
+    /* 卡片样式统一由外层 .records-section 提供，避免双层阴影/边框重影 */
   }
 
   .desktop-layout .timeline-view {
