@@ -46,6 +46,7 @@ Six Zustand stores, each with a clear domain:
 
 ### Data Layer (`src/services/`)
 - `db.ts` — Dexie schema: tables `entries`, `goals`, `categories`, `syncMetadata`, `syncOperations`
+- `dataService.ts` — CRUD operations wrapper used by stores (sits between stores and `db.ts`)
 - `syncDb.ts` — DB wrapper that tracks changes for sync
 - `syncEngine.ts` — Push/pull/merge sync (oplog + snapshot, LWW strategy)
 - `oss.ts` — Aliyun OSS operations (optional cloud backend)
@@ -55,8 +56,11 @@ Six Zustand stores, each with a clear domain:
 
 All records have `version`, `deviceId`, `syncStatus`, and `deleted` (soft delete) fields for sync support.
 
+### Components & Pages (`src/components/`)
+There is no separate pages directory — all page-level components live under `src/components/` alongside smaller shared components.
+
 ### Routing & Layout (`src/App.tsx`)
-Responsive: renders mobile layout (bottom tabs) or desktop layout (sidebar split-pane) based on screen width. Pages are conditionally shown — analytics pages (Dashboard, Trends, GoalAnalysis, AIAssistant) are **desktop-only**.
+Responsive: switches between mobile layout (bottom tabs) and desktop layout (sidebar split-pane) at the **1024px** breakpoint. Analytics pages (Dashboard, Trends, GoalAnalysis, AIAssistant) are **desktop-only**. Records, Goals, Export, and Maintenance are available on both layouts.
 
 ### Categories
 Six hardcoded category IDs with colors defined in `src/config/categoryColors.ts` — this is the single source of truth for category colors (colors are not stored in the DB).

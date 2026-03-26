@@ -262,7 +262,6 @@ export const TimeEntryForm: React.FC = () => {
 
   const setEndTimeToOngoing = () => {
     setEndTime(null);
-    showToast('已设置为正在进行', 'success');
   };
 
   const setToNow = (isStart: boolean) => {
@@ -552,77 +551,124 @@ export const TimeEntryForm: React.FC = () => {
       {/* 时间选择卡片 */}
       <IonCard style={{ ...getCardStyle(isDark), marginBottom: '0.5rem' }}>
         <IonCardContent style={{ padding: '12px 20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
-            {/* 开始时间 */}
-            <div
-              style={{ flex: 1, cursor: 'pointer', minWidth: '80px' }}
-              onClick={() => {
-                if (isIOS) {
-                  void openIOSTimePicker(startTime, (pickedDate) => {
-                    setStartTime(pickedDate);
-                    setSelectedDate(dayjs(pickedDate).format('YYYY-MM-DD'));
-                  });
-                  return;
-                }
-                setStartPickerVisible(true);
-              }}
-            >
-              <div style={{ ...TIME_DISPLAY_STYLE, color: isDark ? '#f1f5f9' : '#333' }}>
-                {dayjs(startTime).format('HH:mm')}
-              </div>
-              <div>
-                <span
-                  onClick={(e) => { e.stopPropagation(); setToNow(true); }}
-                  style={{
-                    ...TIME_BADGE_STYLE,
-                    color: isDark ? '#94a3b8' : '#666',
-                    background: isDark ? 'rgba(51, 65, 85, 0.5)' : '#f7f8fa'
-                  }}
-                >
-                  <IonIcon icon={refreshOutline} style={{ fontSize: '12px' }} />
-                  现在
-                </span>
-              </div>
-            </div>
+          {/* 时间显示行：时间 + 箭头对齐 */}
+          {(() => {
+            const lastEndTime = getLastEntryEndTimeForDate(selectedDate);
+            const lastEndDate = lastEndTime ? alignDateWithTime(ensureDate(lastEndTime), selectedDate) : null;
+            const startIsLastEnd = lastEndDate !== null &&
+              Math.abs(dayjs(startTime).diff(dayjs(lastEndDate), 'second')) < 5;
+            return (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '8px' }}>
+                  {/* 开始时间 */}
+                  <div
+                    style={{ flex: 1, cursor: 'pointer', minWidth: '80px' }}
+                    onClick={() => {
+                      if (isIOS) {
+                        void openIOSTimePicker(startTime, (pickedDate) => {
+                          setStartTime(pickedDate);
+                          setSelectedDate(dayjs(pickedDate).format('YYYY-MM-DD'));
+                        });
+                        return;
+                      }
+                      setStartPickerVisible(true);
+                    }}
+                  >
+                    <div style={{ ...TIME_DISPLAY_STYLE, marginBottom: 0, color: isDark ? '#f1f5f9' : '#333' }}>
+                      {dayjs(startTime).format('HH:mm')}
+                    </div>
+                  </div>
 
-            {/* 时间轴箭头 */}
-            <div style={{ color: isDark ? '#475569' : '#e0e0e0', fontSize: '20px', flexShrink: 0 }}>→</div>
+                  {/* 时间轴箭头 */}
+                  <div style={{ color: isDark ? '#475569' : '#d0d0d0', fontSize: '18px', flexShrink: 0, lineHeight: 1 }}>→</div>
 
-            {/* 结束时间 */}
-            <div
-              style={{ flex: 1, textAlign: 'right', cursor: 'pointer', minWidth: '80px' }}
-              onClick={() => {
-                if (isIOS) {
-                  void openIOSTimePicker(endTime ?? new Date(), (pickedDate) => {
-                    setEndTime(pickedDate);
-                  });
-                  return;
-                }
-                setEndPickerVisible(true);
-              }}
-            >
-              <div style={{
-                ...TIME_DISPLAY_STYLE,
-                color: endTime ? (isDark ? '#f1f5f9' : '#333') : '#10b981',
-                fontFamily: endTime ? 'Monaco, Menlo, monospace' : 'inherit'
-              }}>
-                {endTime ? dayjs(endTime).format('HH:mm') : '进行中'}
-                {!endTime && <span style={{ fontSize: '16px', marginLeft: '4px' }}>●</span>}
-              </div>
-              <div>
-                <span
-                  onClick={(e) => { e.stopPropagation(); setEndTimeToOngoing(); }}
-                  style={{
-                    ...TIME_BADGE_STYLE,
-                    color: '#10b981',
-                    background: 'rgba(16, 185, 129, 0.1)'
-                  }}
-                >
-                  进行中
-                </span>
-              </div>
-            </div>
-          </div>
+                  {/* 结束时间 */}
+                  <div
+                    style={{ flex: 1, textAlign: 'right', cursor: 'pointer', minWidth: '80px' }}
+                    onClick={() => {
+                      if (isIOS) {
+                        void openIOSTimePicker(endTime ?? new Date(), (pickedDate) => {
+                          setEndTime(pickedDate);
+                        });
+                        return;
+                      }
+                      setEndPickerVisible(true);
+                    }}
+                  >
+                    <div style={{
+                      ...TIME_DISPLAY_STYLE,
+                      marginBottom: 0,
+                      color: endTime ? (isDark ? '#f1f5f9' : '#333') : '#10b981',
+                    }}>
+                      {endTime ? dayjs(endTime).format('HH:mm') : '进行中'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 快捷按钮行 */}
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  {startIsLastEnd ? (
+                    <span
+                      onClick={(e) => { e.stopPropagation(); setToNow(true); }}
+                      style={{
+                        ...TIME_BADGE_STYLE,
+                        color: isDark ? '#94a3b8' : '#666',
+                        background: isDark ? 'rgba(51, 65, 85, 0.5)' : '#f7f8fa'
+                      }}
+                    >
+                      <IonIcon icon={refreshOutline} style={{ fontSize: '12px' }} />
+                      现在
+                    </span>
+                  ) : (
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (lastEndDate) {
+                          setStartTime(lastEndDate);
+                          setSelectedDate(dayjs(lastEndDate).format('YYYY-MM-DD'));
+                        } else {
+                          setToNow(true);
+                        }
+                      }}
+                      style={{
+                        ...TIME_BADGE_STYLE,
+                        color: isDark ? '#94a3b8' : '#666',
+                        background: isDark ? 'rgba(51, 65, 85, 0.5)' : '#f7f8fa'
+                      }}
+                    >
+                      {lastEndDate ? '上次结束' : (
+                        <><IonIcon icon={refreshOutline} style={{ fontSize: '12px' }} />现在</>
+                      )}
+                    </span>
+                  )}
+                  {endTime === null ? (
+                    <span
+                      onClick={(e) => { e.stopPropagation(); setToNow(false); }}
+                      style={{
+                        ...TIME_BADGE_STYLE,
+                        color: isDark ? '#94a3b8' : '#666',
+                        background: isDark ? 'rgba(51, 65, 85, 0.5)' : '#f7f8fa'
+                      }}
+                    >
+                      <IonIcon icon={refreshOutline} style={{ fontSize: '12px' }} />
+                      现在
+                    </span>
+                  ) : (
+                    <span
+                      onClick={(e) => { e.stopPropagation(); setEndTimeToOngoing(); }}
+                      style={{
+                        ...TIME_BADGE_STYLE,
+                        color: '#10b981',
+                        background: 'rgba(16, 185, 129, 0.1)'
+                      }}
+                    >
+                      进行中
+                    </span>
+                  )}
+                </div>
+              </>
+            );
+          })()}
         </IonCardContent>
       </IonCard>
 
