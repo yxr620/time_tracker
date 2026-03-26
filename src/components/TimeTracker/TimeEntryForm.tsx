@@ -534,8 +534,7 @@ export const TimeEntryForm: React.FC = () => {
                         g.id === selectedGoalId,
                         '#f59e0b',
                         '#999',
-                        () => { userPickedGoalRef.current = true; setSelectedGoalId(g.id === selectedGoalId ? null : g.id!); },
-                        '*'
+                          () => { userPickedGoalRef.current = true; setSelectedGoalId(g.id === selectedGoalId ? null : g.id!); }
                       )}
                     </React.Fragment>
                   ))}
