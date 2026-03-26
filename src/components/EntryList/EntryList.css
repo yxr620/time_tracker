@@ -2,16 +2,6 @@
   margin-top: 16px;
 }
 
-.entry-list-header {
-  padding: 0 16px 8px;
-  font-weight: bold;
-  font-size: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: hsl(var(--foreground));
-}
-
 .entry-list-empty {
   padding: 40px 16px;
   text-align: center;

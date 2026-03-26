@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import {
-  IonList,
-  IonButton
+  IonList
 } from '@ionic/react';
 import { useEntryStore } from '../../stores/entryStore';
 import { useGoalStore } from '../../stores/goalStore';
@@ -21,7 +20,6 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
   const { goals, loadGoals } = useGoalStore();
   const { loadCategories, getCategoryName } = useCategoryStore();
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
-  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     loadEntries();
@@ -29,9 +27,9 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
     loadCategories();
   }, [loadEntries, loadGoals, loadCategories]);
 
-  // 筛选记录：选定日期或全部
+  // 按选定日期筛选记录，保留跨天记录
   const displayEntries = useMemo(() => {
-    if (showAll || !selectedDate) {
+    if (!selectedDate) {
       return entries;
     }
 
@@ -44,10 +42,9 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
       const entryStart = dayjs(entry.startTime);
       const entryEnd = entry.endTime ? dayjs(entry.endTime) : dayjs();
 
-      // 记录与选定日期有交集
       return entryStart.isBefore(dayEnd) && entryEnd.isAfter(dayStart);
     });
-  }, [entries, selectedDate, showAll]);
+  }, [entries, selectedDate]);
 
   const formatDuration = (start: Date, end: Date | null) => {
     if (!end) return '进行中';
@@ -69,50 +66,11 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
     return goal?.name || null;
   };
 
-  // 判断是否是今天
-  const isToday = selectedDate ? dayjs(selectedDate).isSame(dayjs(), 'day') : true;
-
-  // 格式化显示日期
-  const getDateLabel = () => {
-    if (!selectedDate) return '记录列表';
-    if (showAll) return '全部记录';
-
-    if (isToday) {
-      return '当日记录';
-    }
-
-    return `当日记录(${dayjs(selectedDate).format('MM-DD')})`;
-  };
-
   return (
     <div className="entry-list-container">
-      <div className="entry-list-header">
-        <span>{getDateLabel()}</span>
-        {selectedDate && !showAll && entries.length > displayEntries.length && (
-          <IonButton
-            size="small"
-            fill="clear"
-            onClick={() => setShowAll(true)}
-            style={{ fontSize: '14px' }}
-          >
-            全部记录 ({entries.length})
-          </IonButton>
-        )}
-        {selectedDate && showAll && (
-          <IonButton
-            size="small"
-            fill="clear"
-            onClick={() => setShowAll(false)}
-            style={{ fontSize: '14px' }}
-          >
-            仅当日
-          </IonButton>
-        )}
-      </div>
-
       {displayEntries.length === 0 ? (
         <div className="entry-list-empty">
-          {selectedDate && !showAll ? '当日还没有记录' : '暂无记录'}
+          暂无记录
         </div>
       ) : (
         <IonList>
