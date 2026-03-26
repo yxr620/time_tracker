@@ -43,20 +43,18 @@
 }
 
 .date-nav-btn {
-  width: 28px;
-  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: hsl(var(--secondary));
-  border: 1px solid hsl(var(--border));
-  border-radius: 8px;
-  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 2px;
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
   color: hsl(var(--muted-foreground));
-  transition: color 0.15s, opacity 0.15s, background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  transition: color 0.15s, opacity 0.15s, transform 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -76,7 +74,6 @@
 }
 
 .date-nav-btn:hover:not(:disabled) {
-  background: hsl(var(--accent));
   color: hsl(var(--foreground));
 }
 
@@ -85,8 +82,8 @@
 }
 
 .date-nav-btn:focus-visible {
-  border-color: #1677ff;
-  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.35);
+  outline: 2px solid rgba(22, 119, 255, 0.35);
+  outline-offset: 4px;
 }
 
 .date-nav-btn:active:not(:disabled) {
@@ -176,8 +173,8 @@
 /* 当前时间指示线 — 相对于 .timeline-container 绝对定位 */
 .timeline-current-time {
   position: absolute;
-  top: 0;
-  height: 10px; /* 与 bar 同高 */
+  top: -2px;
+  height: 14px; /* 比 bar 略长一点，视觉更清晰 */
   width: 2px;
   background: #ff4d4f;
   z-index: 20;
@@ -189,7 +186,7 @@
 .timeline-current-time::before {
   content: '';
   position: absolute;
-  top: -3px;
+  top: -4px;
   left: 50%;
   transform: translateX(-50%);
   width: 6px;
@@ -342,7 +339,8 @@
   }
 
   .timeline-current-time {
-    height: 14px;
+    top: -2px;
+    height: 18px;
   }
 
   .timeline-labels {
