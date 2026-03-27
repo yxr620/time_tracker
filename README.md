@@ -1,6 +1,14 @@
 # Chrono (Time Tracker)
 
-一个基于 React + TypeScript + Capacitor 开发的个人时间追踪应用，支持 Web 和 Android 平台。
+一个基于 React + TypeScript + Capacitor 开发的个人时间追踪应用，支持 Web、Android 和 macOS 平台。
+
+## 📥 下载安装
+
+- **Android APK**：[GitHub Releases](https://github.com/yxr620/time_tracker/releases) 下载最新版本
+- **Web**：克隆项目后 `npm run dev` 本地运行
+- **macOS**：克隆项目后从 Electron 构建（见下方说明）
+
+> 安装后在应用内配置 OSS 同步和 AI 服务（可选功能，不影响核心使用）。
 
 ## 📱 功能特性
 
@@ -17,7 +25,7 @@
 - 📊 **24小时时间轴**：进度条样式可视化展示一天的时间分布，支持点击记录快速设置时间
 - 🎯 **目标管理**：设置每日目标并追踪时间投入，内置时间注入矩阵（月历热力图）
 - 📝 **记录管理**：查看、编辑和删除时间记录，支持点击记录快速设置时间
-- 🔄 **多端同步**：基于阿里云 OSS 的同步功能，支持 oplog + snapshot 双层架构、操作压缩、自动清理、分页列表（v3.0.0）- [查看详情](./sync.md)
+- 🔄 **多端同步**：基于阿里云 OSS 的同步功能，支持 oplog + snapshot 双层架构、操作压缩、自动清理、分页列表（v3.0.0）- [查看详情](./docs/sync.md)
 - 📤 **数据导出**：导出为 JSON 格式（全量/增量），自动过滤已删除记录
 - 📥 **数据导入**：从 JSON 文件恢复数据（合并/替换策略），兼容旧数据
 - 💾 **本地存储**：使用 IndexedDB 实现离线数据存储
@@ -45,7 +53,7 @@
   - 时间投入概览：总投入、日均投入、目标覆盖率、活跃聚类数四大指标
   - 目标时间分布：Top 10 目标簇的时间占比排行图
   - 未关联事件建议：识别可能与现有目标簇相关的无目标记录
-- 🤖 **AI 时间助手**（桌面端专属）：基于 Function Calling 架构的自然语言时间查询与分析 - [查看详情](./ai_tool.md)
+- 🤖 **AI 时间助手**（桌面端专属）：基于 Function Calling 架构的自然语言时间查询与分析 - [查看详情](./docs/ai-assistant.md)
 
 ## 🛠️ 技术栈
 
@@ -140,6 +148,7 @@ time-tracker/
 │   │       ├── toolDefinitions.ts   # 工具 schema + 本地执行函数
 │   │       ├── llmClient.ts         # LLM 网络层
 │   │       ├── providers.ts         # 服务商预设配置
+│   │       ├── envDefaults.ts       # 环境变量默认配置解析
 │   │       ├── contextBuilder.ts    # [遗留] 上下文构建器
 │   │       └── intentParser.ts      # [遗留] 正则时间解析
 │   ├── utils/                # 工具函数
@@ -150,11 +159,20 @@ time-tracker/
 │   └── plugins/              # Capacitor 原生插件
 │       └── iosWheelDateTimePicker.ts
 ├── android/                  # Android 原生项目
-├── ios/                      # iOS 原生项目
+├── ios/                      # iOS 原生项目（实验性）
 ├── electron/                 # Electron 桌面端项目
+├── scripts/                  # 工具脚本
+│   ├── ai-debug-cli.ts       # AI 助手 CLI 调试工具
+│   └── deploy-android.sh     # Android 部署脚本
+├── docs/                     # 项目文档
+│   ├── sync.md               # 多端同步技术文档
+│   ├── ai-assistant.md       # AI 助手技术文档
+│   ├── release-android.md    # Android APK 发布流程
+│   ├── architecture.md       # 系统架构
+│   ├── data-model.md         # 数据模型
+│   └── dataService.md        # 数据服务
 ├── public/                   # 静态资源
 ├── icons/                    # 应用图标
-├── docs/                     # 项目文档
 ├── vite.config.ts           # Vite 构建配置
 ├── capacitor.config.ts      # Capacitor 原生配置
 ├── tsconfig.json            # TypeScript 配置
@@ -201,7 +219,7 @@ npm install
 
 如果需要使用多端同步功能，需要配置阿里云 OSS。
 
-**详细配置说明**：请参考 [多端同步功能文档](./sync.md)
+**详细配置说明**：请参考 [多端同步功能文档](./docs/sync.md)
 
 > 💡 **提示**：如果不配置 OSS，同步功能不会显示，但其他功能正常使用。
 
@@ -314,6 +332,12 @@ npx cap open android
 4. 手机上允许 USB 调试
 5. 在 Android Studio 中选择你的设备
 6. 点击 Run 按钮
+
+### 发布 APK 到 GitHub Release
+
+完整的签名和发布流程见 [Android APK 发布流程](./docs/release-android.md)。
+
+> ⚠️ **安全提示**：Vite 会把 `VITE_*` 环境变量编译进 JS。构建发布用 APK 前必须临时移除 `.env` 文件，否则密钥会被打包进 APK。详见发布文档。
 
 ---
 
@@ -450,9 +474,10 @@ npx cap open @capacitor-community/electron
 
 ```bash
 npm run dev         # 启动开发服务器（http://localhost:5173）
-npm run build       # 构建生产版本到 dist/
+npm run build       # TypeScript 编译 + Vite 生产构建到 dist/
 npm run preview     # 预览生产构建
 npm run lint        # 运行 ESLint 检查代码
+npm run ai:debug    # AI 助手 CLI 调试工具
 ```
 
 ## 🗄️ 数据存储
@@ -660,7 +685,7 @@ git commit -m "docs: 更新文档"
 git push
 ```
 
-详细的 Git 使用说明请查看 [`GIT_GUIDE.md`](./GIT_GUIDE.md)。
+
 
 ### 推荐的提交信息格式
 
@@ -677,9 +702,12 @@ git push
 
 ## 📚 相关文档
 
-- [使用手册](./manual.md) - 完整的功能使用指南
-- [多端同步技术文档](./sync.md) - 同步功能的详细技术设计与实现
-- [AI 时间助手技术文档](./ai_tool.md) - AI 功能的详细技术架构与实现
+- [多端同步技术文档](./docs/sync.md) - 同步功能的详细技术设计与实现
+- [AI 时间助手技术文档](./docs/ai-assistant.md) - AI 功能的详细技术架构与实现
+- [Android APK 发布流程](./docs/release-android.md) - 安全的 APK 签名与 GitHub Release 发布指南
+- [系统架构](./docs/architecture.md) - 整体架构设计
+- [数据模型](./docs/data-model.md) - 数据库表结构与字段说明
+- [数据服务](./docs/dataService.md) - CRUD 操作与数据层设计
 
 ### 外部参考
 
@@ -725,7 +753,7 @@ git push
 
 完整更新日志请查看 [CHANGELOG.md](./CHANGELOG.md)。
 
-**最新版本**：v2.3.0 (2025-01)
-- 目标深度分析：智能聚类、时间投入概览、目标时间分布
+**最新版本**：v0.0.1 (2026-03)
+- 首个 GitHub Release：Android APK 公开发布
 
 
