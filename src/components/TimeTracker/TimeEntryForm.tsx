@@ -369,7 +369,7 @@ export const TimeEntryForm: React.FC = () => {
   );
 
   const renderSeparator = () => (
-    <span style={{ color: isDark ? '#475569' : '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>
+    <span style={{ color: isDark ? '#475569' : '#cbd5e1', fontSize: '14px', margin: '0 1px' }}>|</span>
   );
 
   // ============ 渲染 ============
@@ -483,7 +483,7 @@ export const TimeEntryForm: React.FC = () => {
               <IonIcon icon={pricetagOutline} style={{ fontSize: '13px' }} />
             </div>
             <div style={{ flex: 1, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-              <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '8px', alignItems: 'center', whiteSpace: 'nowrap', paddingRight: '4px' }}>
+              <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '4px', alignItems: 'center', whiteSpace: 'nowrap', paddingRight: '4px' }}>
                 {categories.map((c, index) => (
                   <React.Fragment key={c.id}>
                     {index > 0 && renderSeparator()}
@@ -509,7 +509,7 @@ export const TimeEntryForm: React.FC = () => {
             </div>
             <div style={{ height: '56px', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
               {availableGoals.length > 0 ? (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', paddingRight: '4px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center', paddingRight: '4px' }}>
                   {currentGoals.map((g, index) => (
                     <React.Fragment key={g.id}>
                       {index > 0 && renderSeparator()}

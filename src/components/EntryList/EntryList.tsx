@@ -108,8 +108,6 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
                   {entry.activity}
                 </div>
                 <div className="entry-item-details">
-                  <span>{dayjs(entry.startTime).format('HH:mm')}-{entry.endTime ? dayjs(entry.endTime).format('HH:mm') : '进行中'}</span>
-                  <span>·</span>
                   <span>{formatDuration(entry.startTime, entry.endTime)}</span>
                   <span>·</span>
                   <span className="entry-category-badge">
