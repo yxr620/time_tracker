@@ -5,6 +5,8 @@ import { useGoalStore } from '../../stores/goalStore';
 import type { TimeEntry } from '../../services/db';
 import dayjs from 'dayjs';
 import { IonDatetime, IonModal, IonContent } from '@ionic/react';
+import { WheelMonthYearPicker } from '../common/WheelTimePicker';
+import { useDarkMode } from '../../hooks/useDarkMode';
 import './TimelineView.css';
 
 interface TimeBlock {
@@ -29,6 +31,7 @@ interface TimelineViewProps {
   onDateChange: (date: Date) => void;
 }
 
+
 export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDateChange }) => {
   const { entries, loadEntries, setNextStartTime, setTimeRange, getEarliestEntryDate } = useEntryStore();
   const { loadCategories, getCategoryColor } = useCategoryStore();
@@ -37,9 +40,57 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const [gapBlocks, setGapBlocks] = useState<GapBlock[]>([]);
   const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [showMonthWheel, setShowMonthWheel] = useState(false);
+  const [calendarDate, setCalendarDate] = useState(() => dayjs(selectedDate).format('YYYY-MM-DD'));
+  const [viewYear, setViewYear] = useState(() => dayjs(selectedDate).year());
+  const [viewMonth, setViewMonth] = useState(() => dayjs(selectedDate).month() + 1);
   const [tooltip, setTooltip] = useState<{ block: TimeBlock; positionPercent: number } | null>(null);
-  const datetimeRef = useRef<HTMLIonDatetimeElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const datetimeRef = useRef<HTMLIonDatetimeElement>(null);
+  const { isDark } = useDarkMode();
+
+  // Initialize all picker state from selectedDate when opening
+  const openDatePicker = () => {
+    const d = dayjs(selectedDate);
+    setCalendarDate(d.format('YYYY-MM-DD'));
+    setViewYear(d.year());
+    setViewMonth(d.month() + 1);
+    setShowMonthWheel(false);
+    setDatePickerVisible(true);
+  };
+
+  // Intercept Ionic's built-in month-year-button click (shadow DOM)
+  // and replace it with our custom wheel picker
+  useEffect(() => {
+    if (!datePickerVisible || showMonthWheel) return;
+
+    let cleanup: (() => void) | undefined;
+
+    const attach = () => {
+      const shadow = datetimeRef.current?.shadowRoot;
+      if (!shadow) return false;
+      const btn = shadow.querySelector('[part="month-year-button"]') as HTMLElement | null;
+      if (!btn) return false;
+
+      const onBtnClick = (e: Event) => {
+        e.stopImmediatePropagation(); // prevent Ionic's internal month-year picker
+        const d = dayjs(calendarDate);
+        setViewYear(d.year());
+        setViewMonth(d.month() + 1);
+        setShowMonthWheel(true);
+      };
+
+      btn.addEventListener('click', onBtnClick, { capture: true });
+      cleanup = () => btn.removeEventListener('click', onBtnClick, { capture: true });
+      return true;
+    };
+
+    if (!attach()) {
+      const timer = setTimeout(attach, 250);
+      return () => { clearTimeout(timer); cleanup?.(); };
+    }
+    return () => cleanup?.();
+  }, [datePickerVisible, showMonthWheel, calendarDate]);
 
   useEffect(() => {
     loadEntries();
@@ -227,7 +278,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
           </button>
           <div
             className="date-display date-display-clickable"
-            onClick={() => setDatePickerVisible(true)}
+            onClick={openDatePicker}
           >
             {dayjs(selectedDate).format('YYYY-MM-DD')}
             {!isToday && (
@@ -259,29 +310,66 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ selectedDate, onDate
       {/* 日期选择弹窗 */}
       <IonModal
         isOpen={datePickerVisible}
-        onDidDismiss={() => setDatePickerVisible(false)}
+        onDidDismiss={() => { setDatePickerVisible(false); setShowMonthWheel(false); }}
         initialBreakpoint={0.55}
         breakpoints={[0, 0.55, 0.7]}
       >
         <IonContent className="ion-padding">
-          <IonDatetime
-            ref={datetimeRef}
-            presentation="date"
-            value={dayjs(selectedDate).format('YYYY-MM-DD')}
-            min={earliestDate || undefined}
-            max={dayjs().format('YYYY-MM-DD')}
-            locale="zh-CN"
-            firstDayOfWeek={1}
-            onIonChange={(e) => {
-              const value = e.detail.value;
-              if (value) {
-                const dateStr = typeof value === 'string' ? value : value[0];
-                onDateChange(dayjs(dateStr).toDate());
-              }
-              setDatePickerVisible(false);
-            }}
-            style={{ width: '100%', margin: '0 auto' }}
-          />
+          {showMonthWheel ? (
+            /* ── Year / Month wheel view ── */
+            <div>
+              {/* Back → calendar button */}
+              <button
+                onClick={() => {
+                  const d = `${viewYear}-${String(viewMonth).padStart(2, '0')}-01`;
+                  setCalendarDate(d);
+                  setShowMonthWheel(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  background: 'none',
+                  border: 'none',
+                  color: isDark ? '#60a5fa' : '#3b82f6',
+                  fontSize: 16,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: '4px 0 12px',
+                }}
+              >
+                ‹ {viewYear}年{viewMonth}月
+              </button>
+              <WheelMonthYearPicker
+                year={viewYear}
+                month={viewMonth}
+                min={earliestDate || undefined}
+                max={dayjs().format('YYYY-MM-DD')}
+                isDark={isDark}
+                onChange={(y, m) => { setViewYear(y); setViewMonth(m); }}
+              />
+            </div>
+          ) : (
+            /* ── Calendar view (original IonDatetime) ── */
+            <IonDatetime
+              ref={datetimeRef}
+              presentation="date"
+              value={calendarDate}
+              min={earliestDate || undefined}
+              max={dayjs().format('YYYY-MM-DD')}
+              locale="zh-CN"
+              firstDayOfWeek={1}
+              onIonChange={(e) => {
+                const value = e.detail.value;
+                if (value) {
+                  const dateStr = typeof value === 'string' ? value : value[0];
+                  onDateChange(dayjs(dateStr).toDate());
+                }
+                setDatePickerVisible(false);
+              }}
+              style={{ width: '100%', margin: '0 auto' }}
+            />
+          )}
         </IonContent>
       </IonModal>
 

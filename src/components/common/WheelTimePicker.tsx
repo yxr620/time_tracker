@@ -336,3 +336,110 @@ export const WheelTimePicker = forwardRef<WheelTimePickerHandle, WheelTimePicker
 });
 
 WheelTimePicker.displayName = 'WheelTimePicker';
+
+// ============ WheelMonthYearPicker ============
+// 2-column wheel for selecting year + month (used with a separate calendar grid)
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+interface WheelMonthYearPickerProps {
+  year: number;
+  month: number; // 1–12
+  onChange: (year: number, month: number) => void;
+  min?: string; // YYYY-MM-DD
+  max?: string; // YYYY-MM-DD
+  isDark: boolean;
+}
+
+export const WheelMonthYearPicker: React.FC<WheelMonthYearPickerProps> = ({
+  year, month, onChange, min, max, isDark,
+}) => {
+  const minDjs = useMemo(() => (min ? dayjs(min) : null), [min]);
+  const maxDjs = useMemo(() => (max ? dayjs(max) : null), [max]);
+
+  const minYear = minDjs ? minDjs.year() : dayjs().year() - 5;
+  const maxYear = maxDjs ? maxDjs.year() : dayjs().year();
+
+  const yearItems = useMemo(
+    () =>
+      Array.from({ length: maxYear - minYear + 1 }, (_, i) => {
+        const y = minYear + i;
+        return { value: String(y), label: String(y) };
+      }),
+    [minYear, maxYear]
+  );
+
+  const monthItems = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, i) => {
+        const m = i + 1;
+        return { value: pad2(m), label: pad2(m) };
+      }),
+    []
+  );
+
+  const handleYearChange = useCallback(
+    (v: string) => {
+      const newYear = parseInt(v, 10);
+      const startM = minDjs && newYear === minDjs.year() ? minDjs.month() + 1 : 1;
+      const endM = maxDjs && newYear === maxDjs.year() ? maxDjs.month() + 1 : 12;
+      const clampedMonth = Math.max(startM, Math.min(endM, month));
+      onChange(newYear, clampedMonth);
+    },
+    [month, minDjs, maxDjs, onChange]
+  );
+
+  const handleMonthChange = useCallback(
+    (v: string) => {
+      onChange(year, parseInt(v, 10));
+    },
+    [year, onChange]
+  );
+
+  return (
+    <div style={{ position: 'relative' }}>
+      {/* Selected row highlight */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '2px',
+          right: '2px',
+          height: `${ITEM_HEIGHT}px`,
+          transform: 'translateY(-50%)',
+          background: isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(241, 245, 249, 0.8)',
+          borderRadius: '12px',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      <div
+        style={{
+          display: 'flex',
+          height: `${PICKER_HEIGHT}px`,
+          position: 'relative',
+          overflow: 'hidden',
+          maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)',
+        }}
+      >
+        <ScrollColumn
+          items={yearItems}
+          selectedValue={String(year)}
+          onChange={handleYearChange}
+          isDark={isDark}
+          fontSize={18}
+        />
+        <ScrollColumn
+          items={monthItems}
+          selectedValue={pad2(month)}
+          onChange={handleMonthChange}
+          isDark={isDark}
+          fontSize={18}
+        />
+      </div>
+    </div>
+  );
+};
+
+WheelMonthYearPicker.displayName = 'WheelMonthYearPicker';

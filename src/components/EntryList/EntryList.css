@@ -102,9 +102,10 @@
 .entry-category-badge {
   font-size: 10px;
   padding: 2px 6px;
-  background-color: hsl(var(--secondary));
+  background-color: transparent;
+  border: 1px solid hsl(var(--border));
   border-radius: 4px;
-  color: hsl(var(--foreground));
+  color: hsl(var(--muted-foreground));
 }
 
 .entry-goal-badge {
