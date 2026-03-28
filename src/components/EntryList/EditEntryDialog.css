@@ -79,7 +79,7 @@
 .edit-dialog-options-row {
   display: flex;
   flex-wrap: nowrap;
-  gap: 4px;
+  gap: 6px;
   align-items: center;
   white-space: nowrap;
   padding-right: 8px;

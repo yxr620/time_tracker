@@ -1,5 +1,5 @@
 .entry-list-container {
-  padding-top: 16px;
+  padding-top: 8px;
 }
 
 .entry-list-empty {
@@ -61,11 +61,11 @@
 .swipeable-content::after {
   content: '';
   position: absolute;
-  left: 16px;
+  left: 40px;
   right: 16px;
   bottom: 0;
-  height: 1px;
-  background: hsl(var(--border));
+  height: 0.5px;
+  background: hsl(var(--border) / 0.6);
 }
 
 .swipeable-item-container:last-child .swipeable-content::after {
@@ -73,45 +73,64 @@
 }
 
 .entry-item {
-  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
 .entry-item:active {
-  background-color: hsl(var(--muted) / 0.3);
+  background-color: hsl(var(--muted) / 0.2);
+}
+
+/* Category color indicator dot */
+.entry-color-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .entry-item-title {
   font-size: 14px;
   font-weight: 500;
-  margin-bottom: 6px;
   color: hsl(var(--foreground));
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
 }
 
-.entry-item-details {
+.entry-item-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  font-size: 11px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.entry-item-duration {
+  font-size: 12px;
   color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .entry-category-badge {
-  font-size: 10px;
-  padding: 2px 6px;
-  background-color: transparent;
-  border: 1px solid hsl(var(--border));
-  border-radius: 4px;
+  font-size: 11px;
   color: hsl(var(--muted-foreground));
+  white-space: nowrap;
 }
 
 .entry-goal-badge {
-  font-size: 10px;
-  padding: 2px 6px;
-  background-color: hsl(var(--primary) / 0.1);
-  border-radius: 4px;
+  font-size: 11px;
+  padding: 1px 8px;
+  background-color: hsl(var(--primary) / 0.08);
+  border-radius: 10px;
   color: hsl(var(--primary));
+  white-space: nowrap;
 }

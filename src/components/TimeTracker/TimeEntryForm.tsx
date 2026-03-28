@@ -483,7 +483,7 @@ export const TimeEntryForm: React.FC = () => {
               <IonIcon icon={pricetagOutline} style={{ fontSize: '13px' }} />
             </div>
             <div style={{ flex: 1, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-              <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '4px', alignItems: 'center', whiteSpace: 'nowrap', paddingRight: '4px' }}>
+              <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '6px', alignItems: 'center', whiteSpace: 'nowrap', paddingRight: '4px' }}>
                 {categories.map((c, index) => (
                   <React.Fragment key={c.id}>
                     {index > 0 && renderSeparator()}
