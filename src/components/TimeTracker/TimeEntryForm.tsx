@@ -296,6 +296,10 @@ export const TimeEntryForm: React.FC = () => {
       showToast('请输入活动名称', 'danger');
       return;
     }
+    if (startTime > new Date()) {
+      showToast('开始时间不能晚于当前时间', 'danger');
+      return;
+    }
 
     await startTracking(
       activity,
@@ -317,6 +321,10 @@ export const TimeEntryForm: React.FC = () => {
   const handleSaveManualEntry = async () => {
     if (!activity.trim()) {
       showToast('请输入活动名称', 'danger');
+      return;
+    }
+    if (startTime > new Date()) {
+      showToast('开始时间不能晚于当前时间', 'danger');
       return;
     }
     if (!endTime) {
@@ -566,6 +574,10 @@ export const TimeEntryForm: React.FC = () => {
                     onClick={() => {
                       if (isIOS) {
                         void openIOSTimePicker(startTime, (pickedDate) => {
+                          if (pickedDate > new Date()) {
+                            showToast('开始时间不能晚于当前时间', 'danger');
+                            return;
+                          }
                           setStartTime(pickedDate);
                           setSelectedDate(dayjs(pickedDate).format('YYYY-MM-DD'));
                         });
@@ -704,6 +716,10 @@ export const TimeEntryForm: React.FC = () => {
                 fill="clear"
                 onClick={() => {
                   const liveValue = startPickerRef.current?.getCurrentValue() ?? startDraftValue;
+                  if (liveValue > new Date()) {
+                    showToast('开始时间不能晚于当前时间', 'danger');
+                    return;
+                  }
                   setStartTime(liveValue);
                   setSelectedDate(dayjs(liveValue).format('YYYY-MM-DD'));
                   setStartPickerVisible(false);

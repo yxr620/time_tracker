@@ -106,6 +106,11 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
       return;
     }
 
+    if (startTime > new Date()) {
+      showToast('开始时间不能晚于当前时间', 'danger');
+      return;
+    }
+
     if (endTime && endTime <= startTime) {
       showToast('结束时间必须晚于开始时间', 'danger');
       return;
@@ -262,7 +267,10 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
               <div className="edit-dialog-time-col">
                 <div className="edit-dialog-time-label">开始时间</div>
                 <IonButton expand="block" fill="outline" size="small" onClick={() => {
-                  if (isIOS) { void openIOSTimePicker(startTime, setStartTime); return; }
+                  if (isIOS) { void openIOSTimePicker(startTime, (pickedDate) => {
+                    if (pickedDate > new Date()) { showToast('开始时间不能晚于当前时间', 'danger'); return; }
+                    setStartTime(pickedDate);
+                  }); return; }
                   setStartPickerVisible(true);
                 }}>
                   {dayjs(startTime).format('MM-DD HH:mm')}
@@ -315,7 +323,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
           <div className="edit-dialog-picker" style={{ background: isDark ? 'hsl(222.2, 84%, 4.9%)' : '#fff' }}>
             <div className="edit-dialog-picker-header">
               <IonButton fill="clear" onClick={() => setStartPickerVisible(false)}>取消</IonButton>
-              <IonButton fill="clear" onClick={() => { const liveValue = startPickerRef.current?.getCurrentValue() ?? startDraftValue; setStartTime(liveValue); setStartPickerVisible(false); }}>确定</IonButton>
+              <IonButton fill="clear" onClick={() => { const liveValue = startPickerRef.current?.getCurrentValue() ?? startDraftValue; if (liveValue > new Date()) { showToast('开始时间不能晚于当前时间', 'danger'); return; } setStartTime(liveValue); setStartPickerVisible(false); }}>确定</IonButton>
             </div>
             <WheelTimePicker ref={startPickerRef} value={startDraftValue} onChange={setStartDraftValue} isDark={isDark} />
           </div>
