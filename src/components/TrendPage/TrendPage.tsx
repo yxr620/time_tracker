@@ -34,7 +34,7 @@ const CHART_STYLES = {
       backgroundColor: 'hsl(var(--card))',
       border: '1px solid hsl(var(--border))',
       borderRadius: 6,
-      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+      boxShadow: 'none',
       fontSize: 12,
       padding: 10,
       color: 'hsl(var(--foreground))',

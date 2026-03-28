@@ -1,5 +1,10 @@
 /* ─── GoalManager responsive layout ─── */
 
+/* Frameless page background: override ion-content for goals page */
+.goal-manager-root {
+  border-radius: 16px 16px 0 0;
+}
+
 /* Desktop: dual-column body (left = goals, right = calendar) */
 @media (min-width: 1024px) {
   .goal-manager-body {

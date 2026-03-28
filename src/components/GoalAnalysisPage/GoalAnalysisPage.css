@@ -132,7 +132,6 @@
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .overview-stats-card h3 {
@@ -192,7 +191,6 @@
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .goal-chart-header {
@@ -222,7 +220,6 @@
   background: hsl(var(--popover));
   border: 1px solid hsl(var(--border));
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   padding: 12px;
   min-width: 160px;
 }
@@ -320,16 +317,15 @@
   background: hsl(var(--card));
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: box-shadow 0.2s;
+  transition: opacity 0.2s;
 }
 
 .cluster-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  opacity: 0.95;
 }
 
 .cluster-card.expanded {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  opacity: 1;
 }
 
 .cluster-card-main {
@@ -467,7 +463,6 @@
   padding: 14px 16px;
   background: hsl(var(--card));
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .unlinked-info {

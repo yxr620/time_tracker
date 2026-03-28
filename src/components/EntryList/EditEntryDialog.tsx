@@ -308,7 +308,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
             '--width': '100%',
             '--border-radius': '16px 16px 0 0',
             '--background': isDark ? 'hsl(222.2, 84%, 4.9%)' : '#fff',
-            '--box-shadow': '0 -4px 24px rgba(0, 0, 0, 0.15)',
+            '--box-shadow': 'none',
             alignItems: 'flex-end',
           }}
         >
@@ -332,7 +332,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
             '--width': '100%',
             '--border-radius': '16px 16px 0 0',
             '--background': isDark ? 'hsl(222.2, 84%, 4.9%)' : '#fff',
-            '--box-shadow': '0 -4px 24px rgba(0, 0, 0, 0.15)',
+            '--box-shadow': 'none',
             alignItems: 'flex-end',
           }}
         >

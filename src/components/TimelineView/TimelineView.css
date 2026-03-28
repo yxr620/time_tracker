@@ -1,7 +1,8 @@
 .timeline-view {
   padding: 10px 16px 8px;
   background: hsl(var(--card));
-  margin-bottom: 12px;
+  border-radius: 16px;
+  margin-bottom: 0;
   width: 100%;
   /* 不设 overflow:hidden，tooltip 向下展开不会被裁切 */
 }
@@ -240,7 +241,6 @@
   font-size: 12px;
   white-space: nowrap;
   z-index: 100;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), 0 1px 4px rgba(0, 0, 0, 0.08);
   border: 1px solid hsl(var(--border));
   pointer-events: none;
   max-width: 85vw;

@@ -1,5 +1,8 @@
 .entry-list-container {
-  padding-top: 8px;
+  padding-top: 0;
+  background: hsl(var(--card));
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 .entry-list-empty {

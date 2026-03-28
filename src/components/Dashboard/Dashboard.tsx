@@ -202,7 +202,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend, onOpenGoalAna
                 <div 
                   className="trend-entry-card"
                   onClick={onOpenTrend}
-                  style={{ flex: 1, background: 'hsl(var(--card))', borderRadius: 12, padding: 16, cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', minHeight: 96 }}
+                  style={{ flex: 1, background: 'hsl(var(--card))', borderRadius: 12, padding: 16, cursor: 'pointer', minHeight: 96 }}
                 >
                   <div className="trend-entry-content" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
                     <div className="trend-entry-left">
@@ -235,7 +235,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend, onOpenGoalAna
                 <div 
                   className="trend-entry-card goal-entry-card"
                   onClick={onOpenGoalAnalysis}
-                  style={{ flex: 1, background: 'hsl(var(--card))', borderRadius: 12, padding: 16, cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', minHeight: 96 }}
+                  style={{ flex: 1, background: 'hsl(var(--card))', borderRadius: 12, padding: 16, cursor: 'pointer', minHeight: 96 }}
                 >
                   <div className="trend-entry-content" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
                     <div className="trend-entry-left">

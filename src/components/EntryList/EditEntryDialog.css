@@ -28,7 +28,6 @@
   margin: 0;
   border-radius: 24px;
   background: hsl(var(--card));
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
   border: 1px solid hsl(var(--border));
   --background: hsl(var(--card));
   --color: hsl(var(--foreground));
