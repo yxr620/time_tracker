@@ -1,5 +1,5 @@
-// 类别颜色配置（硬编码，不存储在数据库中）
-// 修改这里的颜色后，重新编译部署即可生效
+// 类别颜色配置
+// 预设类别定义 + 自定义类别可选颜色调色板
 
 export interface CategoryConfig {
   id: string;
@@ -8,58 +8,72 @@ export interface CategoryConfig {
   order: number;
 }
 
-export const CATEGORY_COLORS: Record<string, CategoryConfig> = {
+// 预设类别（作为默认值，实际数据存储在数据库中）
+export const PRESET_CATEGORIES: Record<string, CategoryConfig> = {
   study: {
     id: 'study',
     name: '学习',
-    color: '#1890FF', // 标准蓝
+    color: '#1890FF',
     order: 1
   },
   work: {
     id: 'work',
     name: '工作',
-    color: '#40A9FF', // 浅蓝
+    color: '#40A9FF',
     order: 2
   },
   daily: {
     id: 'daily',
     name: '日常',
-    color: '#FFA940', // 亮橙
+    color: '#FFA940',
     order: 3
   },
   exercise: {
     id: 'exercise',
     name: '运动',
-    color: '#FF7A45', // 深橙
+    color: '#FF7A45',
     order: 4
   },
   rest: {
     id: 'rest',
     name: '休息',
-    color: '#9254DE', // 标准紫
+    color: '#9254DE',
     order: 5
   },
   entertainment: {
     id: 'entertainment',
     name: '娱乐',
-    color: '#B37FEB', // 浅紫
+    color: '#B37FEB',
     order: 6
   }
 };
 
-// 获取类别颜色
+/** @deprecated 使用 PRESET_CATEGORIES */
+export const CATEGORY_COLORS = PRESET_CATEGORIES;
+
+// 自定义类别可选颜色调色板
+export const COLOR_PALETTE = [
+  '#1890FF', '#40A9FF', '#FFA940', '#FF7A45', '#9254DE', '#B37FEB',
+  '#36CFC9', '#73D13D', '#FF4D4F', '#F759AB', '#597EF7', '#FFC53D',
+  '#FF85C0', '#5CDBD3', '#95DE64', '#FF9C6E', '#85A5FF', '#D3ADF7',
+];
+
+// 预设类别 ID 集合
+export const PRESET_CATEGORY_IDS = new Set(Object.keys(PRESET_CATEGORIES));
+
+// 获取类别颜色（回退用，优先从 DB 读取）
 export const getCategoryColor = (categoryId: string | null): string => {
-  if (!categoryId) return '#d9d9d9'; // 默认灰色
-  return CATEGORY_COLORS[categoryId]?.color || '#d9d9d9';
+  if (!categoryId) return '#d9d9d9';
+  return PRESET_CATEGORIES[categoryId]?.color || '#d9d9d9';
 };
 
-// 获取类别名称
+// 获取类别名称（回退用，优先从 DB 读取）
 export const getCategoryName = (categoryId: string | null): string | null => {
   if (!categoryId) return null;
-  return CATEGORY_COLORS[categoryId]?.name || null;
+  return PRESET_CATEGORIES[categoryId]?.name || null;
 };
 
-// 获取所有类别配置（用于初始化）
+// 获取所有预设类别配置（用于初始化）
 export const getAllCategories = (): CategoryConfig[] => {
-  return Object.values(CATEGORY_COLORS).sort((a, b) => a.order - b.order);
+  return Object.values(PRESET_CATEGORIES).sort((a, b) => a.order - b.order);
 };

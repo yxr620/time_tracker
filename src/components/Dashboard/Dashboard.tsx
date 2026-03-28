@@ -100,8 +100,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenTrend, onOpenGoalAna
       setEntries(processed);
       setMetrics(calculateMetrics(processed));
       setGoalData(groupByGoal(processed).slice(0, 10)); // 取前10
-      setCategoryData(groupByCategory(processed));
-      setCategoryTrendData(groupByDayAndCategory(processed, dateRange));
+      setCategoryData(groupByCategory(processed, categories));
+      setCategoryTrendData(groupByDayAndCategory(processed, dateRange, categories));
       setHourData(groupByHour(processed));
     } catch (error) {
       console.error('加载分析数据失败:', error);

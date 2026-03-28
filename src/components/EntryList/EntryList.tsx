@@ -5,7 +5,6 @@ import {
 import { useEntryStore } from '../../stores/entryStore';
 import { useGoalStore } from '../../stores/goalStore';
 import { useCategoryStore } from '../../stores/categoryStore';
-import { getCategoryColor } from '../../config/categoryColors';
 import type { TimeEntry } from '../../services/db';
 import { EditEntryDialog } from './EditEntryDialog';
 import { SwipeableItem } from './SwipeableItem';
@@ -19,7 +18,7 @@ interface EntryListProps {
 export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
   const { entries, loadEntries, deleteEntry, updateEntry, setNextStartTime } = useEntryStore();
   const { goals, loadGoals } = useGoalStore();
-  const { loadCategories, getCategoryName } = useCategoryStore();
+  const { loadCategories, getCategoryName, getCategoryColor } = useCategoryStore();
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
 
   useEffect(() => {

@@ -1,15 +1,20 @@
 import { create } from 'zustand';
 import { db, type Category } from '../services/db';
-import { getCategoryColor, getCategoryName as getConfigCategoryName } from '../config/categoryColors';
+import { syncDb } from '../services/syncDb';
+import { v4 as uuidv4 } from 'uuid';
+import { autoPush } from '../utils/autoPush';
 
 interface CategoryStore {
   categories: Category[];
   
-  // 操作方法
   loadCategories: () => Promise<void>;
   getCategoryById: (id: string | null) => Category | null;
   getCategoryName: (id: string | null) => string | null;
   getCategoryColor: (id: string | null) => string;
+
+  addCategory: (category: { name: string; color: string; icon?: string }) => Promise<string>;
+  updateCategory: (id: string, updates: { name?: string; color?: string; icon?: string }) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
 }
 
 export const useCategoryStore = create<CategoryStore>((set, get) => ({
@@ -19,7 +24,6 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
     const allCategories = await db.categories
       .orderBy('order')
       .toArray();
-    // 过滤掉软删除的记录
     const categories = allCategories.filter(c => !c.deleted);
     set({ categories });
   },
@@ -30,12 +34,45 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
   },
 
   getCategoryName: (id: string | null) => {
-    // 优先从配置文件读取名称
-    return getConfigCategoryName(id);
+    if (!id) return null;
+    const category = get().categories.find(c => c.id === id);
+    return category?.name || null;
   },
 
   getCategoryColor: (id: string | null) => {
-    // 从配置文件读取颜色
-    return getCategoryColor(id);
-  }
+    if (!id) return '#d9d9d9';
+    const category = get().categories.find(c => c.id === id);
+    return category?.color || '#d9d9d9';
+  },
+
+  addCategory: async ({ name, color, icon }) => {
+    const now = new Date();
+    const maxOrder = get().categories.reduce((max, c) => Math.max(max, c.order), 0);
+    const newCategory: Category = {
+      id: uuidv4(),
+      name,
+      color,
+      icon,
+      order: maxOrder + 1,
+      isPreset: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await syncDb.categories.add(newCategory);
+    await get().loadCategories();
+    autoPush('after add category');
+    return newCategory.id;
+  },
+
+  updateCategory: async (id, updates) => {
+    await syncDb.categories.update(id, updates);
+    await get().loadCategories();
+    autoPush('after update category');
+  },
+
+  deleteCategory: async (id) => {
+    await syncDb.categories.delete(id);
+    await get().loadCategories();
+    autoPush('after delete category');
+  },
 }));

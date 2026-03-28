@@ -130,6 +130,29 @@ async function listCategories(): Promise<Category[]> {
   return db.categories.filter(c => !c.deleted).sortBy('order');
 }
 
+async function addCategory(
+  category: Omit<Category, 'createdAt' | 'updatedAt'>
+): Promise<string> {
+  const now = new Date();
+  const newCategory: Category = {
+    ...category,
+    createdAt: now,
+    updatedAt: now,
+  };
+  return syncDb.categories.add(newCategory);
+}
+
+async function updateCategory(
+  id: string,
+  updates: Partial<Category>
+): Promise<void> {
+  await syncDb.categories.update(id, updates);
+}
+
+async function deleteCategory(id: string): Promise<void> {
+  await syncDb.categories.delete(id);
+}
+
 // ============ Maintenance: findGaps ============
 
 async function findGaps(options: {
@@ -388,5 +411,5 @@ export const dataService = {
     findAnomalies,
   },
   goals: { query: queryGoals, add: addGoal, update: updateGoal, delete: deleteGoal },
-  categories: { list: listCategories },
+  categories: { list: listCategories, add: addCategory, update: updateCategory, delete: deleteCategory },
 };

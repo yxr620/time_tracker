@@ -63,7 +63,7 @@ There is no separate pages directory — all page-level components live under `s
 Responsive: switches between mobile layout (bottom tabs) and desktop layout (sidebar split-pane) at the **1024px** breakpoint. Analytics pages (Dashboard, Trends, GoalAnalysis, AIAssistant) are **desktop-only**. Records, Goals, Export, and Maintenance are available on both layouts.
 
 ### Categories
-Six hardcoded category IDs with colors defined in `src/config/categoryColors.ts` — this is the single source of truth for category colors (colors are not stored in the DB).
+Six preset categories + user-defined custom categories. Colors are stored in the DB (`Category.color` field, added in schema v5). Preset defaults live in `src/config/categoryColors.ts`. Users manage categories via Maintenance → 类别管理 tab.
 
 ### Multi-Device Sync
 Optional — disabled if OSS is not configured. Uses Aliyun OSS as the backend. Architecture: oplog (operation log) + snapshot (full state), LWW merge strategy. Configure via `.env` using `VITE_OSS_*` variables (see `.env.example`).
