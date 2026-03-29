@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { db, type Category } from '../services/db';
+import { db, type Category, ensurePresetCategories } from '../services/db';
 import { syncDb } from '../services/syncDb';
 import { v4 as uuidv4 } from 'uuid';
 import { autoPush } from '../utils/autoPush';
@@ -21,9 +21,13 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
   categories: [],
 
   loadCategories: async () => {
-    const allCategories = await db.categories
+    let allCategories = await db.categories
       .orderBy('order')
       .toArray();
+    if (allCategories.length === 0) {
+      await ensurePresetCategories();
+      allCategories = await db.categories.orderBy('order').toArray();
+    }
     const categories = allCategories.filter(c => !c.deleted);
     set({ categories });
   },

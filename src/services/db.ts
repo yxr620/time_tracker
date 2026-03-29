@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie';
+import { PRESET_CATEGORIES } from '../config/categoryColors';
 
 // === Sync-related interfaces ===
 export interface Syncable {
@@ -150,6 +151,21 @@ export class TimeTrackerDB extends Dexie {
       }
     });
 
+    // Seed preset categories when the database is first created
+    this.on('populate', (tx) => {
+      const now = new Date();
+      const presets = Object.values(PRESET_CATEGORIES).map(p => ({
+        id: p.id,
+        name: p.name,
+        color: p.color,
+        order: p.order,
+        isPreset: true,
+        createdAt: now,
+        updatedAt: now,
+      }));
+      tx.table('categories').bulkAdd(presets);
+    });
+
     // 自定义类别支持：将颜色存入数据库，标记预设类别
     this.version(5).stores({
       entries: 'id, startTime, endTime, activity, categoryId, goalId, createdAt',
@@ -179,6 +195,30 @@ export class TimeTrackerDB extends Dexie {
 }
 
 export const db = new TimeTrackerDB();
+
+/**
+ * Ensure preset categories exist in the database.
+ * Called as a safety net during loadCategories.
+ */
+export async function ensurePresetCategories(): Promise<void> {
+  const existing = await db.categories.toArray();
+  const existingIds = new Set(existing.map(c => c.id));
+  const now = new Date();
+  const missing = Object.values(PRESET_CATEGORIES)
+    .filter(p => !existingIds.has(p.id))
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      color: p.color,
+      order: p.order,
+      isPreset: true,
+      createdAt: now,
+      updatedAt: now,
+    }));
+  if (missing.length > 0) {
+    await db.categories.bulkAdd(missing);
+  }
+}
 
 // === Sync helper functions ===
 
