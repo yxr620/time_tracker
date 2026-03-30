@@ -50,7 +50,7 @@ export function useDarkMode() {
           style: isDark ? Style.Dark : Style.Light
         });
         StatusBar.setBackgroundColor({
-          color: isDark ? '#020817' : '#ffffff'
+          color: isDark ? '#020817' : '#EEEEF2'
         });
       } catch (error) {
         console.error('[DarkMode] 状态栏更新失败:', error);

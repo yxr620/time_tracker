@@ -48,7 +48,7 @@ if (Capacitor.isNativePlatform()) {
       style: prefersDark ? Style.Dark : Style.Light
     });
     StatusBar.setBackgroundColor({
-      color: prefersDark ? '#020817' : '#ffffff'
+      color: prefersDark ? '#020817' : '#EEEEF2'
     });
     StatusBar.setOverlaysWebView({ overlay: false });
   } catch (error) {

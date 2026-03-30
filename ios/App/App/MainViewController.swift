@@ -22,7 +22,8 @@ class MainViewController: CAPBridgeViewController {
     private func updateWebViewBackground() {
         // Match the CSS dark mode background: hsl(222.2, 84%, 4.9%) = #020817
         let darkColor = UIColor(red: CGFloat(2)/CGFloat(255), green: CGFloat(8)/CGFloat(255), blue: CGFloat(23)/CGFloat(255), alpha: 1)
-        let lightColor = UIColor.white
+        // Match the CSS light mode background: hsl(230, 14%, 94%) = #EEEEF2
+        let lightColor = UIColor(red: CGFloat(238)/CGFloat(255), green: CGFloat(238)/CGFloat(255), blue: CGFloat(242)/CGFloat(255), alpha: 1)
 
         let bgColor = traitCollection.userInterfaceStyle == .dark ? darkColor : lightColor
 
