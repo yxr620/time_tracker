@@ -28,7 +28,6 @@
   margin: 0;
   border-radius: 24px;
   background: hsl(var(--card));
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
   border: 1px solid hsl(var(--border));
   --background: hsl(var(--card));
   --color: hsl(var(--foreground));
@@ -79,7 +78,7 @@
 .edit-dialog-options-row {
   display: flex;
   flex-wrap: nowrap;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   white-space: nowrap;
   padding-right: 8px;
@@ -88,7 +87,7 @@
 .edit-dialog-options-wrap {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
   align-items: center;
   padding-right: 8px;
 }
@@ -99,10 +98,10 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.edit-dialog-dot {
+.edit-dialog-separator {
   color: hsl(var(--muted-foreground) / 0.5);
   font-size: 14px;
-  margin: 0 2px;
+  margin: 0 1px;
   flex: 0 0 auto;
 }
 

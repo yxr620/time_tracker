@@ -205,7 +205,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
                   <div className="edit-dialog-options-row">
                     {categories.map((c, i) => (
                       <React.Fragment key={c.id}>
-                        {i > 0 && <span className="edit-dialog-dot">•</span>}
+                        {i > 0 && <span className="edit-dialog-separator">|</span>}
                         <span
                           onClick={() => setSelectedCategoryId(c.id === selectedCategoryId ? '' : c.id)}
                           className={`edit-dialog-option ${c.id === selectedCategoryId ? 'selected' : ''}`}
@@ -231,7 +231,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
                     <div className="edit-dialog-options-wrap">
                       {todayGoals.map((g, i) => (
                         <React.Fragment key={g.id}>
-                          {i > 0 && <span className="edit-dialog-dot">•</span>}
+                          {i > 0 && <span className="edit-dialog-separator">|</span>}
                           <span
                             onClick={() => setSelectedGoalId(g.id === selectedGoalId ? null : g.id!)}
                             className={`edit-dialog-option goal ${g.id === selectedGoalId ? 'selected' : ''}`}
@@ -241,11 +241,11 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
                         </React.Fragment>
                       ))}
                       {todayGoals.length > 0 && yesterdayGoals.length > 0 && (
-                        <span className="edit-dialog-dot">•</span>
+                        <span className="edit-dialog-separator">|</span>
                       )}
                       {yesterdayGoals.map((g, i) => (
                         <React.Fragment key={g.id}>
-                          {i > 0 && <span className="edit-dialog-dot">•</span>}
+                          {i > 0 && <span className="edit-dialog-separator">|</span>}
                           <span
                             onClick={() => setSelectedGoalId(g.id === selectedGoalId ? null : g.id!)}
                             className={`edit-dialog-option goal yesterday ${g.id === selectedGoalId ? 'selected' : ''}`}
@@ -316,7 +316,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
             '--width': '100%',
             '--border-radius': '16px 16px 0 0',
             '--background': isDark ? 'hsl(222.2, 84%, 4.9%)' : '#fff',
-            '--box-shadow': '0 -4px 24px rgba(0, 0, 0, 0.15)',
+            '--box-shadow': 'none',
             alignItems: 'flex-end',
           }}
         >
@@ -340,7 +340,7 @@ export const EditEntryDialog: React.FC<EditEntryDialogProps> = ({
             '--width': '100%',
             '--border-radius': '16px 16px 0 0',
             '--background': isDark ? 'hsl(222.2, 84%, 4.9%)' : '#fff',
-            '--box-shadow': '0 -4px 24px rgba(0, 0, 0, 0.15)',
+            '--box-shadow': 'none',
             alignItems: 'flex-end',
           }}
         >

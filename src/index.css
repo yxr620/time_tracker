@@ -1,5 +1,5 @@
 :root {
-  --background: 0 0% 100%;
+  --background: 230 14% 94%;
   --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
   --card-foreground: 222.2 84% 4.9%;
@@ -157,4 +157,19 @@ button:focus-visible {
 
 .dark ion-button {
   --color: hsl(var(--foreground));
+}
+
+/* ── Frameless: remove all Ionic card shadows globally ── */
+ion-card {
+  --ion-card-background: hsl(var(--card));
+  box-shadow: none !important;
+}
+
+/* Light mode Ionic background override to match --background */
+:root {
+  --ion-background-color: hsl(230, 14%, 94%);
+  --ion-item-background: transparent;
+  --ion-card-background: #ffffff;
+  --ion-toolbar-background: hsl(230, 14%, 94%);
+  --ion-tab-bar-background: hsl(230, 14%, 94%);
 }

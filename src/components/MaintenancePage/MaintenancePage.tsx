@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { SleepBackfillTab } from './SleepBackfillTab';
 import { DataValidationTab } from './DataValidationTab';
+import { CategoryManagerTab } from './CategoryManagerTab';
 import './MaintenancePage.css';
 
 export const MaintenancePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'sleep' | 'validation'>('sleep');
+  const [activeTab, setActiveTab] = useState<'sleep' | 'validation' | 'categories'>('sleep');
 
   return (
     <div className="maintenance-page">
@@ -21,8 +22,16 @@ export const MaintenancePage: React.FC = () => {
         >
           数据校验
         </button>
+        <button
+          className={`maintenance-tab-btn ${activeTab === 'categories' ? 'active' : ''}`}
+          onClick={() => setActiveTab('categories')}
+        >
+          类别管理
+        </button>
       </div>
-      {activeTab === 'sleep' ? <SleepBackfillTab /> : <DataValidationTab />}
+      {activeTab === 'sleep' && <SleepBackfillTab />}
+      {activeTab === 'validation' && <DataValidationTab />}
+      {activeTab === 'categories' && <CategoryManagerTab />}
     </div>
   );
 };

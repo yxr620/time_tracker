@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie';
+import { PRESET_CATEGORIES } from '../config/categoryColors';
 
 // === Sync-related interfaces ===
 export interface Syncable {
@@ -32,9 +33,10 @@ export interface Goal extends Syncable {
 export interface Category extends Syncable {
   id: string;
   name: string;
-  // color 不再存储在数据库中，从配置文件读取
+  color: string;
   icon?: string;
   order: number;
+  isPreset?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -84,15 +86,15 @@ export class TimeTrackerDB extends Dexie {
       categories: 'id, name, order',
       syncMetadata: 'key, updatedAt'
     }).upgrade(async tx => {
-      // 初始化预设类别（颜色从配置文件读取，不存储在数据库）
+      // 初始化预设类别
       const now = new Date();
       const categories: Category[] = [
-        { id: 'study', name: '学习', order: 1, createdAt: now, updatedAt: now },
-        { id: 'work', name: '工作', order: 2, createdAt: now, updatedAt: now },
-        { id: 'daily', name: '日常', order: 3, createdAt: now, updatedAt: now },
-        { id: 'exercise', name: '运动', order: 4, createdAt: now, updatedAt: now },
-        { id: 'rest', name: '休息', order: 5, createdAt: now, updatedAt: now },
-        { id: 'entertainment', name: '娱乐', order: 6, createdAt: now, updatedAt: now }
+        { id: 'study', name: '学习', color: '#1890FF', order: 1, isPreset: true, createdAt: now, updatedAt: now },
+        { id: 'work', name: '工作', color: '#40A9FF', order: 2, isPreset: true, createdAt: now, updatedAt: now },
+        { id: 'daily', name: '日常', color: '#FFA940', order: 3, isPreset: true, createdAt: now, updatedAt: now },
+        { id: 'exercise', name: '运动', color: '#FF7A45', order: 4, isPreset: true, createdAt: now, updatedAt: now },
+        { id: 'rest', name: '休息', color: '#9254DE', order: 5, isPreset: true, createdAt: now, updatedAt: now },
+        { id: 'entertainment', name: '娱乐', color: '#B37FEB', order: 6, isPreset: true, createdAt: now, updatedAt: now }
       ];
       
       await tx.table('categories').bulkAdd(categories);
@@ -148,10 +150,75 @@ export class TimeTrackerDB extends Dexie {
         });
       }
     });
+
+    // Seed preset categories when the database is first created
+    this.on('populate', (tx) => {
+      const now = new Date();
+      const presets = Object.values(PRESET_CATEGORIES).map(p => ({
+        id: p.id,
+        name: p.name,
+        color: p.color,
+        order: p.order,
+        isPreset: true,
+        createdAt: now,
+        updatedAt: now,
+      }));
+      tx.table('categories').bulkAdd(presets);
+    });
+
+    // 自定义类别支持：将颜色存入数据库，标记预设类别
+    this.version(5).stores({
+      entries: 'id, startTime, endTime, activity, categoryId, goalId, createdAt',
+      goals: 'id, name, date, createdAt',
+      categories: 'id, name, order',
+      syncMetadata: 'key, updatedAt',
+      syncOperations: 'id, timestamp, deviceId, tableName, synced'
+    }).upgrade(async tx => {
+      const PRESET_COLORS: Record<string, string> = {
+        study: '#1890FF',
+        work: '#40A9FF',
+        daily: '#FFA940',
+        exercise: '#FF7A45',
+        rest: '#9254DE',
+        entertainment: '#B37FEB',
+      };
+      const categories = await tx.table('categories').toArray();
+      for (const category of categories) {
+        const isPreset = category.id in PRESET_COLORS;
+        await tx.table('categories').update(category.id, {
+          color: PRESET_COLORS[category.id] || '#d9d9d9',
+          isPreset,
+        });
+      }
+    });
   }
 }
 
 export const db = new TimeTrackerDB();
+
+/**
+ * Ensure preset categories exist in the database.
+ * Called as a safety net during loadCategories.
+ */
+export async function ensurePresetCategories(): Promise<void> {
+  const existing = await db.categories.toArray();
+  const existingIds = new Set(existing.map(c => c.id));
+  const now = new Date();
+  const missing = Object.values(PRESET_CATEGORIES)
+    .filter(p => !existingIds.has(p.id))
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      color: p.color,
+      order: p.order,
+      isPreset: true,
+      createdAt: now,
+      updatedAt: now,
+    }));
+  if (missing.length > 0) {
+    await db.categories.bulkAdd(missing);
+  }
+}
 
 // === Sync helper functions ===
 

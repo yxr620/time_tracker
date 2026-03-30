@@ -42,10 +42,10 @@ const alignDateWithTime = (time: Date, dateStr: string): Date => {
 
 const getCardStyle = (isDark: boolean): React.CSSProperties => ({
   margin: 0,
-  borderRadius: '24px',
-  background: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.95)',
-  boxShadow: isDark ? '0 12px 28px rgba(0, 0, 0, 0.3)' : '0 12px 28px rgba(15, 23, 42, 0.08)',
-  border: isDark ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(148, 163, 184, 0.12)'
+  borderRadius: '20px',
+  background: isDark ? 'rgba(15, 23, 42, 0.9)' : '#ffffff',
+  boxShadow: 'none',
+  border: 'none'
 });
 
 
@@ -74,10 +74,9 @@ const ACTION_BUTTON_STYLE: React.CSSProperties = {
   fontWeight: '600',
   '--border-radius': '26px',
   '--background': 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-  '--box-shadow': '0 4px 12px rgba(59, 130, 246, 0.3)',
+  '--box-shadow': 'none',
   transition: 'all 0.2s',
-  margin: 0,
-  marginTop: '2px'
+  margin: 0
 } as React.CSSProperties;
 
 const getModalContentStyle = (isDark: boolean): React.CSSProperties => ({
@@ -92,7 +91,7 @@ const getPickerModalStyle = (isDark: boolean): React.CSSProperties => ({
   '--width': '100%',
   '--border-radius': '16px 16px 0 0',
   '--background': isDark ? 'hsl(222.2, 84%, 4.9%)' : '#fff',
-  '--box-shadow': '0 -4px 24px rgba(0, 0, 0, 0.15)',
+  '--box-shadow': 'none',
   alignItems: 'flex-end',
 } as React.CSSProperties);
 
@@ -377,7 +376,7 @@ export const TimeEntryForm: React.FC = () => {
   );
 
   const renderSeparator = () => (
-    <span style={{ color: isDark ? '#475569' : '#ddd', fontSize: '14px', margin: '0 2px' }}>•</span>
+    <span style={{ color: isDark ? '#475569' : '#cbd5e1', fontSize: '14px', margin: '0 1px' }}>|</span>
   );
 
   // ============ 渲染 ============
@@ -435,7 +434,7 @@ export const TimeEntryForm: React.FC = () => {
               height: '48px',
               fontSize: '18px',
               fontWeight: '600',
-              '--box-shadow': '0 6px 16px rgba(255, 77, 79, 0.25)',
+              '--box-shadow': 'none',
               marginTop: '10px'
             }}
             onClick={handleStopTracking}
@@ -451,9 +450,9 @@ export const TimeEntryForm: React.FC = () => {
   // 正常录入界面
   return (
     // <div style={{ padding: '16px', minHeight: '100%' }}>
-    <div style={{ padding: '0px 16px 16px', minHeight: '100%' }}>
+    <div style={{ padding: '0 0 8px', minHeight: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
       {/* 活动名称输入 */}
-      <IonCard style={{ ...getCardStyle(isDark), marginBottom: '0.5rem' }}>
+      <IonCard style={getCardStyle(isDark)}>
         <IonCardContent style={{ padding: 0 }}>
           <IonItem
             lines="none"
@@ -483,7 +482,7 @@ export const TimeEntryForm: React.FC = () => {
       </IonCard>
 
       {/* 类别 + 目标选择（合并为一个卡片，节约纵向空间） */}
-      <IonCard style={{ ...getCardStyle(isDark), marginBottom: '0.5rem' }}>
+      <IonCard style={getCardStyle(isDark)}>
         <IonCardContent style={{ padding: '10px 16px' }}>
           {/* 类别行：图标标签 + 横向滚动内容 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -491,7 +490,7 @@ export const TimeEntryForm: React.FC = () => {
               <IonIcon icon={pricetagOutline} style={{ fontSize: '13px' }} />
             </div>
             <div style={{ flex: 1, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-              <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '8px', alignItems: 'center', whiteSpace: 'nowrap', paddingRight: '4px' }}>
+              <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '6px', alignItems: 'center', whiteSpace: 'nowrap', paddingRight: '4px' }}>
                 {categories.map((c, index) => (
                   <React.Fragment key={c.id}>
                     {index > 0 && renderSeparator()}
@@ -517,7 +516,7 @@ export const TimeEntryForm: React.FC = () => {
             </div>
             <div style={{ height: '56px', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
               {availableGoals.length > 0 ? (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', paddingRight: '4px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center', paddingRight: '4px' }}>
                   {currentGoals.map((g, index) => (
                     <React.Fragment key={g.id}>
                       {index > 0 && renderSeparator()}
@@ -557,7 +556,7 @@ export const TimeEntryForm: React.FC = () => {
       </IonCard>
 
       {/* 时间选择卡片 */}
-      <IonCard style={{ ...getCardStyle(isDark), marginBottom: '0.5rem' }}>
+      <IonCard style={getCardStyle(isDark)}>
         <IonCardContent style={{ padding: '12px 20px' }}>
           {/* 时间显示行：时间 + 箭头对齐 */}
           {(() => {

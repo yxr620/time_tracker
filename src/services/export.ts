@@ -22,9 +22,9 @@ interface ExportData {
   };
 }
 
-/** 清理 categories：移除 color 字段（color 应从配置文件读取） */
-const stripCategoryColors = (categories: any[]): any[] =>
-  categories.filter(c => !c.deleted).map(({ color, ...rest }) => rest);
+/** 清理 categories：过滤软删除记录 */
+const cleanCategories = (categories: any[]): any[] =>
+  categories.filter(c => !c.deleted);
 
 // 获取上次同步时间
 const getLastSyncTime = async (): Promise<Date | null> => {
@@ -53,7 +53,7 @@ export const exportFullJSON = async () => {
   // 过滤已删除的记录
   const entries = allEntries.filter(e => !e.deleted);
   const goals = allGoals.filter(g => !g.deleted);
-  const categories = stripCategoryColors(allCategories);
+  const categories = cleanCategories(allCategories);
   
   const exportTime = new Date();
   
@@ -110,7 +110,7 @@ export const exportIncrementalJSON = async () => {
     .toArray();
   
   const allCategories = await db.categories.toArray();
-  const categories = stripCategoryColors(allCategories);
+  const categories = cleanCategories(allCategories);
 
   const exportData: ExportData = {
     exportTime: exportTime.toISOString(),
@@ -147,7 +147,7 @@ export const exportToJSON = async (startDate?: Date, endDate?: Date) => {
   // 过滤已删除的记录
   let entries = allEntries.filter(e => !e.deleted);
   let goals = allGoals.filter(g => !g.deleted);
-  const categories = stripCategoryColors(allCategories);
+  const categories = cleanCategories(allCategories);
   
   if (startDate || endDate) {
     entries = entries.filter(entry => {
@@ -348,7 +348,7 @@ export const importFromJSON = async (
     if (strategy === ImportStrategy.REPLACE) {
       await db.entries.clear();
       await db.goals.clear();
-      // 注意：不清空categories，因为它们是系统预设的
+      // 注意：不清空categories，保留预设类别；导入数据会覆盖/新增
     }
 
     // 获取现有数据（用于检查重复）
@@ -371,13 +371,12 @@ export const importFromJSON = async (
           continue;
         }
         
-        // 移除可能存在的 color 字段（color 应从配置文件读取）
-        const { color, ...categoryWithoutColor } = category as any;
+        // 保留 color 字段（自定义类别的颜色存储在 DB 中）
         
         // 确保日期字段是Date对象
         const categoryData = {
-          ...categoryWithoutColor,
-          createdAt: categoryWithoutColor.createdAt ? new Date(categoryWithoutColor.createdAt) : new Date()
+          ...category,
+          createdAt: category.createdAt ? new Date(category.createdAt) : new Date()
         };
 
         if (strategy === ImportStrategy.SKIP_DUPLICATES && existingCategoryIds.has(category.id)) {
@@ -386,7 +385,7 @@ export const importFromJSON = async (
         }
 
         if (strategy === ImportStrategy.MERGE && existingCategoryIds.has(category.id)) {
-          // 合并策略：更新现有类别（但不更新 color）
+          // 合并策略：更新现有类别
           await db.categories.update(category.id, categoryData);
         } else {
           // 添加新类别

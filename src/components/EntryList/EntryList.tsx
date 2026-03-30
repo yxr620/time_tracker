@@ -18,7 +18,7 @@ interface EntryListProps {
 export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
   const { entries, loadEntries, deleteEntry, updateEntry, setNextStartTime } = useEntryStore();
   const { goals, loadGoals } = useGoalStore();
-  const { loadCategories, getCategoryName } = useCategoryStore();
+  const { loadCategories, getCategoryName, getCategoryColor } = useCategoryStore();
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
 
   useEffect(() => {
@@ -50,13 +50,7 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
     if (!end) return '进行中';
 
     const diff = dayjs(end).diff(dayjs(start), 'minute');
-    const hours = Math.floor(diff / 60);
-    const minutes = diff % 60;
-
-    if (hours > 0) {
-      return `${hours}小时${minutes} 分钟`;
-    }
-    return `${minutes} 分钟`;
+    return `${diff} 分钟`;
   };
 
   // 根据goalId获取目标名称
@@ -104,22 +98,23 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
                   }
                 }}
               >
-                <div className="entry-item-title">
+                <span
+                  className="entry-color-dot"
+                  style={{ backgroundColor: getCategoryColor(entry.categoryId) }}
+                />
+                <span className="entry-item-title">
                   {entry.activity}
-                </div>
-                <div className="entry-item-details">
-                  <span>{dayjs(entry.startTime).format('HH:mm')}-{entry.endTime ? dayjs(entry.endTime).format('HH:mm') : '进行中'}</span>
-                  <span>·</span>
-                  <span>{formatDuration(entry.startTime, entry.endTime)}</span>
-                  <span>·</span>
-                  <span className="entry-category-badge">
-                    {getCategoryName(entry.categoryId) || '未分类'}
-                  </span>
+                </span>
+                <div className="entry-item-meta">
                   {getGoalName(entry.goalId) && (
                     <span className="entry-goal-badge">
                       {getGoalName(entry.goalId)}
                     </span>
                   )}
+                  <span className="entry-item-duration">{formatDuration(entry.startTime, entry.endTime)}</span>
+                  <span className="entry-category-badge">
+                    {getCategoryName(entry.categoryId) || '未分类'}
+                  </span>
                 </div>
               </div>
             </SwipeableItem>

@@ -5,7 +5,6 @@
 import dayjs from 'dayjs';
 import { db } from '../db';
 import type { TimeEntry, Goal, Category } from '../db';
-import { CATEGORY_COLORS } from '../../config/categoryColors';
 import type {
   ProcessedEntry,
   AnalysisMetrics,
@@ -15,6 +14,28 @@ import type {
   DateRange,
   AnalysisFilters,
 } from '../../types/analysis';
+
+/** 从类别列表构建 id → color 映射 */
+function buildCategoryColorMap(categories?: Category[]): Map<string, string> {
+  const map = new Map<string, string>();
+  if (categories) {
+    for (const c of categories) {
+      if (c.color) map.set(c.id, c.color);
+    }
+  }
+  return map;
+}
+
+/** 从类别列表构建 id → order 映射 */
+function buildCategoryOrderMap(categories?: Category[]): Map<string, number> {
+  const map = new Map<string, number>();
+  if (categories) {
+    for (const c of categories) {
+      map.set(c.id, c.order);
+    }
+  }
+  return map;
+}
 
 /** 默认时间范围：最近30天（不含今天） */
 export function getDefaultDateRange(): DateRange {
@@ -146,7 +167,8 @@ export function groupByGoal(entries: ProcessedEntry[]): ChartDataPoint[] {
 }
 
 /** 按类别分组聚合 */
-export function groupByCategory(entries: ProcessedEntry[]): ChartDataPoint[] {
+export function groupByCategory(entries: ProcessedEntry[], categories?: Category[]): ChartDataPoint[] {
+  const categoryColorMap = buildCategoryColorMap(categories);
   const groups = new Map<string, { value: number; categoryId: string | null }>();
 
   entries.forEach(e => {
@@ -163,7 +185,7 @@ export function groupByCategory(entries: ProcessedEntry[]): ChartDataPoint[] {
     .map(([name, data]) => ({
       name,
       value: data.value,
-      color: data.categoryId ? CATEGORY_COLORS[data.categoryId]?.color : '#999',
+      color: data.categoryId ? (categoryColorMap.get(data.categoryId) || '#999') : '#999',
     }))
     .sort((a, b) => b.value - a.value);
 }
@@ -209,8 +231,11 @@ export function groupByDay(entries: ProcessedEntry[], dateRange: DateRange): Tre
  */
 export function groupByDayAndCategory(
   entries: ProcessedEntry[],
-  dateRange: DateRange
+  dateRange: DateRange,
+  categories?: Category[]
 ): { data: CategoryTrendDataPoint[]; categoryKeys: { id: string; name: string; color: string }[] } {
+  const categoryColorMap = buildCategoryColorMap(categories);
+  const categoryOrderMap = buildCategoryOrderMap(categories);
   // 获取所有出现的类别（不包括 uncategorized，后面单独处理）
   const categorySet = new Map<string, { name: string; color: string }>();
   entries.forEach(e => {
@@ -219,7 +244,7 @@ export function groupByDayAndCategory(
       if (!categorySet.has(id)) {
         categorySet.set(id, {
           name: e.categoryName || '未分类',
-          color: CATEGORY_COLORS[id]?.color || '#999',
+          color: categoryColorMap.get(id) || '#999',
         });
       }
     }
@@ -296,8 +321,8 @@ export function groupByDayAndCategory(
     .sort((a, b) => {
       if (a.id === 'uncategorized') return 1;
       if (b.id === 'uncategorized') return -1;
-      const orderA = CATEGORY_COLORS[a.id]?.order ?? 999;
-      const orderB = CATEGORY_COLORS[b.id]?.order ?? 999;
+      const orderA = categoryOrderMap.get(a.id) ?? 999;
+      const orderB = categoryOrderMap.get(b.id) ?? 999;
       return orderA - orderB;
     });
 
@@ -365,8 +390,11 @@ export function formatHours(minutes: number): string {
 /** 按周和类别分组（用于周度对比） */
 export function groupByWeekAndCategory(
   entries: ProcessedEntry[],
-  weeks: { start: Date; end: Date; label: string }[]
+  weeks: { start: Date; end: Date; label: string }[],
+  categories?: Category[]
 ): { data: CategoryTrendDataPoint[]; categoryKeys: { id: string; name: string; color: string }[] } {
+  const categoryColorMap = buildCategoryColorMap(categories);
+  const categoryOrderMap = buildCategoryOrderMap(categories);
   const categorySet = new Map<string, { name: string; color: string }>();
   
   // 确保有"未分类"类别
@@ -403,7 +431,7 @@ export function groupByWeekAndCategory(
       
       // 记录类别信息
       if (!categorySet.has(categoryId)) {
-        const color = CATEGORY_COLORS[categoryId]?.color || '#999999';
+        const color = categoryColorMap.get(categoryId) || '#999999';
         categorySet.set(categoryId, { name: categoryName, color });
       }
 
@@ -454,8 +482,8 @@ export function groupByWeekAndCategory(
     .sort((a, b) => {
       if (a.id === 'uncategorized') return 1;
       if (b.id === 'uncategorized') return -1;
-      const orderA = CATEGORY_COLORS[a.id]?.order ?? 999;
-      const orderB = CATEGORY_COLORS[b.id]?.order ?? 999;
+      const orderA = categoryOrderMap.get(a.id) ?? 999;
+      const orderB = categoryOrderMap.get(b.id) ?? 999;
       return orderA - orderB;
     });
 

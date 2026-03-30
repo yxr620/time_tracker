@@ -1,7 +1,8 @@
 .timeline-view {
   padding: 10px 16px 8px;
   background: hsl(var(--card));
-  margin-bottom: 12px;
+  border-radius: 16px;
+  margin-bottom: 0;
   width: 100%;
   /* 不设 overflow:hidden，tooltip 向下展开不会被裁切 */
 }
@@ -49,7 +50,7 @@
   background: transparent;
   border: none;
   border-radius: 0;
-  padding: 2px;
+  padding: 6px 4px;
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
@@ -240,7 +241,6 @@
   font-size: 12px;
   white-space: nowrap;
   z-index: 100;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), 0 1px 4px rgba(0, 0, 0, 0.08);
   border: 1px solid hsl(var(--border));
   pointer-events: none;
   max-width: 85vw;
@@ -314,8 +314,8 @@
   }
 
   .date-nav-btn {
-    font-size: 16px;
-    padding: 2px 5px;
+    font-size: 18px;
+    padding: 8px 6px;
   }
 
   .date-display {

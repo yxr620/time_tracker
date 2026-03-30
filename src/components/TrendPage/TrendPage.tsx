@@ -34,7 +34,7 @@ const CHART_STYLES = {
       backgroundColor: 'hsl(var(--card))',
       border: '1px solid hsl(var(--border))',
       borderRadius: 6,
-      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+      boxShadow: 'none',
       fontSize: 12,
       padding: 10,
       color: 'hsl(var(--foreground))',
@@ -113,7 +113,7 @@ export const TrendPage: React.FC<TrendPageProps> = ({ onBack, dateRange: dateRan
       
       const processed = processEntries(rawEntries, goals, categories);
       setEntries(processed);
-      setCategoryTrendData(groupByDayAndCategory(processed, dateRange));
+      setCategoryTrendData(groupByDayAndCategory(processed, dateRange, categories));
 
       // 2. 加载周度对比数据 (最近3个完整周)
       // 基于今天计算，找到上一个完整周（不包含今天所在的不完整周）
@@ -145,7 +145,7 @@ export const TrendPage: React.FC<TrendPageProps> = ({ onBack, dateRange: dateRan
       });
       
       const compProcessed = processEntries(compEntries, goals, categories);
-      const weeklyData = groupByWeekAndCategory(compProcessed, weeks);
+      const weeklyData = groupByWeekAndCategory(compProcessed, weeks, categories);
       setWeeklyComparisonData(weeklyData);
 
     } catch (error) {

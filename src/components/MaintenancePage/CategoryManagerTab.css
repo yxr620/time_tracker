@@ -1,0 +1,154 @@
+.category-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.category-manager-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.category-manager-item {
+  padding: 10px 12px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--card));
+}
+
+.category-display-row,
+.category-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.category-color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.category-name {
+  flex: 1;
+  font-size: 14px;
+  color: hsl(var(--foreground));
+}
+
+.category-preset-badge {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+}
+
+.category-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.category-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.15s;
+}
+
+.category-action-btn:hover {
+  background: hsl(var(--accent));
+}
+
+.category-action-btn.save {
+  color: hsl(var(--primary));
+}
+
+.category-action-btn.delete {
+  color: #ef4444;
+}
+
+.category-action-btn.cancel {
+  color: hsl(var(--muted-foreground));
+}
+
+.category-edit-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-size: 14px;
+  outline: none;
+}
+
+.category-edit-input:focus {
+  border-color: hsl(var(--primary));
+}
+
+.color-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  padding-left: 24px;
+}
+
+.color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.color-swatch:hover {
+  transform: scale(1.15);
+}
+
+.color-swatch.selected {
+  border-color: hsl(var(--foreground));
+  box-shadow: 0 0 0 2px hsl(var(--background));
+}
+
+.category-add-form {
+  padding: 10px 12px;
+  border: 1px dashed hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--card));
+}
+
+.category-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  border: 1px dashed hsl(var(--border));
+  border-radius: 8px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.category-add-btn:hover {
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
+  background: hsl(var(--accent));
+}

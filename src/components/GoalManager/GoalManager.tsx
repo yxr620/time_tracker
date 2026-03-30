@@ -336,11 +336,10 @@ export const GoalManager: React.FC = () => {
 
   const cardStyle = {
     margin: 0,
-    borderRadius: '24px',
-    backdropFilter: 'blur(8px)',
-    background: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255,255,255,0.92)',
-    boxShadow: isDark ? '0 12px 28px rgba(0, 0, 0, 0.3)' : '0 12px 28px rgba(15, 23, 42, 0.08)',
-    border: isDark ? '1px solid rgba(71, 85, 105, 0.3)' : '1px solid rgba(148, 163, 184, 0.12)'
+    borderRadius: '20px',
+    background: isDark ? 'rgba(15, 23, 42, 0.9)' : '#ffffff',
+    boxShadow: 'none',
+    border: 'none'
   };
 
   return (

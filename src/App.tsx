@@ -36,7 +36,7 @@ interface LayoutProps {
 const MobileLayout: React.FC<LayoutProps> = ({ activeTab, onTabChange, children }) => (
   <div className="app mobile-layout">
     <div className="app-header">
-      <h1>Time Tracker</h1>
+      <h1>Chrono</h1>
     </div>
     <div className="app-body">
       {children}
@@ -69,7 +69,7 @@ const DesktopLayout: React.FC<LayoutProps> = ({ activeTab, onTabChange, children
     <DesktopSidebar activeTab={activeTab} onTabChange={onTabChange} />
     <div className="desktop-main">
       <div className="desktop-header">
-        <h1>Time Tracker</h1>
+        <h1>Chrono</h1>
       </div>
       <div className="desktop-content">
         {children}

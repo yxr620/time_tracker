@@ -81,7 +81,7 @@ src/
 ├── stores/                    # Zustand 状态管理（6 个 store）
 │   ├── entryStore.ts          # 时间记录 CRUD + 计时器
 │   ├── goalStore.ts           # 目标 CRUD
-│   ├── categoryStore.ts       # 分类（6 个硬编码类型）
+│   ├── categoryStore.ts       # 分类（6 个预设 + 自定义类别 CRUD）
 │   ├── dateStore.ts           # 全局选中日期
 │   ├── syncStore.ts           # 同步状态 + 自动同步开关
 │   └── aiStore.ts             # AI 配置 + 对话历史
@@ -121,7 +121,7 @@ src/
 │   └── common/                # SyncToastListener、WheelTimePicker
 │
 ├── config/
-│   └── categoryColors.ts      # 6 个分类的颜色常量（单一数据源）
+│   └── categoryColors.ts      # 预设类别默认值 + 自定义类别调色板
 │
 └── utils/
     └── autoPush.ts            # 数据变更后自动触发增量 Push

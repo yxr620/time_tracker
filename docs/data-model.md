@@ -60,8 +60,10 @@ interface Goal extends Syncable {
 
 ```typescript
 interface Category extends Syncable {
-  id: 'study' | 'work' | 'daily' | 'exercise' | 'rest' | 'entertainment';
+  id: string;            // 预设类别为固定 ID，自定义类别为 UUID
   name: string;
+  color: string;         // 颜色存储在 DB 中（v5 迁移后）
+  isPreset?: boolean;    // 标记是否为预设类别
   order: number;
   icon?: string;
   createdAt: Date;
@@ -69,9 +71,11 @@ interface Category extends Syncable {
 }
 ```
 
-**颜色不存储在 DB 中**，从 `src/config/categoryColors.ts` 读取：
+**颜色存储在 DB 中**（`Category.color` 字段，Schema v5 新增）。预设类别默认颜色见 `src/config/categoryColors.ts`。
 
-| id | 中文名 | 颜色 |
+预设类别：
+
+| id | 中文名 | 默认颜色 |
 |---|---|---|
 | study | 学习 | #1890FF |
 | work | 工作 | #40A9FF |
@@ -79,6 +83,8 @@ interface Category extends Syncable {
 | exercise | 运动 | #FF7A45 |
 | rest | 休息 | #9254DE |
 | entertainment | 娱乐 | #B37FEB |
+
+用户可通过「维护 → 类别管理」添加自定义类别（UUID ID、自选颜色）、编辑预设/自定义类别的名称和颜色、删除自定义类别。
 
 获取颜色：`categoryStore.getCategoryColor(id)`，未知 id 返回 `#d9d9d9`。
 
