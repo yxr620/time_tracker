@@ -166,3 +166,147 @@ npm run build && npx cap sync @capacitor-community/electron
 cd electron && npm run electron:start   # 启动（调试端口 5858）
 cd electron && npm run electron:make    # 打包 .dmg/.app
 ```
+
+---
+
+## 数据模型
+
+应用有三个核心实体：**TimeEntry**、**Goal**、**Category**。所有实体均实现 `Syncable` 接口，支持多端同步。
+
+### Syncable 接口
+
+```typescript
+interface Syncable {
+  version?: number;                  // 版本号，每次修改 +1
+  deviceId?: string;                 // 最后修改设备的 UUID
+  syncStatus?: 'synced' | 'pending'; // 同步状态
+  deleted?: boolean;                 // 软删除标记（true = 已删除）
+  updatedAt: Date;                   // LWW 冲突解决时间戳
+}
+```
+
+**软删除**：应用中的"删除"操作将 `deleted` 置为 `true`，记录不会从 DB 中物理移除，以确保删除操作能同步到其他设备。
+
+### TimeEntry
+
+```typescript
+interface TimeEntry extends Syncable {
+  id: string;              // UUID
+  startTime: Date;
+  endTime: Date | null;    // null 表示当前正在计时
+  activity: string;        // 活动描述（用户输入）
+  categoryId: string | null;  // 关联分类 ID
+  goalId: string | null;      // 关联目标 ID
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+`endTime === null` 表示正在进行中的计时，任何时刻最多一条。
+
+### Goal
+
+```typescript
+interface Goal extends Syncable {
+  id: string;      // UUID
+  name: string;
+  date: string;    // YYYY-MM-DD
+  color?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Category
+
+```typescript
+interface Category extends Syncable {
+  id: string;            // 预设类别为固定 ID，自定义类别为 UUID
+  name: string;
+  color: string;         // 颜色存储在 DB 中（v5 迁移后）
+  isPreset?: boolean;
+  order: number;
+  icon?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+预设类别：
+
+| id | 中文名 | 默认颜色 |
+|---|---|---|
+| study | 学习 | #1890FF |
+| work | 工作 | #40A9FF |
+| daily | 日常 | #FFA940 |
+| exercise | 运动 | #FF7A45 |
+| rest | 休息 | #9254DE |
+| entertainment | 娱乐 | #B37FEB |
+
+用户可通过「维护 → 类别管理」添加自定义类别、编辑名称和颜色、删除自定义类别。颜色获取：`categoryStore.getCategoryColor(id)`，未知 id 返回 `#d9d9d9`。
+
+### 同步辅助实体
+
+**SyncOperation**（操作日志）：记录本地数据变更，由 `syncDb.ts` 自动写入。
+
+**SyncMetadata**：`deviceId`（本设备 UUID）、`lastProcessedTimestamp`（Pull 游标）、`lastSnapshotPullTimestamps`（各设备 snapshot 上次拉取时间）。
+
+### Dexie Schema
+
+数据库名 `TimeTrackerDB`：
+
+```
+entries        → id, startTime, endTime, activity, categoryId, goalId, ...
+goals          → id, date, name, color, ...
+categories     → id, order, name, icon, ...
+syncMetadata   → key, value, updatedAt
+syncOperations → id, timestamp, deviceId, tableName, recordId, type, data, synced
+```
+
+### db.ts vs syncDb.ts
+
+| | `db.ts` | `syncDb.ts` |
+|---|---|---|
+| 用途 | 直接读取（查询、分析） | 写操作（增删改） |
+| 操作日志 | 不记录 | 自动记录 SyncOperation |
+| 版本管理 | 不处理 | 自动递增 version，设置 deviceId |
+
+**规则**：读用 `db`，写用 `syncDb`。直接写 `db` 会导致变更不被同步。
+
+---
+
+## dataService
+
+`src/services/dataService.ts` 是统一数据访问层。stores 通过它写入数据，AI tools、分析服务、维护页面通过它读写数据。
+
+### API 概览
+
+```typescript
+dataService.entries.query(filters?)        // 查询记录（按日期、分类、目标过滤）
+dataService.entries.add(entry)             // 新增记录
+dataService.entries.update(id, updates)    // 更新记录
+dataService.entries.delete(id)             // 软删除记录
+dataService.entries.batchAdd(entries[])    // 批量新增
+
+dataService.entries.findGaps(options)      // 查找时间空白
+dataService.entries.findSleepGaps(options) // 查找睡觉候选
+dataService.entries.findOverlaps(options)  // 查找时间重叠
+dataService.entries.findAnomalies(options) // 查找异常记录
+
+dataService.goals.query(filters?)
+dataService.goals.add(goal) / update(id, updates) / delete(id)
+dataService.categories.list()
+```
+
+读操作走 `db`，写操作走 `syncDb`。
+
+### 维护方法
+
+- **findGaps**：按天遍历，计算相邻记录间的空白（含第一条前、最后一条后、整天无记录）
+- **findSleepGaps**：在 findGaps 基础上筛选与睡眠窗口（默认 22:00-10:00）有交集的 gap
+- **findOverlaps**：按 startTime 升序检查相邻记录是否重叠
+- **findAnomalies**：检测 `reversed_time`（结束早于开始）、`too_long`（超 12h）、`stale_active`（计时超 24h）
+
+### 数据维护页面（MaintenancePage）
+
+仅桌面端可见。**睡觉补录 Tab**：配置 → 扫描 → 预览/勾选 → 确认补录。**数据校验 Tab**：扫描重叠和异常 → 逐条截断或删除。
