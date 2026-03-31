@@ -47,4 +47,21 @@
     border-radius: 12px;
     overflow: hidden;
   }
+
+  /* 两栏布局 */
+  .records-body-desktop {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .records-col-left {
+    width: 360px;
+    flex-shrink: 0;
+  }
+
+  .records-col-right {
+    flex: 1;
+    min-width: 0;
+  }
 }

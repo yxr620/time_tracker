@@ -64,4 +64,3 @@ electron/dist/
 
 # Android signing keys
 *.jks
-docs/release-android.md

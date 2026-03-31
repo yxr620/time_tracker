@@ -139,6 +139,7 @@ export const TimeEntryForm: React.FC = () => {
   const endPickerRef = useRef<WheelTimePickerHandle>(null);
   const [elapsed, setElapsed] = useState('00:00:00');
   const [present] = useIonToast();
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
 
   // 智能预选：追踪用户是否手动选过（手动选过就不再覆盖）
   const userPickedCategoryRef = useRef(false);
@@ -240,6 +241,13 @@ export const TimeEntryForm: React.FC = () => {
 
     return () => clearInterval(timer);
   }, [currentEntry]);
+
+  // 响应式桌面检测
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // ============ 计算属性 ============
 
@@ -379,6 +387,76 @@ export const TimeEntryForm: React.FC = () => {
     <span style={{ color: isDark ? '#475569' : '#cbd5e1', fontSize: '14px', margin: '0 1px' }}>|</span>
   );
 
+  const renderCategoryRow = () => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, color: isDark ? '#94a3b8' : '#999', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase' as const, letterSpacing: '0.5px' }}>
+        <IonIcon icon={pricetagOutline} style={{ fontSize: '13px' }} />
+      </div>
+      <div style={{ flex: 1, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '6px', alignItems: 'center', whiteSpace: 'nowrap', paddingRight: '4px' }}>
+          {categories.map((c, index) => (
+            <React.Fragment key={c.id}>
+              {index > 0 && renderSeparator()}
+              {renderSelectableItem(
+                c.id,
+                c.name,
+                c.id === selectedCategoryId,
+                '#3b82f6',
+                '#666',
+                () => { userPickedCategoryRef.current = true; setSelectedCategoryId(c.id === selectedCategoryId ? '' : c.id); }
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderGoalRow = () => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, color: isDark ? '#94a3b8' : '#999', fontSize: '12px', fontWeight: '600' }}>
+        <IonIcon icon={flagOutline} style={{ fontSize: '13px' }} />
+      </div>
+      <div style={{ height: '56px', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        {availableGoals.length > 0 ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center', paddingRight: '4px' }}>
+            {currentGoals.map((g, index) => (
+              <React.Fragment key={g.id}>
+                {index > 0 && renderSeparator()}
+                {renderSelectableItem(
+                  g.id!,
+                  g.name,
+                  g.id === selectedGoalId,
+                  '#f59e0b',
+                  '#666',
+                  () => { userPickedGoalRef.current = true; setSelectedGoalId(g.id === selectedGoalId ? null : g.id!); }
+                )}
+              </React.Fragment>
+            ))}
+            {currentGoals.length > 0 && filteredPrevGoals.length > 0 && renderSeparator()}
+            {filteredPrevGoals.map((g, index) => (
+              <React.Fragment key={g.id}>
+                {index > 0 && renderSeparator()}
+                {renderSelectableItem(
+                  g.id!,
+                  g.name,
+                  g.id === selectedGoalId,
+                  '#f59e0b',
+                  '#999',
+                  () => { userPickedGoalRef.current = true; setSelectedGoalId(g.id === selectedGoalId ? null : g.id!); }
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        ) : (
+          <div style={{ color: isDark ? '#475569' : '#bbb', fontSize: '14px' }}>
+            该日期暂无目标
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   // ============ 渲染 ============
 
   // 正在计时界面
@@ -481,79 +559,32 @@ export const TimeEntryForm: React.FC = () => {
         </IonCardContent>
       </IonCard>
 
-      {/* 类别 + 目标选择（合并为一个卡片，节约纵向空间） */}
-      <IonCard style={getCardStyle(isDark)}>
-        <IonCardContent style={{ padding: '10px 16px' }}>
-          {/* 类别行：图标标签 + 横向滚动内容 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, color: isDark ? '#94a3b8' : '#999', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase' as const, letterSpacing: '0.5px' }}>
-              <IonIcon icon={pricetagOutline} style={{ fontSize: '13px' }} />
-            </div>
-            <div style={{ flex: 1, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-              <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '6px', alignItems: 'center', whiteSpace: 'nowrap', paddingRight: '4px' }}>
-                {categories.map((c, index) => (
-                  <React.Fragment key={c.id}>
-                    {index > 0 && renderSeparator()}
-                    {renderSelectableItem(
-                      c.id,
-                      c.name,
-                      c.id === selectedCategoryId,
-                      '#3b82f6',
-                      '#666',
-                      () => { userPickedCategoryRef.current = true; setSelectedCategoryId(c.id === selectedCategoryId ? '' : c.id); }
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
-          </div>
-          {/* 分隔线 */}
-          <div style={{ height: '1px', background: isDark ? 'rgba(71, 85, 105, 0.3)' : 'rgba(148, 163, 184, 0.2)', margin: '8px 0' }} />
-          {/* 目标行：图标标签 + 横向滚动内容 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, color: isDark ? '#94a3b8' : '#999', fontSize: '12px', fontWeight: '600' }}>
-              <IonIcon icon={flagOutline} style={{ fontSize: '13px' }} />
-            </div>
-            <div style={{ height: '56px', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-              {availableGoals.length > 0 ? (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center', paddingRight: '4px' }}>
-                  {currentGoals.map((g, index) => (
-                    <React.Fragment key={g.id}>
-                      {index > 0 && renderSeparator()}
-                      {renderSelectableItem(
-                        g.id!,
-                        g.name,
-                        g.id === selectedGoalId,
-                        '#f59e0b',
-                        '#666',
-                        () => { userPickedGoalRef.current = true; setSelectedGoalId(g.id === selectedGoalId ? null : g.id!); }
-                      )}
-                    </React.Fragment>
-                  ))}
-                  {currentGoals.length > 0 && filteredPrevGoals.length > 0 && renderSeparator()}
-                  {filteredPrevGoals.map((g, index) => (
-                    <React.Fragment key={g.id}>
-                      {index > 0 && renderSeparator()}
-                      {renderSelectableItem(
-                        g.id!,
-                        g.name,
-                        g.id === selectedGoalId,
-                        '#f59e0b',
-                        '#999',
-                          () => { userPickedGoalRef.current = true; setSelectedGoalId(g.id === selectedGoalId ? null : g.id!); }
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ color: isDark ? '#475569' : '#bbb', fontSize: '14px' }}>
-                  该日期暂无目标
-                </div>
-              )}
-            </div>
-          </div>
-        </IonCardContent>
-      </IonCard>
+      {/* 类别选择 / 目标选择 */}
+      {isDesktop ? (
+        <>
+          {/* 桌面端：类别和目标分开显示 */}
+          <IonCard style={getCardStyle(isDark)}>
+            <IonCardContent style={{ padding: '10px 16px' }}>
+              {renderCategoryRow()}
+            </IonCardContent>
+          </IonCard>
+          <IonCard style={getCardStyle(isDark)}>
+            <IonCardContent style={{ padding: '10px 16px' }}>
+              {renderGoalRow()}
+            </IonCardContent>
+          </IonCard>
+        </>
+      ) : (
+        /* 移动端：类别和目标合并为一个卡片 */
+        <IonCard style={getCardStyle(isDark)}>
+          <IonCardContent style={{ padding: '10px 16px' }}>
+            {renderCategoryRow()}
+            {/* 分隔线 */}
+            <div style={{ height: '1px', background: isDark ? 'rgba(71, 85, 105, 0.3)' : 'rgba(148, 163, 184, 0.2)', margin: '8px 0' }} />
+            {renderGoalRow()}
+          </IonCardContent>
+        </IonCard>
+      )}
 
       {/* 时间选择卡片 */}
       <IonCard style={getCardStyle(isDark)}>
