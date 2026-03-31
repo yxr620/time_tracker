@@ -18,7 +18,7 @@ interface EntryListProps {
 export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
   const { entries, loadEntries, deleteEntry, updateEntry, setNextStartTime } = useEntryStore();
   const { goals, loadGoals } = useGoalStore();
-  const { loadCategories, getCategoryName, getCategoryColor } = useCategoryStore();
+  const { loadCategories, getCategoryColor } = useCategoryStore();
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
 
   useEffect(() => {
@@ -51,6 +51,13 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
 
     const diff = dayjs(end).diff(dayjs(start), 'minute');
     return `${diff} 分钟`;
+  };
+
+  const formatTimeRange = (start: Date, end: Date | null) => {
+    const startLabel = dayjs(start).format('HH:mm');
+    const endLabel = end ? dayjs(end).format('HH:mm') : '进行中';
+
+    return `${startLabel}-${endLabel}`;
   };
 
   // 根据goalId获取目标名称
@@ -111,10 +118,10 @@ export const EntryList: React.FC<EntryListProps> = ({ selectedDate }) => {
                       {getGoalName(entry.goalId)}
                     </span>
                   )}
-                  <span className="entry-item-duration">{formatDuration(entry.startTime, entry.endTime)}</span>
-                  <span className="entry-category-badge">
-                    {getCategoryName(entry.categoryId) || '未分类'}
-                  </span>
+                  <div className="entry-time-info">
+                    <span className="entry-item-duration">{formatDuration(entry.startTime, entry.endTime)}</span>
+                    <span className="entry-time-range">{formatTimeRange(entry.startTime, entry.endTime)}</span>
+                  </div>
                 </div>
               </div>
             </SwipeableItem>

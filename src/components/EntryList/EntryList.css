@@ -116,17 +116,25 @@
   flex-shrink: 0;
 }
 
+.entry-time-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.3;
+}
+
 .entry-item-duration {
-  font-size: 12px;
-  color: hsl(var(--muted-foreground));
+  font-size: 11px;
+  color: hsl(var(--foreground) / 0.7);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
-.entry-category-badge {
-  font-size: 11px;
+.entry-time-range {
+  font-size: 10px;
   color: hsl(var(--muted-foreground));
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .entry-goal-badge {
