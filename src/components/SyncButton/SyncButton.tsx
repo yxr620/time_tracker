@@ -7,22 +7,23 @@ import { useEffect } from 'react';
 import { IonButton, IonIcon, useIonToast } from '@ionic/react';
 import { useSyncStore } from '../../stores/syncStore';
 import { cloudUploadOutline, checkmarkCircleOutline, closeCircleOutline } from 'ionicons/icons';
+import { emitSyncStatus } from '../../services/syncToast';
 
 export const SyncButton: React.FC = () => {
   const { status, message, lastSyncTime, pushedCount, pulledCount, isConfigured, sync } = useSyncStore();
   const [present] = useIonToast();
 
   useEffect(() => {
-    // 如果有成功或错误消息，显示 Toast
     if (status === 'success' && message) {
-      present({
-        message: `${message} (↑${pushedCount} ↓${pulledCount})`,
-        duration: 2000,
-        position: 'top',
-        color: 'success',
-        icon: checkmarkCircleOutline
+      // Show via header indicator instead of toast
+      emitSyncStatus({
+        phase: 'done',
+        direction: 'both',
+        pushedCount,
+        pulledCount,
       });
     } else if (status === 'error' && message) {
+      emitSyncStatus({ phase: 'error', direction: 'both' });
       present({
         message: '同步失败，详情请查看设置页',
         duration: 3000,
@@ -35,6 +36,7 @@ export const SyncButton: React.FC = () => {
 
   const handleSync = async () => {
     if (status === 'syncing') return;
+    emitSyncStatus({ phase: 'syncing', direction: 'both' });
     await sync();
   };
 

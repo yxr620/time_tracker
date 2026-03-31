@@ -18,9 +18,10 @@ import { GoalManager } from './components/GoalManager/GoalManager';
 import { useSyncStore } from './stores/syncStore';
 import { isSyncReady } from './services/syncConfig';
 import { syncEngine } from './services/syncEngine';
-import { emitSyncToast } from './services/syncToast';
+import { emitSyncToast, emitSyncStatus } from './services/syncToast';
 import { DesktopSidebar } from './components/Desktop/DesktopSidebar';
 import { SyncToastListener } from './components/common/SyncToastListener';
+import { SyncIndicator } from './components/common/SyncIndicator';
 import { getDefaultDateRange } from './services/analysis/processor';
 import type { DateRange } from './types/analysis';
 import './App.css';
@@ -37,6 +38,7 @@ const MobileLayout: React.FC<LayoutProps> = ({ activeTab, onTabChange, children 
   <div className="app mobile-layout">
     <div className="app-header">
       <h1>Chrono</h1>
+      <SyncIndicator />
     </div>
     <div className="app-body">
       {children}
@@ -70,6 +72,7 @@ const DesktopLayout: React.FC<LayoutProps> = ({ activeTab, onTabChange, children
     <div className="desktop-main">
       <div className="desktop-header">
         <h1>Chrono</h1>
+        <SyncIndicator />
       </div>
       <div className="desktop-content">
         {children}
@@ -108,18 +111,22 @@ function App() {
   useEffect(() => {
     if (!isSyncReady()) return;
 
+    emitSyncStatus({ phase: 'syncing', direction: 'pull' });
+
     syncEngine.incrementalPull().then(result => {
       if (result.status === 'success') {
-        emitSyncToast({
-          message: `自动 Pull 完成（↓${result.pulledCount || 0}）`,
-          color: 'success',
-          duration: 1200,
+        emitSyncStatus({
+          phase: 'done',
+          direction: 'pull',
+          pulledCount: result.pulledCount || 0,
         });
       } else if (result.message !== '正在同步中，请稍候') {
+        emitSyncStatus({ phase: 'error', direction: 'pull' });
         emitSyncToast({ message: '自动 Pull 失败，详情请查看设置页', color: 'danger', duration: 2200 });
       }
     }).catch(err => {
       console.error('[AutoSync] 启动时 Pull 失败:', err);
+      emitSyncStatus({ phase: 'error', direction: 'pull' });
       emitSyncToast({ message: '自动 Pull 失败，详情请查看设置页', color: 'danger', duration: 2200 });
     });
   }, []);

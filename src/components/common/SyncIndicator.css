@@ -1,0 +1,73 @@
+.sync-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  min-width: 0;
+  overflow: hidden;
+  transition: opacity 0.3s ease;
+}
+
+/* Syncing arrows animation */
+.sync-indicator-syncing {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: hsl(var(--primary));
+}
+
+.sync-indicator-arrow {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sync-indicator-arrow.push {
+  animation: sync-bounce-up 0.8s ease-in-out infinite;
+}
+
+.sync-indicator-arrow.pull {
+  animation: sync-bounce-down 0.8s ease-in-out infinite;
+}
+
+@keyframes sync-bounce-up {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(-3px); opacity: 1; }
+}
+
+@keyframes sync-bounce-down {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(3px); opacity: 1; }
+}
+
+/* Done state */
+.sync-indicator-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: hsl(var(--muted-foreground));
+  animation: sync-fade-in-out 2.5s ease forwards;
+}
+
+.sync-indicator-done .sync-count {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes sync-fade-in-out {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Error state */
+.sync-indicator-error {
+  color: hsl(var(--destructive, 0 84% 60%));
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+}

@@ -216,3 +216,13 @@ html {
     background: #5a5a5a;
   }
 }
+
+/* Toast 弹窗样式 — 缩窄并居中 */
+ion-toast {
+  --max-width: 340px;
+  --min-width: 200px;
+}
+
+ion-toast::part(container) {
+  margin: 0 auto;
+}

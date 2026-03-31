@@ -10,6 +10,7 @@
 import { syncEngine } from '../services/syncEngine';
 import { isSyncReady } from '../services/syncConfig';
 import { emitSyncToast } from '../services/syncToast';
+import { emitSyncStatus } from '../services/syncToast';
 
 /**
  * 异步执行自动 Push，不阻塞调用方。
@@ -21,29 +22,39 @@ import { emitSyncToast } from '../services/syncToast';
 export function autoPush(context: string): void {
   if (!isSyncReady()) return;
 
+  emitSyncStatus({ phase: 'syncing', direction: 'push' });
+
   syncEngine.incrementalPush()
     .then(result => {
       if (result.status === 'success' && (result.pushedCount || 0) > 0) {
         console.log(`[AutoSync] ${context}自动 Push，上传 ${result.pushedCount} 条操作`);
-        emitSyncToast({
-          message: `自动 Push 完成（↑${result.pushedCount}）`,
-          color: 'success',
-          duration: 1200
+        emitSyncStatus({
+          phase: 'done',
+          direction: 'push',
+          pushedCount: result.pushedCount,
         });
+      } else if (result.status === 'success') {
+        // pushedCount === 0, nothing uploaded — just clear syncing state
+        emitSyncStatus({ phase: 'done', direction: 'push', pushedCount: 0 });
       } else if (result.status === 'error') {
         // isSyncing 冲突时静默跳过，其他错误打日志
         if (result.message !== '正在同步中，请稍候') {
           console.warn(`[AutoSync] ${context} Push 跳过: ${result.message}`);
+          emitSyncStatus({ phase: 'error', direction: 'push' });
           emitSyncToast({
             message: '自动 Push 失败，详情请查看设置页',
             color: 'danger',
             duration: 2200
           });
+        } else {
+          // Syncing conflict — just clear indicator
+          emitSyncStatus({ phase: 'done', direction: 'push', pushedCount: 0 });
         }
       }
     })
     .catch(error => {
       console.error(`[AutoSync] ${context} Push 失败:`, error);
+      emitSyncStatus({ phase: 'error', direction: 'push' });
       emitSyncToast({
         message: '自动 Push 失败，详情请查看设置页',
         color: 'danger',

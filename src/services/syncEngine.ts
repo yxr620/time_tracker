@@ -14,7 +14,7 @@ import {
   uploadSyncFile, listSyncFiles, downloadSyncFile, extractTimestamp, isOSSConfigured,
   uploadSnapshot, downloadSnapshot, listSnapshotFiles, listOwnOplogFiles, deleteOSSFiles,
 } from './oss';
-import { emitSyncToast } from './syncToast';
+import { emitSyncToast, emitSyncStatus } from './syncToast';
 
 // ─── 类型定义 ────────────────────────────────────────────
 
@@ -542,15 +542,17 @@ export const syncEngine = new SyncEngine();
 
 // ─── 自动同步 ──────────────────────────────────────────
 
-/** 处理自动同步结果的 toast 通知 */
+/** 处理自动同步结果的状态指示 + 错误 toast */
 function handleAutoSyncResult(result: SyncResult): void {
   if (result.status === 'success') {
-    emitSyncToast({
-      message: `自动同步完成（↑${result.pushedCount || 0} ↓${result.pulledCount || 0}）`,
-      color: 'success',
-      duration: 1200,
+    emitSyncStatus({
+      phase: 'done',
+      direction: 'both',
+      pushedCount: result.pushedCount || 0,
+      pulledCount: result.pulledCount || 0,
     });
   } else {
+    emitSyncStatus({ phase: 'error', direction: 'both' });
     emitSyncToast({
       message: '自动同步失败，详情请查看设置页',
       color: 'danger',
@@ -562,10 +564,12 @@ function handleAutoSyncResult(result: SyncResult): void {
 /** 启动自动同步（立即执行一次 + 定期执行），返回清理函数 */
 export function startAutoSync(intervalMinutes = 10): () => void {
   const run = () => {
+    emitSyncStatus({ phase: 'syncing', direction: 'both' });
     syncEngine.sync()
       .then(handleAutoSyncResult)
       .catch(err => {
         console.error('[AutoSync] 自动同步失败:', err);
+        emitSyncStatus({ phase: 'error', direction: 'both' });
         emitSyncToast({ message: '自动同步失败', color: 'danger', duration: 2200 });
       });
   };
