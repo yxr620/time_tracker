@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { addSyncStatusListener } from '../../services/syncToast';
+import { addSyncStatusListener, getCurrentSyncStatus } from '../../services/syncToast';
 import type { SyncStatusPayload, SyncDirection } from '../../services/syncToast';
 import './SyncIndicator.css';
 
@@ -10,12 +10,31 @@ interface IndicatorState {
   pulledCount: number;
 }
 
+function payloadToState(payload: SyncStatusPayload): IndicatorState {
+  if (payload.phase === 'syncing') {
+    return { phase: 'syncing', direction: payload.direction, pushedCount: 0, pulledCount: 0 };
+  }
+  if (payload.phase === 'done') {
+    return {
+      phase: 'done',
+      direction: payload.direction,
+      pushedCount: payload.pushedCount || 0,
+      pulledCount: payload.pulledCount || 0,
+    };
+  }
+  return { phase: 'error', direction: payload.direction, pushedCount: 0, pulledCount: 0 };
+}
+
+const IDLE_STATE: IndicatorState = { phase: 'idle', direction: 'push', pushedCount: 0, pulledCount: 0 };
+
 export const SyncIndicator: React.FC = () => {
-  const [state, setState] = useState<IndicatorState>({
-    phase: 'idle',
-    direction: 'push',
-    pushedCount: 0,
-    pulledCount: 0,
+  const [state, setState] = useState<IndicatorState>(() => {
+    // Recover state from shared module-level status on mount/remount
+    const current = getCurrentSyncStatus();
+    if (current && current.phase === 'syncing') {
+      return payloadToState(current);
+    }
+    return IDLE_STATE;
   });
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -81,9 +100,12 @@ export const SyncIndicator: React.FC = () => {
 
   if (state.phase === 'done') {
     const parts: string[] = [];
-    if (state.pushedCount > 0) parts.push(`↑${state.pushedCount}`);
-    if (state.pulledCount > 0) parts.push(`↓${state.pulledCount}`);
-    if (parts.length === 0) return null;
+    if (state.direction === 'push' || state.direction === 'both') {
+      parts.push(`↑${state.pushedCount}`);
+    }
+    if (state.direction === 'pull' || state.direction === 'both') {
+      parts.push(`↓${state.pulledCount}`);
+    }
 
     return (
       <span className="sync-indicator sync-indicator-done">

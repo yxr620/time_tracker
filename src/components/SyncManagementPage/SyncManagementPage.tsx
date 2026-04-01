@@ -13,6 +13,8 @@ import {
 import { syncEngine, type SyncStats, type SyncResult } from '../../services/syncEngine';
 import { isOSSConfigured, getOSSConfig } from '../../services/oss';
 import { useSyncStore } from '../../stores/syncStore';
+import { emitSyncStatus } from '../../services/syncToast';
+import type { SyncDirection } from '../../services/syncToast';
 import {
   getSavedOSSConfig,
   saveOSSConfig as persistOSSConfig,
@@ -80,20 +82,29 @@ export const SyncManagementPage: React.FC = () => {
     });
   };
 
-  const handleSync = async (syncFn: () => Promise<SyncResult>, actionName: string) => {
+  const handleSync = async (syncFn: () => Promise<SyncResult>, actionName: string, direction: SyncDirection = 'both') => {
     setLoading(true);
+    emitSyncStatus({ phase: 'syncing', direction });
     try {
       const result = await syncFn();
       setLastResult(result);
       await loadStats();
 
       if (result.status === 'success') {
+        emitSyncStatus({
+          phase: 'done',
+          direction,
+          pushedCount: result.pushedCount || 0,
+          pulledCount: result.pulledCount || 0,
+        });
         showToast(result.message, 'success');
       } else {
+        emitSyncStatus({ phase: 'error', direction });
         showToast(`${actionName} 失败，详情请查看设置页`, 'danger');
       }
     } catch (error) {
       console.error(`${actionName} 失败:`, error);
+      emitSyncStatus({ phase: 'error', direction });
       showToast(`${actionName} 失败`, 'danger');
     } finally {
       setLoading(false);
@@ -101,15 +112,15 @@ export const SyncManagementPage: React.FC = () => {
   };
 
   const handleIncrementalSync = () => {
-    handleSync(() => syncEngine.incrementalSync(), '增量同步');
+    handleSync(() => syncEngine.incrementalSync(), '增量同步', 'both');
   };
 
   const handleIncrementalPush = () => {
-    handleSync(() => syncEngine.incrementalPush(), '增量 Push');
+    handleSync(() => syncEngine.incrementalPush(), '增量 Push', 'push');
   };
 
   const handleIncrementalPull = () => {
-    handleSync(() => syncEngine.incrementalPull(), '增量 Pull');
+    handleSync(() => syncEngine.incrementalPull(), '增量 Pull', 'pull');
   };
 
   const handleForceFullSync = () => {

@@ -38,8 +38,17 @@ export interface SyncStatusPayload {
 
 const SYNC_STATUS_EVENT = 'app-sync-status';
 
+/** Module-level shared state so remounted components pick up current status */
+let currentSyncStatus: SyncStatusPayload | null = null;
+
 export function emitSyncStatus(payload: SyncStatusPayload): void {
+  currentSyncStatus = payload;
   window.dispatchEvent(new CustomEvent<SyncStatusPayload>(SYNC_STATUS_EVENT, { detail: payload }));
+}
+
+/** Get the latest sync status (survives component remounts) */
+export function getCurrentSyncStatus(): SyncStatusPayload | null {
+  return currentSyncStatus;
 }
 
 export function addSyncStatusListener(handler: (payload: SyncStatusPayload) => void): () => void {
