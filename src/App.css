@@ -219,8 +219,8 @@ html {
 
 /* Toast 弹窗样式 — 缩窄并居中 */
 ion-toast {
-  --max-width: 340px;
-  --min-width: 200px;
+  --max-width: 240px;
+  --min-width: 160px;
 }
 
 ion-toast::part(container) {
