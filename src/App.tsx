@@ -34,6 +34,21 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+const mobileTabConfigs = [
+  {
+    tab: 'records',
+    icon: <img src={recordsIcon} alt="" />,
+  },
+  {
+    tab: 'goals',
+    icon: <IonIcon icon={checkmarkDoneOutline} />,
+  },
+  {
+    tab: 'export',
+    icon: <IonIcon icon={settingsOutline} />,
+  },
+] as const;
+
 const MobileLayout: React.FC<LayoutProps> = ({ activeTab, onTabChange, children }) => (
   <div className="app mobile-layout">
     <div className="app-header">
@@ -45,22 +60,20 @@ const MobileLayout: React.FC<LayoutProps> = ({ activeTab, onTabChange, children 
     </div>
     <div className="app-footer">
       <IonTabBar
+        className="mobile-tab-bar"
         selectedTab={activeTab}
         onIonTabsDidChange={(e) => onTabChange(e.detail.tab)}
-        style={{
-          '--background': 'hsl(var(--background))',
-          borderTop: '1px solid hsl(var(--border))'
-        }}
       >
-        <IonTabButton tab="records" onClick={() => onTabChange('records')}>
-          <img src={recordsIcon} alt="" style={{ width: '24px', height: '24px' }} />
-        </IonTabButton>
-        <IonTabButton tab="goals" onClick={() => onTabChange('goals')}>
-          <IonIcon icon={checkmarkDoneOutline} style={{ fontSize: '24px' }} />
-        </IonTabButton>
-        <IonTabButton tab="export" onClick={() => onTabChange('export')}>
-          <IonIcon icon={settingsOutline} style={{ fontSize: '24px' }} />
-        </IonTabButton>
+        {mobileTabConfigs.map(({ tab, icon }) => (
+          <IonTabButton
+            key={tab}
+            tab={tab}
+            className={`mobile-tab-button${tab === activeTab ? ' mobile-tab-button-active' : ''}`}
+            onClick={() => onTabChange(tab)}
+          >
+            {icon}
+          </IonTabButton>
+        ))}
       </IonTabBar>
     </div>
   </div>

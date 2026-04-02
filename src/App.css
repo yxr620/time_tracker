@@ -66,6 +66,39 @@ html {
   z-index: 100;
 }
 
+.mobile-layout .app-footer .mobile-tab-bar {
+  --background: hsl(var(--background));
+  --border: 0;
+}
+
+.mobile-layout .mobile-tab-button {
+  --color: hsl(var(--muted-foreground));
+  --color-selected: hsl(var(--primary));
+  --ripple-color: transparent;
+}
+
+.mobile-layout .mobile-tab-button ion-icon,
+.mobile-layout .mobile-tab-button img {
+  width: 24px;
+  height: 24px;
+  opacity: 0.38;
+  transition: opacity 200ms ease;
+}
+
+.mobile-layout .mobile-tab-button ion-icon {
+  font-size: 24px;
+}
+
+.mobile-layout .mobile-tab-button img {
+  display: block;
+  object-fit: contain;
+}
+
+.mobile-layout .mobile-tab-button-active ion-icon,
+.mobile-layout .mobile-tab-button-active img {
+  opacity: 1;
+}
+
 /* 页面内容包装器 - 用于同步/导出页面 */
 .page-content-wrapper {
   padding: 16px;
