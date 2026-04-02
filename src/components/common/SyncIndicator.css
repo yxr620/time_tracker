@@ -6,11 +6,10 @@
   font-weight: 500;
   color: hsl(var(--muted-foreground));
   min-width: 0;
-  overflow: hidden;
-  transition: opacity 0.3s ease;
+  overflow: visible;
 }
 
-/* Syncing arrows animation */
+/* ── Syncing: breathing pulse ── */
 .sync-indicator-syncing {
   display: inline-flex;
   align-items: center;
@@ -25,49 +24,93 @@
   line-height: 1;
 }
 
-.sync-indicator-arrow.push {
-  animation: sync-bounce-up 0.8s ease-in-out infinite;
+.sync-indicator-syncing .sync-indicator-arrow.push {
+  animation: sync-breathe 1.6s ease-in-out infinite;
 }
 
-.sync-indicator-arrow.pull {
-  animation: sync-bounce-down 0.8s ease-in-out infinite;
+/* Pull arrow offsets by half-cycle for alternating breathing */
+.sync-indicator-syncing .sync-indicator-arrow.pull {
+  animation: sync-breathe 1.6s ease-in-out infinite;
+  animation-delay: 0.8s;
+  opacity: 0.35;
 }
 
-@keyframes sync-bounce-up {
-  0%, 100% { transform: translateY(0); opacity: 0.5; }
-  50% { transform: translateY(-3px); opacity: 1; }
+@keyframes sync-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.35; }
+  50% { transform: scale(1.2); opacity: 1; }
 }
 
-@keyframes sync-bounce-down {
-  0%, 100% { transform: translateY(0); opacity: 0.5; }
-  50% { transform: translateY(3px); opacity: 1; }
-}
-
-/* Done state */
+/* ── Done: arrow exit + count enter ── */
 .sync-indicator-done {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  position: relative;
   color: hsl(var(--muted-foreground));
-  animation: sync-fade-in-out 2.5s ease forwards;
+  animation: sync-done-fade 3.0s ease forwards;
 }
 
+/* Exiting arrows overlay */
+.sync-exit-arrows {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: none;
+  color: hsl(var(--primary));
+}
+
+.sync-exit-arrows .sync-indicator-arrow.push {
+  animation: sync-exit-up 0.4s ease-in forwards;
+}
+
+.sync-exit-arrows .sync-indicator-arrow.pull {
+  animation: sync-exit-down 0.4s ease-in forwards;
+}
+
+@keyframes sync-exit-up {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.5) translateY(-8px); opacity: 0; }
+}
+
+@keyframes sync-exit-down {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.5) translateY(8px); opacity: 0; }
+}
+
+/* Count text enters after arrows finish exiting */
 .sync-indicator-done .sync-count {
   font-variant-numeric: tabular-nums;
+  animation: sync-count-enter 0.4s ease-out 0.4s forwards;
+  opacity: 0;
 }
 
-@keyframes sync-fade-in-out {
-  0% { opacity: 0; }
-  10% { opacity: 1; }
-  70% { opacity: 1; }
+@keyframes sync-count-enter {
+  0%   { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Stable display, then fade out over last ~650ms */
+@keyframes sync-done-fade {
+  0%  { opacity: 1; }
+  75% { opacity: 1; }
   100% { opacity: 0; }
 }
 
-/* Error state */
+/* ── Error: elastic bounce-in (one-shot) ── */
 .sync-indicator-error {
   color: hsl(var(--destructive, 0 84% 60%));
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   font-size: 14px;
+  animation: sync-error-enter 0.4s ease-out;
+}
+
+@keyframes sync-error-enter {
+  0%   { transform: scale(0.8); opacity: 0; }
+  30%  { transform: scale(1.1); opacity: 1; }
+  50%  { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
 }

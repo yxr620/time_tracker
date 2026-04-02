@@ -58,10 +58,10 @@ export const SyncIndicator: React.FC = () => {
         pushedCount: payload.pushedCount || 0,
         pulledCount: payload.pulledCount || 0,
       });
-      // Auto-hide after animation
+      // Auto-hide after animation (0.4s arrow exit + 0.4s count enter + ~2.2s display)
       fadeTimerRef.current = setTimeout(() => {
         setState(prev => prev.phase === 'done' ? { ...prev, phase: 'idle' } : prev);
-      }, 2600);
+      }, 3000);
     } else if (payload.phase === 'error') {
       setState({
         phase: 'error',
@@ -109,6 +109,14 @@ export const SyncIndicator: React.FC = () => {
 
     return (
       <span className="sync-indicator sync-indicator-done">
+        <span className="sync-exit-arrows">
+          {(state.direction === 'push' || state.direction === 'both') && (
+            <span className="sync-indicator-arrow push">↑</span>
+          )}
+          {(state.direction === 'pull' || state.direction === 'both') && (
+            <span className="sync-indicator-arrow pull">↓</span>
+          )}
+        </span>
         <span className="sync-count">{parts.join(' ')}</span>
       </span>
     );
